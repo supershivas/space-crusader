@@ -61,6 +61,16 @@ export const AILE_LOURD=[
 "..ZSSSZ..","..ZSKSZ..","...ZKZ...","...ZKZ...",
 "....K...."
 ];
+/* ---- NOUVEAUX ENNEMIS (Lot 1) ---- */
+export const STRONGHOLD=["...BBBBBBBBB...","..BBBBBBBBBBB..",".BBBBBBBBBBBBB.","BBBBBRRRRRBBBBB","BBBBBRrrrRBBBBB","BBBBBRrKrRBBBBB","BBBBBRrrrRBBBBB","BBBBBRRRRRBBBBB",".BBBBBBBBBBBBB.","..BBBBBBBBBBB..","...BBBBBBBBB...","....BBBBBBB....",".....BBBBB.....","......BBB......",".......B......."];
+export const MINI_NAVETTE=["..B..",".BBB.","BBRBB",".BBB.","..B.."];
+export const REGENERATEUR=["....G....",".G.GwG.G.","GwGwGwGwG","GwWWWWWwG","GwWwWwWwG",".G.WwW.G.","..GwWwG..","..GvWvG..","..GvWvG..","..GvWvG..","...vWv...","...vWv...","...vWv...","....W....","....W...."];
+export const MINI_SNIPER=["....W....",".W.WyW.W.","WyWyWyWyW","WyWWWWWwW","WyWyWyWyW",".W.WyW.W.","..WyWyW..","..WyWyW..","..WyWyW..","..WyWyW..","...WyW...","...WyW...","...WyW...","....W....","....W...."];
+export const DIAGONAL_D=["....W....",".W.WwW...","WwWwWwW..","WwWWWWW..","WwWwWwW..",".W.WwW...","..WwWwW..","..WwWwW..","..WwWwW..","..WwWwW..","...WwW...","...WwW...","...WwW...","....W....","....W...."];
+export const DIAGONAL_G=["....W....","...WwW.W.","..WwWwWwW","..WWWWWwW","..WwWwWwW","...WwW.W.","..WwWwW..","..WwWwW..","..WwWwW..","..WwWwW..","...WwW...","...WwW...","...WwW...","....W....","....W...."];
+export const MIMIC=["....y....",".y.yMy.y.","yMyMyMyMy","yMyyyyyMy","yMyMyMyMy",".y.yMy.y.","..yMyMy..","..yMyMy..","..yMyMy..","..yMyMy..","...yMy...","...yMy...","...yMy...","....y....","....y...."];
+export const VOID=["....k....",".k.kkk.k.","kkkUUUkkk","kkUUUUUkk","kkkUUUkkk",".k.kUk.k.","..kUUUk..","..kUUUk..","..kUUUk..","..kUUUk..","...kUk...","...kUk...","...kUk...","....k....","....k...."];
+
 /* ---- OBSTACLES (Lot 1) ---- */
 export const DEBRIS_1=["..N..",".NNN.","NNmNN",".NNN.","..N.."];
 export const DEBRIS_2=[".N.N.","NNmNN",".NmN.","NNmNN",".N.N."];

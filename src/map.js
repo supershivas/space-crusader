@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase, sauvegarderPartie } from './state.js';
 import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
-import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles } from './entities.js';
+import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
 import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements } from './ui.js';
@@ -74,6 +74,7 @@ export function demarrerCombat(type){
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; }
   state.boucliersRestants=BOUCLIER_USAGES_MAX;
   genererObstacles();
+  if(state.vague>=2 && Math.random()<0.4) spawnMimic();   // piège mimic occasionnel
   state.tourCompteur=0; state.prochainAsteroide=Math.max(1,3+Math.floor(Math.random()*2)+d.menaceDelta); state.enCombat=true;
   const diff=state.secteur*0.8+(state.noeudActuel?state.noeudActuel.col:0)*0.5;
   const squads=Math.max(1, 2+Math.round(diff)+(type==='elite'?2:0)+d.squadDelta);

@@ -9,7 +9,7 @@ import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occup
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
-         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle } from './combat.js';
+         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
 
 const canvas=document.getElementById('jeu');
@@ -150,6 +150,13 @@ function updateTooltip(x,y){
       porteur:{nom:'Porteur (élite)',role:'Renforce d\'un bouclier les ailes voisines.'},
       brouilleur:{nom:'Brouilleur (élite)',role:'Protège de tes tirs les ailes voisines.'},
       lourd:{nom:'Aile lourde',role:'Blindée : encaisse 3 tirs. Avance lentement.'},
+      stronghold:{nom:'Forteresse',role:'3 PV. Se scinde en 2 navettes à sa destruction.'},
+      mini_navette:{nom:'Navette',role:'Débris de forteresse. Fragile.'},
+      regenerateur:{nom:'Régénérateur',role:'Se soigne d\'1 PV tous les 3 tours.'},
+      mini_sniper:{nom:'Traqueur',role:'Vise tes 2 vaisseaux les plus proches du croiseur.'},
+      diagonal_d:{nom:'Intercepteur oblique',role:'Avance en diagonale, rebondit sur les bords.'},
+      diagonal_g:{nom:'Intercepteur oblique',role:'Avance en diagonale, rebondit sur les bords.'},
+      void:{nom:'Faille',role:'Attire tes vaisseaux (sauf cuirassés) d\'une case.'},
     }[a.type]||{nom:'Aile',role:''};
     const deg=a.type==='eclaireur'?0:(a.type==='bombardier'?degLaserActuel()*2:degLaserActuel());
     html='<div class="tt-name">'+info.nom+'</div>';
@@ -175,9 +182,9 @@ function updateTooltip(x,y){
     const cap=CAPACITES[f.type];
     if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+cap.nom+' — '+(f.capUsed?'déjà utilisée':cap.desc+' (2e appui)')+'</div>';
   } else if(b){
-    const names={'pv':'Soin','tir':'Tir gratuit','vaisseau':'Renfort'};
-    html='<div class="tt-name">Bonus: '+names[b.type]+'</div>';
-    html+='<div class="tt-spd">Disparaît dans '+b.ttl+' tour'+(b.ttl>1?'s':'')+'</div>';
+    const names={'pv':'Soin','tir':'Tir gratuit','vaisseau':'Renfort','mimic':'Renfort'};
+    html='<div class="tt-name">Bonus: '+(names[b.type]||'Renfort')+'</div>';
+    if(b.type!=='mimic') html+='<div class="tt-spd">Disparaît dans '+b.ttl+' tour'+(b.ttl>1?'s':'')+'</div>';
   } else if(ast){
     html='<div class="tt-name">Astéroïde</div>';
     html+='<div class="tt-dmg">Dégâts: '+DEG_ASTEROIDE+'</div>';
@@ -273,7 +280,7 @@ canvas.addEventListener('pointerdown', ev=>{
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?'Vaisseau brouillé':'Tir bloqué','log-red'); return; }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?'Vaisseau brouillé (champ magnétique)':'Tir bloqué / hors d’atteinte','log-red'); return; }
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
-  if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b) ramasser(b); state.selection=null; return; }
+  if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return; }
   state.selection=null;
 });
 

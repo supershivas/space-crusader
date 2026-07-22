@@ -48,8 +48,11 @@ export function tirerCharge(f,cible){
   }, 130);
 }
 
-export function cibleLaser(a){ if(a.type==='eclaireur'||a.r<0) return null;
-  if(a.r<state.RANG_TIR && a.type!=='chasseur') return null;   // le chasseur attaque dès son 1er tour
+export function cibleLaser(a){ if(a.type==='eclaireur'||a.type==='void'||a.r<0) return null;   // éclaireur & faille ne tirent pas
+  if(a.r<state.RANG_TIR && a.type!=='chasseur' && a.type!=='mini_sniper') return null;   // chasseur & mini-sniper tirent dès le 1er tour
+  if(a.type==='mini_sniper'){ // vise les 2 vaisseaux les plus proches du croiseur (rang le plus bas)
+    const cibles=[...state.fighters].sort((x,y)=>(y.r-x.r)||(Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))).slice(0,2);
+    return cibles.length?{type:'multi',targets:cibles}:{type:'croiseur'}; }
   if(a.type==='bombardier'){ for(let rr=a.r+1;rr<state.RANGS;rr++){ if(obstacleBloquant(a.c,rr)) return null; } return {type:'croiseur',bomber:true}; }
   const taunt=state.fighters.find(f=>f.provoque&&Math.abs(f.c-a.c)<=1);   // provocation du cuirassé
   if(taunt) return {type:'fighter',f:taunt};
@@ -76,6 +79,11 @@ export function analyseTir(f){
   }
   return {ailesOk,obstaclesOk,boss:bossOk,beams,jam:false};
 }
+/* MIMIC : faux bonus jaune. Explose au contact d'un vaisseau (le blesse). */
+export function declencheMimic(b,f){ const i=state.bonus.indexOf(b); if(i>=0) state.bonus.splice(i,1);
+  exploser(b.x,b.y,true); state.secousse=Math.max(state.secousse,8); sonBoom(); logMsg('Piège ! 🎭','log-red');
+  if(f && state.fighters.includes(f)){ const m=blesser(f); exploser(f.x,f.y,true); if(m) tuerFighter(f); } }
+
 /* dégât d'un tir allié sur un obstacle destructible ; gère station (bonus) et mines (explosion de zone) */
 export function frapperObstacle(o){
   o.hp--; exploser(o.x,o.y,false); sonBoom();
@@ -164,7 +172,10 @@ export function declencheUltime(){
   state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0; state.ultimeSeuil+=ULTIME_INCREMENT;
   sonBoom(); sonVague(); logMsg('⚡ FRAPPE ORBITALE !','log-ylw'); checkAchievements();
 }
-export function frapperAile(a,grand){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; } exploser(a.x,a.y,grand); tuerAile(a); return true; }
+export function frapperAile(a,grand){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
+  a.hp=(a.hp||1)-1;
+  if(a.hp>0){ exploser(a.x,a.y,false); return false; }   // touché mais pas encore détruit (ennemis blindés)
+  exploser(a.x,a.y,grand); tuerAile(a); return true; }
 
 /* =====================================================================
    FIN DU TOUR (phase ennemie)
@@ -186,6 +197,7 @@ export function finDuTour(){
   // (1) TIRS des ailes + du boss
   const tirs=state.ailes.map(a=>({a,cb:cibleLaser(a)})).filter(o=>o.cb); let degats=0;
   for(const {a,cb} of tirs){
+    if(cb.type==='multi'){ for(const f of cb.targets){ if(state.fighters.includes(f)){ laserAile(a,f.x,f.y); const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } } continue; }
     const tx=cb.type==='fighter'?cb.f.x:a.x, ty=cb.type==='fighter'?cb.f.y:(state.GRID_BAS+10);
     if(a.type==='bombardier'){ state.lasers.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); state.trails.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); }
     else { laserAile(a,tx,ty); }
@@ -201,8 +213,15 @@ export function finDuTour(){
     if(champObstacleEn(a.c,a.r)==='gravite') steps=Math.min(steps,1);   // champ de gravité : ennemi ralenti
     for(let s=0;s<steps;s++){ if(!state.ailes.includes(a)) break; const nr=a.r+1;
       if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
-      if(obstacleBloquant(a.c,nr)){ break; }   // obstacle : l'aile s'arrête devant
-      a.r=nr; const f=fighterEn(a.c,nr); if(f){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); sonBoom(); break; } } }
+      let nc=a.c;
+      if(a.dc){ nc=a.c+a.dc; if(nc<0||nc>=state.COLS){ a.dc=-a.dc; nc=a.c+a.dc; } }   // diagonal : rebond sur les bords
+      if(obstacleBloquant(nc,nr)){ break; }   // obstacle : l'aile s'arrête devant
+      a.r=nr; a.c=nc; const f=fighterEn(nc,nr); if(f){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); sonBoom(); break; } } }
+  // Régénérateurs : se soignent après quelques tours ; Void : attire tes vaisseaux et bonus
+  for(const a of state.ailes){ if(a.type==='regenerateur'){ a.regenTimer=(a.regenTimer||3)-1; if(a.regenTimer<=0){ if(a.hp<a.maxhp) a.hp++; a.regenTimer=3; } } }
+  for(const v of state.ailes){ if(v.type!=='void') continue;
+    for(const f of [...state.fighters]){ if(f.type==='bouclier') continue; const d=Math.max(Math.abs(f.c-v.c),Math.abs(f.r-v.r)); if(d>=1&&d<=2){ const nc=f.c+Math.sign(v.c-f.c), nr=f.r+Math.sign(v.r-f.r); if(dansGrille(nc,nr)&&!occupe(nc,nr)&&!asterEn(nc,nr)&&!trouNoirEn(nc,nr)){ f.c=nc; f.r=nr; } } }
+    for(const b of state.bonus){ const d=Math.max(Math.abs(b.c-v.c),Math.abs(b.r-v.r)); if(d>=1&&d<=2){ b.c=Math.max(0,Math.min(state.COLS-1,b.c+Math.sign(v.c-b.c))); b.r=Math.max(0,Math.min(state.RANGS-1,b.r+Math.sign(v.r-b.r))); } } }
 
   // (3) BOSS avance
   if(state.boss){ if(!(state.boss.type==='blinde'&&state.tourCompteur%2===1)) state.boss.r+=1;
@@ -235,7 +254,9 @@ export function finDuTour(){
     const f=fighterEn(o.c,o.r); if(f){ const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); } }
 
   // (5) bonus : avancent vers les vaisseaux, ramassés au passage, disparaissent vite
-  for(let i=state.bonus.length-1;i>=0;i--){ const b=state.bonus[i]; b.r+=1; b.ttl--;
+  for(let i=state.bonus.length-1;i>=0;i--){ const b=state.bonus[i];
+    if(b.type==='mimic'){ const f=fighterEn(b.c,b.r); if(f) declencheMimic(b,f); continue; }   // le mimic est un piège immobile
+    b.r+=1; b.ttl--;
     const f=fighterEn(b.c,b.r); if(f){ ramasser(b); continue; }
     if(b.r>state.RANGS-1||b.ttl<=0) state.bonus.splice(i,1); }
 
