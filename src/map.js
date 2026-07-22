@@ -2,7 +2,7 @@
    CARTE DE SECTEUR — génération, navigation, objectifs de vague,
    événements aléatoires entre les vagues
    ===================================================================== */
-import { state, sauvegarderPartie } from './state.js';
+import { state, centreCase, sauvegarderPartie } from './state.js';
 import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
@@ -67,7 +67,16 @@ export function gagnerCombat(){ state.enCombat=false;
   state.suiteMission=()=>{ if(type==='boss'){ state.suiteAmelioration=secteurSuivant; ouvrirAmelioration(); }
     else if(type==='elite'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } else ouvrirCarte(); };
   ouvrirMission(type,reussi); }
-export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); logMsg('★ SECTEUR '+state.secteur,'log-ylw'); genererCarte(); ouvrirCarte(); }
+/* réorganise tous les vaisseaux sur les deux premières lignes (bas de grille) */
+export function reorganiserVaisseaux(){
+  const r0=state.RANGS-1, r1=state.RANGS-2, libres=[];
+  for(let c=0;c<state.COLS;c++){ libres.push({c,r:r0}); }
+  for(let c=0;c<state.COLS;c++){ libres.push({c,r:r1}); }
+  const centre=(state.COLS-1)/2;
+  libres.sort((a,b)=>(Math.abs(a.r-r0)-Math.abs(b.r-r0)) || (Math.abs(a.c-centre)-Math.abs(b.c-centre)));
+  state.fighters.forEach((f,i)=>{ const pos=libres[i%libres.length]; f.c=pos.c; f.r=pos.r; const p=centreCase(f.c,f.r); f.x=p.x; f.y=p.y; });
+}
+export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); reorganiserVaisseaux(); logMsg('★ SECTEUR '+state.secteur,'log-ylw'); genererCarte(); ouvrirCarte(); }
 
 /* ===== OBJECTIFS DE VAGUE ===== */
 export function assignerObjectif(){

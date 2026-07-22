@@ -10,7 +10,7 @@ import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRen
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge } from './combat.js';
-import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement } from './map.js';
+import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
 
 const canvas=document.getElementById('jeu');
 const scene=document.getElementById('scene');
@@ -163,6 +163,19 @@ function updateTooltip(x,y){
   if(html){ tooltip.innerHTML=html; tooltip.classList.add('visible'); }
   else tooltip.classList.remove('visible');
 }
+/* infobulle de la carte des secteurs : type + description au survol d'une planète */
+function tooltipCarte(x,y){
+  if(!state.carte){ tooltip.classList.remove('visible'); return; }
+  const atteign=noeudsAtteignables();
+  let trouve=null;
+  for(const lvl of state.carte) for(const nd of lvl){ const p=posNoeud(nd); const R=nd.type==='boss'?18:14; if(Math.hypot(x-p.x,y-p.y)<=R+10){ trouve=nd; break; } }
+  if(!trouve){ tooltip.classList.remove('visible'); return; }
+  const reach=atteign.includes(trouve), cur=trouve===state.noeudActuel;
+  let html='<div class="tt-name">'+(ICONE[trouve.type]||'')+' '+(NOM_NOEUD[trouve.type]||trouve.type)+'</div>';
+  html+='<div class="tt-spd">'+(DESC_NOEUD[trouve.type]||'')+'</div>';
+  html+='<div class="tt-'+(cur?'grn':(reach?'dmg':'hp'))+'" style="color:'+(cur?'#8fa0c8':(reach?'#ffd23d':'#e5484d'))+'">'+(cur?'Position actuelle':(reach?'▸ Accessible':'Hors de portée'))+'</div>';
+  tooltip.innerHTML=html; tooltip.classList.add('visible');
+}
 function tooltipBouton(a){
   let html='';
   if(a.id==='vaisseau'){ html='<div class="tt-name">Générer un vaisseau</div>';
@@ -183,10 +196,11 @@ function dansRect(x,y,R){ return x>=R.x&&x<=R.x+R.w&&y>=R.y&&y<=R.y+R.h; }
 
 canvas.addEventListener('pointermove', ev=>{
   if(state.paused) return;
-  if(state.phase!=='joueur'){ tooltip.classList.remove('visible'); state.hoverCell=null; return; }
-  const {x,y}=coord(ev.clientX,ev.clientY);
   const rect=scene.getBoundingClientRect();
   tooltip.style.left=(ev.clientX-rect.left+14)+'px'; tooltip.style.top=(ev.clientY-rect.top+14)+'px';
+  const {x,y}=coord(ev.clientX,ev.clientY);
+  if(state.phase==='carte'){ tooltipCarte(x,y); state.hoverCell=null; return; }
+  if(state.phase!=='joueur'){ tooltip.classList.remove('visible'); state.hoverCell=null; return; }
   const btn=state.ACT.find(a=>dansRect(x,y,a));
   if(btn && state.phase==='joueur'){ tooltipBouton(btn); state.hoverCell=null; return; }
   updateTooltip(x,y);
@@ -196,7 +210,7 @@ canvas.addEventListener('pointermove', ev=>{
 canvas.addEventListener('pointerdown', ev=>{
   initAudio(); if(state.paused) return;
   const {x,y}=coord(ev.clientX,ev.clientY);
-  if(state.phase==='carte'){ for(const nd of noeudsAtteignables()){ const p=posNoeud(nd); if(Math.hypot(x-p.x,y-p.y)<28){ entrerNoeud(nd); return; } } return; }
+  if(state.phase==='carte'){ for(const nd of noeudsAtteignables()){ const p=posNoeud(nd); if(Math.hypot(x-p.x,y-p.y)<28){ tooltip.classList.remove('visible'); entrerNoeud(nd); return; } } return; }
   if(state.phase!=='joueur') return;
   saveState();
   if(ultimePret()&&dansRect(x,y,state.ULT)){ declencheUltime(); return; }
