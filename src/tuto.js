@@ -30,8 +30,10 @@ function marquerVu(){ try{ localStorage.setItem(TUTO_KEY,'1'); }catch(e){} }
 export function demarrer(){
   elements();
   actif=true; etapeIdx=0; alignementFait=false;
-  bar.classList.add('visible');
   afficherEtape();
+  // la barre n'apparaît qu'une fois le combat commencé (voir mettreAJour) :
+  // pendant le choix de la planète de départ (phase 'carte'), on reste masqué.
+  bar.classList.remove('visible'); if(halo) halo.classList.remove('visible');
 }
 export function relancer(){ demarrer(); }
 
@@ -94,7 +96,11 @@ function positionnerHalo(){
 
 export function mettreAJour(){
   if(!actif) return;
-  if(state.phase==='joueur' && state.enCombat) garantirCibleAccessible();
+  // Le tutoriel ne s'affiche et n'avance QUE pendant le combat.
+  // Sur la carte (choix de planète) ou une scène de planète, on masque tout.
+  if(state.phase!=='joueur'){ bar.classList.remove('visible'); halo.classList.remove('visible'); return; }
+  bar.classList.add('visible');
+  if(state.enCombat) garantirCibleAccessible();
   const e=ETAPES[etapeIdx];
   if(e && e.fait(baseline)){
     etapeIdx++;
