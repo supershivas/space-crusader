@@ -3,12 +3,13 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde } from './state.js';
-import { DEG_LASER, DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META } from './config.js';
+import { DEG_LASER, DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser } from './entities.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
-import { casesMouvement, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
-         ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur } from './combat.js';
+import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
+         ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
+         peutActiverCapacite, activerCapacite, tirerCharge } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement } from './map.js';
 
 const canvas=document.getElementById('jeu');
@@ -140,6 +141,8 @@ function updateTooltip(x,y){
     html+='<div class="tt-hp">PV: '+f.hp+'</div>';
     html+='<div class="tt-spd">Déplacement: '+porteeDep(f)+' case'+(porteeDep(f)>1?'s':'')+'</div>';
     html+='<div class="tt-dmg">Tir: colonne ±1</div>';
+    const cap=CAPACITES[f.type];
+    if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+cap.nom+' — '+(f.capUsed?'déjà utilisée':cap.desc+' (2e appui)')+'</div>';
   } else if(b){
     const names={'pv':'Soin','tir':'Tir gratuit','vaisseau':'Renfort'};
     html='<div class="tt-name">Bonus: '+names[b.type]+'</div>';
@@ -198,16 +201,30 @@ canvas.addEventListener('pointerdown', ev=>{
   if(ultimePret()&&dansRect(x,y,state.ULT)){ declencheUltime(); return; }
   if(dansRect(x,y,state.BTN)){ finDuTour(); return; }
   for(const a of state.ACT){ if(dansRect(x,y,a)){ a.anim=1; choisirAction(a.id); return; } }
-  const cell=caseDe(x,y); if(!cell){ state.selection=null; state.modeTourelle=false; return; } const {c,r}=cell;
+  const cell=caseDe(x,y); if(!cell){ state.selection=null; state.modeTourelle=false; state.modeCapacite=null; return; } const {c,r}=cell;
   if(state.modeTourelle){ if(bossEn(c,r)){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); state.trails.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); sonTir(); finirTourelle(); setTimeout(()=>toucherBoss(2,px,py),120); } else { const t=aileEn(c,r); if(t){ tirerTourelle(t); } else state.modeTourelle=false; } return; }
+  if(state.modeCapacite){
+    const {ship,kind}=state.modeCapacite;
+    if(kind==='bond'){
+      if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvementCapacite(ship).some(p=>p.c===c&&p.r===r)){
+        ship.c=c; ship.r=r; ship.capUsed=true; state.modeCapacite=null; state.deplacementsJoueurTotal++; sonTir(); logMsg('💨 Bond !','log-ylw');
+        const b=bonusEn(c,r); if(b) ramasser(b);
+      } else { state.modeCapacite=null; state.selection=null; }
+    } else if(kind==='charge'){
+      const cible=aileEn(c,r); const an=analyseTir(ship);
+      if(cible && an.ailesOk.has(cible)){ tirerCharge(ship,cible); }
+      else { state.modeCapacite=null; state.selection=null; logMsg('Tir chargé annulé','log-ylw'); }
+    }
+    return;
+  }
   if(!state.selection){ const f=fighterEn(c,r); if(f&&!f.used){ state.selection=f; sonSelect(); } return; }
   const f=state.selection;
-  if(f.c===c&&f.r===r){ state.selection=null; return; }
+  if(f.c===c&&f.r===r){ if(activerCapacite(f)) return; state.selection=null; return; }
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?'Vaisseau brouillé':'Tir bloqué','log-red'); return; }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?'Vaisseau brouillé (champ magnétique)':'Tir bloqué / hors d’atteinte','log-red'); return; }
-  if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; const b=bonusEn(c,r); if(b) ramasser(b); state.selection=null; return; }
+  if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b) ramasser(b); state.selection=null; return; }
   state.selection=null;
 });
 

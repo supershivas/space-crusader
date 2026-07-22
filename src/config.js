@@ -33,3 +33,24 @@ export const META=[
  {id:'ultimeRapide', nom:'Réacteur dopé', desc:'Ultime déjà chargé au départ',  max:3, cout:l=>5+l*3},
  {id:'vaisseauBonus',nom:'Escadrille',    desc:'+1 vaisseau au départ',         max:3, cout:l=>5+l*3},
 ];
+
+/* ===== DIFFICULTÉ (menu d'accueil) =====
+   hpMult : multiplicateur des PV de départ du croiseur
+   squadDelta : ajustement de la taille des escadrons (demarrerCombat)
+   menaceDelta : ajustement de l'intervalle avant la prochaine menace (+ = plus rare)
+   eliteVagueDelta : ajustement de la vague à partir de laquelle les élites peuvent apparaître (+ = plus tard)
+   eliteProbMult : multiplicateur de la probabilité d'apparition d'une élite
+   trousNoirs : autorise ou non les trous noirs parmi les menaces */
+export const DIFFICULTES = {
+  facile:    { label:'Facile',    hpMult:1.25, squadDelta:-1, menaceDelta:2,  eliteVagueDelta:2,  eliteProbMult:0.5, trousNoirs:false },
+  normal:    { label:'Normal',    hpMult:1,    squadDelta:0,  menaceDelta:0,  eliteVagueDelta:0,  eliteProbMult:1,   trousNoirs:true  },
+  difficile: { label:'Difficile', hpMult:0.8,  squadDelta:1,  menaceDelta:-1, eliteVagueDelta:-1, eliteProbMult:1.6, trousNoirs:true  },
+};
+
+/* ===== CAPACITÉS ACTIVES DES VAISSEAUX (une fois par combat) =====
+   Déclenchées par un second appui sur le vaisseau déjà sélectionné. */
+export const CAPACITES = {
+  rapide:     { nom:'Bond',        desc:'Bond de 2 cases en plus, sans perdre le tir' },
+  bouclier:   { nom:'Provocation', desc:'Les ailes adjacentes le ciblent au tour suivant' },
+  bombardier: { nom:'Tir chargé',  desc:'Vise une cible : détruit 2 colonnes au lieu d\'une' },
+};

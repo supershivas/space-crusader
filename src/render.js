@@ -3,12 +3,12 @@
    de la carte de secteur et de l'illustration d'accueil
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX } from './config.js';
+import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES } from './config.js';
 import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom } from './sprites.js';
 import { cuireUnites, imgVaisseau, fighterEn, aileEn, estProtege } from './entities.js';
-import { casesMouvement, analyseTir, cibleLaser, trajectoire } from './combat.js';
+import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
 import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD } from './map.js';
 
 const canvas=document.getElementById('jeu'), ctx=canvas.getContext('2d');
@@ -157,8 +157,9 @@ export function dessiner(t){
                 :                      'rgba(255,120,120,.16)';  // rouge pâle = voie libre
       ctx.strokeStyle=col; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(cc.x,cc.y); ctx.stroke(); }
     ctx.restore();
-    // cases de déplacement : BLEU (bien distinct du tir en rouge)
-    ctx.fillStyle='rgba(80,150,255,.85)'; for(const p of casesMouvement(state.selection)){ const c2=centreCase(p.c,p.r); ctx.beginPath(); ctx.arc(c2.x,c2.y,7,0,7); ctx.fill(); }
+    // cases de déplacement : BLEU (bien distinct du tir en rouge) — étendues pendant un "bond"
+    const enBond = state.modeCapacite && state.modeCapacite.kind==='bond' && state.modeCapacite.ship===state.selection;
+    ctx.fillStyle=enBond?'rgba(255,210,61,.85)':'rgba(80,150,255,.85)'; for(const p of (enBond?casesMouvementCapacite(state.selection):casesMouvement(state.selection))){ const c2=centreCase(p.c,p.r); ctx.beginPath(); ctx.arc(c2.x,c2.y,7,0,7); ctx.fill(); }
     // cercle rouge UNIQUEMENT sur les ennemis réellement atteignables (ligne de mire dégagée)
     ctx.strokeStyle='#ff5a5a'; ctx.lineWidth=3; for(const a of an.ailesOk){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); }
     if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('BROUILLÉ',state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
@@ -218,7 +219,11 @@ export function dessiner(t){
   for(const f of state.fighters){ if(f===state.selection){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=4; const cc=centreCase(f.c,f.r); ctx.strokeRect(cc.x-state.CELL/2+5,cc.y-state.CELL/2+5,state.CELL-10,state.CELL-10); }
     ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y-f.img.height/2)); ctx.globalAlpha=1;
     if(f.type==='rouge'){ for(let i=0;i<f.hp;i++){ ctx.fillStyle='#ff5a5a'; ctx.fillRect(f.x-8+i*10,f.y-f.img.height/2-8,6,6); } }
-    if(f.type==='bouclier'){ for(let i=0;i<f.hp;i++){ ctx.fillStyle='#4aa3ff'; ctx.fillRect(f.x-9+i*7,f.y-f.img.height/2-8,5,5); } } }
+    if(f.type==='bouclier'){ for(let i=0;i<f.hp;i++){ ctx.fillStyle='#4aa3ff'; ctx.fillRect(f.x-9+i*7,f.y-f.img.height/2-8,5,5); } }
+    // pastille de capacité active disponible
+    if(CAPACITES[f.type] && !f.capUsed){ const bx=f.x+f.img.width/2-2, by=f.y-f.img.height/2-2;
+      ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.beginPath(); ctx.arc(bx,by,4,0,7); ctx.fill();
+      ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke(); } }
 
   // explosions + particules + éclairage
   for(const e of state.explosions){ const idx=Math.min(NFRAMES-1,Math.floor(e.t/0.05)), im=framesBoom[idx], dw=im.width*e.scale, dh=im.height*e.scale;

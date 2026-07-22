@@ -3,7 +3,7 @@
    événements aléatoires entre les vagues
    ===================================================================== */
 import { state, sauvegarderPartie } from './state.js';
-import { UPGRADES, ULTIME_MAX } from './config.js';
+import { UPGRADES, ULTIME_MAX, DIFFICULTES } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
@@ -46,10 +46,12 @@ export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const typ
   else if(type==='event'){ state.suiteEvenement=ouvrirCarte; ouvrirEvenement(); }
   else if(type==='tresor'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } }
 export function demarrerCombat(type){
+  const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   state.ailes=[]; state.asteroides=[]; state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.bonus=[]; if(type!=='boss') state.boss=null;
-  state.tourCompteur=0; state.prochainAsteroide=3+Math.floor(Math.random()*2); state.enCombat=true;
+  for(const f of state.fighters){ f.capUsed=false; f.provoque=false; }
+  state.tourCompteur=0; state.prochainAsteroide=Math.max(1,3+Math.floor(Math.random()*2)+d.menaceDelta); state.enCombat=true;
   const diff=state.secteur*0.6+(state.noeudActuel?state.noeudActuel.col:0)*0.4;
-  const squads=2+Math.round(diff)+(type==='elite'?2:0);
+  const squads=Math.max(1, 2+Math.round(diff)+(type==='elite'?2:0)+d.squadDelta);
   for(let s=0;s<squads;s++) apparaitreEscadrille();
   if(type==='elite'){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,Math.random()<0.5?'porteur':'brouilleur'); }
   if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS'); logMsg('FORTERESSE !','log-red'); }

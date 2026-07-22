@@ -1,6 +1,7 @@
 /* =====================================================================
    ÉTAT PARTAGÉ — état mutable du jeu, achievements, highscores, undo
    ===================================================================== */
+import { DIFFICULTES } from './config.js';
 
 /* Objet unique et partagé : tous les modules importent `state` et lisent/
    écrivent directement ses propriétés (équivalent des `let` globaux du
@@ -28,7 +29,7 @@ export const state = {
 
   ultimeJauge:undefined, ondeChoc:undefined,
   hpCruiser:undefined, score:undefined, phase:undefined, selection:undefined, vague:undefined,
-  actionFaite:undefined, modeTourelle:undefined, hangar:undefined, tirsGratuits:undefined,
+  actionFaite:undefined, modeTourelle:undefined, modeCapacite:null, hangar:undefined, tirsGratuits:undefined,
 
   lockTimer:undefined, flashCroiseur:undefined, flashRecharge:undefined, secousse:undefined,
   tourCompteur:undefined, prochainAsteroide:undefined, prochainBoss:undefined,
@@ -43,6 +44,12 @@ export const state = {
 
   damageThisWave:0,
   hoverCell:null, hoverTime:0,
+
+  // difficulté (préférence mémorisée + difficulté active de la partie en cours)
+  difficultePreferee:'normal', difficulte:'normal',
+
+  // compteurs de session (utilisés par le tutoriel pour détecter les actions du joueur)
+  tirsJoueurTotal:0, deplacementsJoueurTotal:0, toursJoueurTotal:0,
 };
 
 export function centreCase(c,r){ return {x:state.GX+c*state.CELL+state.CELL/2, y:state.GY+r*state.CELL+state.CELL/2}; }
@@ -64,6 +71,20 @@ export const ACHIEVEMENTS_DEF = {
 
 export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; }catch(e){} }
 export function saveData(){ try{ localStorage.setItem('dc_highscores',JSON.stringify(state.highscores)); localStorage.setItem('dc_achievements',JSON.stringify(state.achievements)); localStorage.setItem('dc_meta',JSON.stringify(state.meta)); }catch(e){} }
+
+/* =====================================================================
+   DIFFICULTÉ (préférence mémorisée depuis l'accueil)
+   ===================================================================== */
+const DIFF_KEY='dc_difficulte';
+export function chargerDifficultePreferee(){
+  try{ const d=localStorage.getItem(DIFF_KEY); if(d && DIFFICULTES[d]) state.difficultePreferee=d; }catch(e){}
+  state.difficulte=state.difficultePreferee;
+}
+export function definirDifficultePreferee(d){
+  if(!DIFFICULTES[d]) return;
+  state.difficultePreferee=d; state.difficulte=d;
+  try{ localStorage.setItem(DIFF_KEY,d); }catch(e){}
+}
 
 /* =====================================================================
    UNDO (snapshot / restauration de l'état du tour)
@@ -91,8 +112,8 @@ export function sauvegarderPartie(serialiserCarte){
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify({
     v:1, secteur:state.secteur, vague:state.vague, score:state.score, hpCruiser:state.hpCruiser, HP_MAX:state.HP_MAX, ups:state.ups, ultimeJauge:state.ultimeJauge, tourCompteur:state.tourCompteur, prochainAsteroide:state.prochainAsteroide,
     enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave,
-    hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus,
-    fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,used:f.used})),
+    hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte,
+    fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,used:f.used,capUsed:f.capUsed||false})),
     ailes: state.ailes.map(a=>({c:a.c,r:a.r,type:a.type,hp:a.hp,maxhp:a.maxhp,vitesse:a.vitesse})),
     asteroides: state.asteroides.map(o=>({c:o.c,r:o.r,dc:o.dc,dr:o.dr})),
     bonus: state.bonus.map(b=>({c:b.c,r:b.r,type:b.type,ttl:b.ttl})),

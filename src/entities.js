@@ -3,7 +3,7 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { ULTIME_MAX } from './config.js';
+import { ULTIME_MAX, DIFFICULTES } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR } from './sprites.js';
 import { sonRenfort } from './audio.js';
@@ -21,7 +21,7 @@ export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : imgJoueur; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   const hp = type==='rouge'?2 : type==='bouclier'?3 : 1;
-  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,img:imgVaisseau(type)}; }
+  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,img:imgVaisseau(type),capUsed:false,provoque:false}; }
 export function spread(n){ const out=[]; for(let i=0;i<n;i++) out.push(Math.max(0,Math.min(state.COLS-1,Math.round((i+0.5)*state.COLS/n-0.5)))); return [...new Set(out)]; }
 
 export function fighterEn(c,r){ return state.fighters.find(f=>f.c===c&&f.r===r); }
@@ -45,8 +45,9 @@ export function blesser(f){ f.hp=(f.hp||1)-1; return f.hp<=0; }
 
 /* ---- ennemis & formations ---- */
 export function typeAile(){
-  if(state.vague>=2 && Math.random()<0.06) return 'porteur';
-  if(state.vague>=3 && Math.random()<0.05) return 'brouilleur';
+  const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
+  if(state.vague>=Math.max(1,2+d.eliteVagueDelta) && Math.random()<0.06*d.eliteProbMult) return 'porteur';
+  if(state.vague>=Math.max(1,3+d.eliteVagueDelta) && Math.random()<0.05*d.eliteProbMult) return 'brouilleur';
   const r=Math.random(); return r<0.55?'normal':r<0.72?'chasseur':r<0.87?'eclaireur':'bombardier'; }
 export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal';
   const img=type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:imgAile;
