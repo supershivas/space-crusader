@@ -8,6 +8,8 @@ export const DEG_LASER=8, DEG_EPERON=16, DEG_ASTEROIDE=20;
 export const TOURS_VAGUE=8;
 
 export const ULTIME_MAX=18;
+export const ULTIME_INCREMENT=6;  // le seuil de l'ultime augmente de ce montant à chaque utilisation
+export const BOUCLIER_USAGES_MAX=2;  // nombre d'utilisations de l'action BOUCLIER autorisées par combat
 
 /* ===== PROFONDEUR : améliorations, vaisseaux ===== */
 export const UPGRADES=[

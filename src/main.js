@@ -3,8 +3,8 @@
    Point d'entrée : cycle de vie de la partie, boucle de jeu, démarrage
    ===================================================================== */
 import { state, centreCase, loadData, sauvegardeExiste, chargerSauvegarde, effacerSauvegarde,
-         chargerDifficultePreferee, definirDifficultePreferee } from './state.js';
-import { ULTIME_MAX, DIFFICULTES } from './config.js';
+         chargerDifficultePreferee, definirDifficultePreferee, statsEquilibrage } from './state.js';
+import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
@@ -19,7 +19,7 @@ function etatVide(){
   state.trousNoirs=[];state.champs=[];state.menacesWarn=[];state.bossVaincus=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;
-  state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;
+  state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
   state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.banniereTimer=0;
   state.comboCount=0;state.comboTimer=0;state.bestCombo=0;state.undoStack=[];state.paused=false;
 }
@@ -40,6 +40,7 @@ function nouvellePartie(){
   for(let i=0;i<(M.vaisseauBonus||0);i++) deployerVaisseau('normal');    // méta : vaisseaux de départ
   state.hpCruiser=state.HP_MAX; state.score=0; state.phase='joueur'; state.selection=null; state.vague=1;
   state.actionFaite=false; state.modeTourelle=false; state.modeCapacite=null; state.hangar=null; state.tirsGratuits=0;
+  state.boucliersRestants=BOUCLIER_USAGES_MAX; state.ultimeSeuil=ULTIME_MAX;
   state.lockTimer=0; state.flashCroiseur=0; state.flashRecharge=0; state.secousse=0; state.tourCompteur=0; state.ambianceT=0;
   state.prochainAsteroide=3+Math.floor(Math.random()*2); state.prochainBoss=18+Math.floor(Math.random()*6); state.banniereTimer=0;
   state.comboCount=0; state.comboTimer=0; state.bestCombo=0; state.undoStack=[]; state.paused=false;
@@ -58,6 +59,8 @@ function reprendrePartie(){
   state.shipsLostThisWave=d.shipsLostThisWave||0; state.bossKilledThisWave=!!d.bossKilledThisWave; state.damageThisWave=d.damageThisWave||0;
   state.hangar=d.hangar||null; state.actionFaite=!!d.actionFaite; state.tirsGratuits=d.tirsGratuits||0; state.bossVaincus=d.bossVaincus||0;
   state.difficulte=d.difficulte||state.difficultePreferee;
+  state.boucliersRestants=(d.boucliersRestants!==undefined)?d.boucliersRestants:BOUCLIER_USAGES_MAX;
+  state.ultimeSeuil=d.ultimeSeuil||ULTIME_MAX;
   for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,used:f.used,capUsed:!!f.capUsed});
   for(const a of d.ailes||[]){ faireAile(a.c,a.r,a.type); const na=state.ailes[state.ailes.length-1]; na.hp=a.hp; na.maxhp=a.maxhp; na.vitesse=a.vitesse; const p=centreCase(a.c,a.r); na.x=p.x; na.y=p.y; }
   for(const o of d.asteroides||[]){ const p=centreCase(Math.max(0,Math.min(state.COLS-1,o.c)),Math.max(0,Math.min(state.RANGS-1,o.r))); state.asteroides.push({c:o.c,r:o.r,dc:o.dc,dr:o.dr,x:p.x,y:p.y,ang:0,img:getImgAster(),hp:1,maxhp:1,type:'normal'}); }
@@ -92,7 +95,11 @@ document.getElementById('btnJouer').addEventListener('click',()=>{
   if(premiereFois) demarrerTuto();
 });
 document.getElementById('btnReprendre').addEventListener('click',()=>{ initAudio(); loadData(); reprendrePartie(); });
-document.getElementById('btnInfo').addEventListener('click',()=>{ document.getElementById('info').classList.add('visible'); });
+document.getElementById('btnInfo').addEventListener('click',()=>{
+  const st=statsEquilibrage();
+  document.getElementById('infoStats').textContent = st.total>0 ? '📊 Secteur moyen atteint : '+st.moyenneSecteur.toFixed(1)+' ('+st.total+' partie'+(st.total>1?'s':'')+')' : '';
+  document.getElementById('info').classList.add('visible');
+});
 document.getElementById('btnFermerInfo').addEventListener('click',()=>{ document.getElementById('info').classList.remove('visible'); });
 document.getElementById('btnRelancerTuto').addEventListener('click',()=>{
   document.getElementById('info').classList.remove('visible');

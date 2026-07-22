@@ -2,7 +2,7 @@
    UI — DOM (modales, infobulle, journal, HUD texte) + entrées
    (souris + clavier)
    ===================================================================== */
-import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde } from './state.js';
+import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage } from './state.js';
 import { DEG_LASER, DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser } from './entities.js';
@@ -112,6 +112,7 @@ export function ouvrirMission(type,reussi){ state.phase='mission';
 
 export function finPartie(){
   state.phase='fin'; stopMusic(); effacerSauvegarde();
+  enregistrerStat(state.secteur,state.vague,state.score);
   const gagne=Math.floor(state.score/8)+state.vague; state.meta.cristaux=(state.meta.cristaux||0)+gagne; saveData();
   document.getElementById('cristauxGagnes').textContent='💎 +'+gagne+' cristaux (total : '+state.meta.cristaux+')';
   addHighscore();
@@ -169,7 +170,7 @@ function tooltipBouton(a){
     else if(state.hangar) html+='<div class="tt-hp">Un vaisseau est déjà en préparation (⏳).</div>';
     else html+='<div class="tt-spd">Sort du hangar au tour suivant · '+state.fighters.length+'/'+state.MAX_VAISSEAUX+'</div>'; }
   else if(a.id==='tourelle'){ html='<div class="tt-name">Tourelle du croiseur</div><div class="tt-dmg">Détruit une aile n\'importe où sur la carte</div>'; }
-  else { html='<div class="tt-name">Recharger le bouclier</div><div class="tt-grn" style="color:#2fd6a0">+'+state.RECHARGE+' PV au croiseur</div>'; }
+  else { html='<div class="tt-name">Recharger le bouclier</div><div class="tt-grn" style="color:#2fd6a0">+'+state.RECHARGE+' PV au croiseur</div><div class="tt-spd">'+(state.boucliersRestants>0?state.boucliersRestants+' utilisation'+(state.boucliersRestants>1?'s':'')+' restante'+(state.boucliersRestants>1?'s':'')+' ce combat':'Épuisé pour ce combat')+'</div>'; }
   tooltip.innerHTML=html; tooltip.classList.add('visible');
 }
 

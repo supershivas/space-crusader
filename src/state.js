@@ -30,6 +30,7 @@ export const state = {
   ultimeJauge:undefined, ondeChoc:undefined,
   hpCruiser:undefined, score:undefined, phase:undefined, selection:undefined, vague:undefined,
   actionFaite:undefined, modeTourelle:undefined, modeCapacite:null, hangar:undefined, tirsGratuits:undefined,
+  boucliersRestants:undefined, ultimeSeuil:undefined,
 
   lockTimer:undefined, flashCroiseur:undefined, flashRecharge:undefined, secousse:undefined,
   tourCompteur:undefined, prochainAsteroide:undefined, prochainBoss:undefined,
@@ -113,6 +114,7 @@ export function sauvegarderPartie(serialiserCarte){
     v:1, secteur:state.secteur, vague:state.vague, score:state.score, hpCruiser:state.hpCruiser, HP_MAX:state.HP_MAX, ups:state.ups, ultimeJauge:state.ultimeJauge, tourCompteur:state.tourCompteur, prochainAsteroide:state.prochainAsteroide,
     enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave,
     hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte,
+    boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil,
     fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,used:f.used,capUsed:f.capUsed||false})),
     ailes: state.ailes.map(a=>({c:a.c,r:a.r,type:a.type,hp:a.hp,maxhp:a.maxhp,vitesse:a.vitesse})),
     asteroides: state.asteroides.map(o=>({c:o.c,r:o.r,dc:o.dc,dr:o.dr})),
@@ -126,3 +128,22 @@ export function sauvegarderPartie(serialiserCarte){
 export function effacerSauvegarde(){ try{ localStorage.removeItem(SAVE_KEY); }catch(e){} }
 export function sauvegardeExiste(){ try{ return !!localStorage.getItem(SAVE_KEY); }catch(e){ return false; } }
 export function chargerSauvegarde(){ try{ return JSON.parse(localStorage.getItem(SAVE_KEY)); }catch(e){ return null; } }
+
+/* =====================================================================
+   STATISTIQUES ANONYMES (mesure de l'équilibrage)
+   ===================================================================== */
+const STATS_KEY='dc_stats';
+export function enregistrerStat(secteur,vague,score){
+  try{
+    const stats=JSON.parse(localStorage.getItem(STATS_KEY))||[];
+    stats.push({secteur,vague,score});
+    localStorage.setItem(STATS_KEY,JSON.stringify(stats));
+  }catch(e){}
+}
+export function statsEquilibrage(){
+  try{
+    const stats=JSON.parse(localStorage.getItem(STATS_KEY))||[];
+    if(!stats.length) return {moyenneSecteur:0,total:0};
+    return {moyenneSecteur:stats.reduce((s,x)=>s+x.secteur,0)/stats.length, total:stats.length};
+  }catch(e){ return {moyenneSecteur:0,total:0}; }
+}

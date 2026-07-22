@@ -2,7 +2,7 @@
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
 import { state, centreCase, saveState, sauvegarderPartie } from './state.js';
-import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_MAX, DIFFICULTES, CAPACITES } from './config.js';
+import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, occupe, dansGrille, trouNoirEn, champEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
          deployerVaisseau, ramasser, getImgAster } from './entities.js';
@@ -10,6 +10,9 @@ import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, s
 import { NFRAMES } from './sprites.js';
 import { logMsg, ouvrirBuild, finPartie, checkAchievements } from './ui.js';
 import { gagnerCombat, serialiserCarte } from './map.js';
+
+/* dégâts d'un tir laser ennemi (aile ou boss) : augmente avec le secteur */
+export function degLaserActuel(){ return DEG_LASER + Math.floor(state.secteur/2); }
 
 /* ---- ciblage / déplacement ---- */
 export function tirable(f,a){ return Math.abs(a.c-f.c)<=1; }
@@ -100,7 +103,7 @@ export function choisirAction(id){
   if(id==='tourelle'){ if(state.actionFaite&&state.tirsGratuits<=0) return; state.modeTourelle=!state.modeTourelle; state.selection=null; return; }
   if(state.actionFaite) return;
   if(id==='vaisseau'){ if(!state.hangar&&state.fighters.length<state.MAX_VAISSEAUX){ ouvrirBuild(); } }
-  else if(id==='bouclier'){ const soin=Math.round(state.RECHARGE*(1+0.25*state.ups.bouclier)); state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+soin); state.actionFaite=true; state.modeTourelle=false; state.flashRecharge=1; sonRenfort(); logMsg('Bouclier +'+soin,'log-grn'); }
+  else if(id==='bouclier'){ if(state.boucliersRestants<=0) return; const soin=Math.round(state.RECHARGE*(1+0.25*state.ups.bouclier)); state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+soin); state.boucliersRestants--; state.actionFaite=true; state.modeTourelle=false; state.flashRecharge=1; sonRenfort(); logMsg('Bouclier +'+soin+' ('+state.boucliersRestants+' restante'+(state.boucliersRestants>1?'s':'')+')','log-grn'); }
 }
 export function tirerTourelle(a){
   state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:a.x,y2:a.y,t:0,ennemi:false,gros:true});
@@ -137,13 +140,13 @@ export function tirer(f,aile){
     sonBoom(); checkAchievements();
   }, 130);
 }
-export function ultimePret(){ return state.ultimeJauge>=ULTIME_MAX; }
+export function ultimePret(){ return state.ultimeJauge>=state.ultimeSeuil; }
 export function declencheUltime(){
   for(const a of [...state.ailes]){ exploser(a.x,a.y,true); state.score++; state.killsThisWave++; } state.ailes=[];
   for(const o of [...state.asteroides]){ exploser(o.x,o.y,true); } state.asteroides=[];
   if(state.boss){ state.boss.hp-=4; if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } }
   state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2));
-  state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0;
+  state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0; state.ultimeSeuil+=ULTIME_INCREMENT;
   sonBoom(); sonVague(); logMsg('⚡ FRAPPE ORBITALE !','log-ylw'); checkAchievements();
 }
 export function frapperAile(a,grand){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; } exploser(a.x,a.y,grand); tuerAile(a); return true; }
@@ -172,7 +175,7 @@ export function finDuTour(){
     if(a.type==='bombardier'){ state.lasers.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); state.trails.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); }
     else { laserAile(a,tx,ty); }
     if(cb.type==='fighter'){ const f=cb.f; if(state.fighters.includes(f)){ const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } }
-    else { degats+=cb.bomber?DEG_LASER*2:DEG_LASER; } }
+    else { const dl=degLaserActuel(); degats+=cb.bomber?dl*2:dl; } }
   if(state.boss){ degats+=tirsBoss(); }
   if(tirs.length||state.boss) sonTirEnnemi();
   if(degats>0){ state.hpCruiser=Math.max(0,state.hpCruiser-degats); state.damageThisWave+=degats; state.flashCroiseur=1; state.secousse=Math.max(state.secousse,7); sonAie(); logMsg('-'+degats+' PV','log-red'); }
@@ -227,10 +230,10 @@ export function tirsBoss(){
   const tirColonne=(bc)=>{ if(bc<0||bc>=state.COLS) return; let hf=null; for(let rr=state.boss.r+2;rr<state.RANGS;rr++){ const f=fighterEn(bc,rr); if(f){hf=f;break;} }
     const fx=centreCase(bc,state.boss.r).x, fy=state.boss.y;
     if(hf){ state.lasers.push({x1:fx,y1:fy,x2:hf.x,y2:hf.y,t:0,ennemi:true,gros:true}); if(state.fighters.includes(hf)){ const m=blesser(hf); exploser(hf.x,hf.y,false); if(m) tuerFighter(hf); } }
-    else { deg+=DEG_LASER; state.lasers.push({x1:fx,y1:fy,x2:fx,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); } };
+    else { deg+=degLaserActuel(); state.lasers.push({x1:fx,y1:fy,x2:fx,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); } };
   if(state.boss.type==='sniper'){                 // vise les 3 vaisseaux les plus proches
     const cibles=[...state.fighters].sort((a,b)=>Math.hypot(a.x-state.boss.x,a.y-state.boss.y)-Math.hypot(b.x-state.boss.x,b.y-state.boss.y)).slice(0,3);
-    if(cibles.length===0){ deg+=DEG_LASER*2; state.lasers.push({x1:state.boss.x,y1:state.boss.y,x2:state.boss.x,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); }
+    if(cibles.length===0){ deg+=degLaserActuel()*2; state.lasers.push({x1:state.boss.x,y1:state.boss.y,x2:state.boss.x,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); }
     for(const f of cibles){ state.lasers.push({x1:state.boss.x,y1:state.boss.y,x2:f.x,y2:f.y,t:0,ennemi:true,gros:true}); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); }
   } else if(state.boss.type==='rayon'){           // charge un tour, puis balaye 5 colonnes
     if(!state.boss.charge){ state.boss.charge=true; logMsg('Boss charge son rayon…','log-red'); }
@@ -243,7 +246,7 @@ export function tirsBoss(){
     const bc=state.boss.c+1; let hf=null; for(let rr=state.boss.r+2;rr<state.RANGS;rr++){ const f=fighterEn(bc,rr); if(f){hf=f;break;} }
     const fx=centreCase(bc,state.boss.r).x, fy=state.boss.y;
     if(hf){ state.lasers.push({x1:fx,y1:fy,x2:hf.x,y2:hf.y,t:0,ennemi:true,gros:true}); if(state.fighters.includes(hf)){ const m=blesser(hf); exploser(hf.x,hf.y,false); if(m) tuerFighter(hf); } }
-    else { deg+=DEG_LASER*2; state.lasers.push({x1:fx,y1:fy,x2:fx,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); }
+    else { deg+=degLaserActuel()*2; state.lasers.push({x1:fx,y1:fy,x2:fx,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); }
   } else {                                   // canonnier : 3 colonnes
     for(let dc=0;dc<3;dc++) tirColonne(state.boss.c+dc);
   }

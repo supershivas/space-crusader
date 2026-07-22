@@ -35,7 +35,7 @@ export function configurer(){
   const gap=8, aw=Math.min(150,(state.LARGEUR-2*MARGE-2*gap)/3), tot=aw*3+gap*2, ax=(state.LARGEUR-tot)/2;
   state.ACT=[{id:'vaisseau',lbl:'VAISSEAU',x:ax,y:actY,w:aw,h:actH},{id:'tourelle',lbl:'TOURELLE',x:ax+aw+gap,y:actY,w:aw,h:actH},{id:'bouclier',lbl:'BOUCLIER',x:ax+2*(aw+gap),y:actY,w:aw,h:actH}];
   state.HP_MAX=Math.round(100*state.COLS/7); state.MAX_VAISSEAUX=Math.max(6,Math.round(state.COLS*0.8)); state.AILES_MAX=Math.max(10,Math.round(state.COLS*1.5));
-  state.STARTF=Math.max(4,Math.round(state.COLS*0.5)); state.STARTA=Math.max(3,Math.round(state.COLS*0.4)); state.RANG_TIR=Math.max(2,Math.round(state.RANGS*0.25)); state.RECHARGE=Math.round(state.HP_MAX*0.16);
+  state.STARTF=Math.max(4,Math.round(state.COLS*0.5)); state.STARTA=Math.max(3,Math.round(state.COLS*0.4)); state.RANG_TIR=Math.max(2,Math.round(state.RANGS*0.25)); state.RECHARGE=Math.round(state.HP_MAX*0.10);
   state.nebuleuses=[{x:state.LARGEUR*0.25,y:state.HAUTEUR*0.30,r:state.LARGEUR*0.55,c1:'rgba(90,55,150,.16)',v:3},{x:state.LARGEUR*0.82,y:state.HAUTEUR*0.18,r:state.LARGEUR*0.5,c1:'rgba(40,95,150,.14)',v:5}];
   planete={x:state.LARGEUR*0.80,y:state.HAUTEUR*0.11,r:Math.min(state.LARGEUR,state.HAUTEUR)*0.10};
 }
@@ -254,7 +254,7 @@ export function dessiner(t){
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
   ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,hudBase-32); ctx.textAlign='left';
   if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+state.objectifVague.texte,state.LARGEUR/2,15); ctx.textAlign='left'; }
-  { const pr=Math.min(1,state.ultimeJauge/ULTIME_MAX), pret=state.ultimeJauge>=ULTIME_MAX;
+  { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil;
     arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,7); ctx.fillStyle='#141d34'; ctx.fill();
     ctx.fillStyle=pret?('rgba(255,210,61,'+(0.6+0.4*pulse)+')'):'#7a3fd6'; ctx.fillRect(state.ULT.x+2,state.ULT.y+2,(state.ULT.w-4)*pr,state.ULT.h-4);
     arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,7); ctx.strokeStyle=pret?'#ffd23d':'#4a5a86'; ctx.lineWidth=2; ctx.stroke();
@@ -262,7 +262,7 @@ export function dessiner(t){
     ctx.fillText(pret?'⚡ FRAPPE ORBITALE':'ULTIME '+Math.floor(pr*100)+'%',state.LARGEUR/2,state.ULT.y+state.ULT.h-4); ctx.textAlign='left'; }
 
   // boutons d'action
-  for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
+  for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
     arrondi(a.x,a.y,a.w,a.h,9); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
     if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,9); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
     ctx.fillStyle=dispo||vise?'#e8eefc':'#5b6580'; ctx.textAlign='center';

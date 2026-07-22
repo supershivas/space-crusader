@@ -3,7 +3,7 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { ULTIME_MAX, DIFFICULTES } from './config.js';
+import { DIFFICULTES } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR } from './sprites.js';
 import { sonRenfort } from './audio.js';
@@ -59,7 +59,7 @@ export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) 
     for(let k=1;k<=taille;k++){ const cg=ce-k,cd=ce+k,rr=-k; if(state.ailes.length>=state.AILES_MAX) break;
       if(cg>=0&&!aileEn(cg,rr)) faireAile(cg,rr,typeAile()); if(cd<state.COLS&&!aileEn(cd,rr)&&state.ailes.length<state.AILES_MAX) faireAile(cd,rr,typeAile()); } } }
 
-export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state.score++; state.killsThisWave++; state.ultimeJauge=Math.min(ULTIME_MAX,state.ultimeJauge+1); if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r)); }
+export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state.score++; state.killsThisWave++; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+1); if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r)); }
 
 /* bonus */
 export function larguerBonus(c,r){ const t=['pv','tir','vaisseau'][Math.floor(Math.random()*3)]; const p=centreCase(c,r); state.bonus.push({c,r,type:t,x:p.x,y:p.y,ttl:4}); }

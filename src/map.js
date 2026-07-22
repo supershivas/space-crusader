@@ -3,7 +3,7 @@
    événements aléatoires entre les vagues
    ===================================================================== */
 import { state, sauvegarderPartie } from './state.js';
-import { UPGRADES, ULTIME_MAX, DIFFICULTES } from './config.js';
+import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
@@ -11,7 +11,7 @@ import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, checkAchiev
 
 export const ICONE={combat:'⚔️',elite:'☠️',event:'❓',rest:'🛠️',tresor:'💎',boss:'👹'};
 export const NOM_NOEUD={combat:'Combat',elite:'Élite',event:'Signal',rest:'Relais',tresor:'Trésor',boss:'BOSS'};
-export const DESC_NOEUD={combat:'Vague standard',elite:'Plus dur · plus de butin',event:'Événement à choix',rest:'Répare +40% PV',tresor:'Amélioration gratuite',boss:"Un boss t'attend !"};
+export const DESC_NOEUD={combat:'Vague standard',elite:'Plus dur · plus de butin',event:'Événement à choix',rest:'Répare +25% PV',tresor:'Amélioration gratuite',boss:"Un boss t'attend !"};
 function planeteAleatoire(){ const pool=['combat','combat','combat','event','rest','elite','tresor']; return pool[Math.floor(Math.random()*pool.length)]; }
 export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'}};
 export function genererCarte(){ const NB=6, cols=[];
@@ -42,15 +42,16 @@ export function deserialiserCarte(d){ if(!d) { state.carte=null; state.noeudActu
 export function ouvrirCarte(){ state.phase='carte'; sauvegarderPartie(serialiserCarte); }
 export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const type=nd.type;
   if(type==='combat'||type==='elite'||type==='boss'){ demarrerCombat(type); }
-  else if(type==='rest'){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.4)); state.flashRecharge=1; sonRenfort(); logMsg('Relais : réparation','log-grn'); ouvrirCarte(); }
+  else if(type==='rest'){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.25)); state.flashRecharge=1; sonRenfort(); logMsg('Relais : réparation','log-grn'); ouvrirCarte(); }
   else if(type==='event'){ state.suiteEvenement=ouvrirCarte; ouvrirEvenement(); }
   else if(type==='tresor'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } }
 export function demarrerCombat(type){
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   state.ailes=[]; state.asteroides=[]; state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.bonus=[]; if(type!=='boss') state.boss=null;
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; }
+  state.boucliersRestants=BOUCLIER_USAGES_MAX;
   state.tourCompteur=0; state.prochainAsteroide=Math.max(1,3+Math.floor(Math.random()*2)+d.menaceDelta); state.enCombat=true;
-  const diff=state.secteur*0.6+(state.noeudActuel?state.noeudActuel.col:0)*0.4;
+  const diff=state.secteur*0.8+(state.noeudActuel?state.noeudActuel.col:0)*0.5;
   const squads=Math.max(1, 2+Math.round(diff)+(type==='elite'?2:0)+d.squadDelta);
   for(let s=0;s<squads;s++) apparaitreEscadrille();
   if(type==='elite'){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,Math.random()<0.5?'porteur':'brouilleur'); }
@@ -59,14 +60,14 @@ export function demarrerCombat(type){
   demarrerTourJoueur(); }
 export function gagnerCombat(){ state.enCombat=false;
   const reussi=objectifReussi(); if(state.damageThisWave===0) state.achievements.perfect_wave=true;
-  state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.08));
+  state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.04));
   if(reussi){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.12)); state.score+=3; }
   state.vague++; sonVague(); setMusicPhase('calme'); checkAchievements();
   const type=state.noeudActuel?state.noeudActuel.type:'combat';
   state.suiteMission=()=>{ if(type==='boss'){ state.suiteAmelioration=secteurSuivant; ouvrirAmelioration(); }
     else if(type==='elite'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } else ouvrirCarte(); };
   ouvrirMission(type,reussi); }
-export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.25)); logMsg('★ SECTEUR '+state.secteur,'log-ylw'); genererCarte(); ouvrirCarte(); }
+export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); logMsg('★ SECTEUR '+state.secteur,'log-ylw'); genererCarte(); ouvrirCarte(); }
 
 /* ===== OBJECTIFS DE VAGUE ===== */
 export function assignerObjectif(){
@@ -90,7 +91,7 @@ export const EVENEMENTS=[
    {emo:'🛒', nom:'Acheter', desc:'-25% PV, +1 amélioration', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.75)); ameliorationAleatoire(); }},
    {emo:'🚫', nom:'Refuser', desc:'+10% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }} ]},
  {titre:'ÉPAVE À LA DÉRIVE', desc:'Une épave flotte non loin. La fouiller ?', choix:[
-   {emo:'🔦', nom:'Fouiller', desc:'Gros butin… ou embuscade', effet:()=>{ if(Math.random()<0.5){ state.ultimeJauge=ULTIME_MAX; state.score+=8; logMsg('Butin ! Ultime chargé','log-ylw'); } else { for(let k=0;k<3;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('Embuscade !','log-red'); } }},
+   {emo:'🔦', nom:'Fouiller', desc:'Gros butin… ou embuscade', effet:()=>{ if(Math.random()<0.5){ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); state.score+=8; logMsg('Butin ! +50% ultime','log-ylw'); } else { for(let k=0;k<3;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('Embuscade !','log-red'); } }},
    {emo:'🧲', nom:'Récupérer', desc:'+1 vaisseau', effet:()=>{ deployerVaisseau('normal'); }} ]},
  {titre:'DOCK DE FORTUNE', desc:'Des réparations sont possibles ici.', choix:[
    {emo:'🔧', nom:'Réparer', desc:'+40% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.4)); }},
@@ -99,10 +100,10 @@ export const EVENEMENTS=[
    {emo:'🚀', nom:'Deux chasseurs', desc:'+2 vaisseaux standards', effet:()=>{ deployerVaisseau('normal'); deployerVaisseau('normal'); }},
    {emo:'🛡', nom:'Un cuirassé', desc:'+1 cuirassé (3 PV)', effet:()=>{ deployerVaisseau('bouclier'); }} ]},
  {titre:'PARI RISQUÉ', desc:'Pile tu gagnes gros, face tu perds ta mise.', choix:[
-   {emo:'🎲', nom:'Parier', desc:'50% : +score & ultime', effet:()=>{ if(Math.random()<0.5){ state.score+=15; state.ultimeJauge=ULTIME_MAX; logMsg('Gagné !','log-ylw'); } else logMsg('Perdu…','log-red'); }},
+   {emo:'🎲', nom:'Parier', desc:'50% : +score & ultime', effet:()=>{ if(Math.random()<0.5){ state.score+=15; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Gagné ! +50% ultime','log-ylw'); } else logMsg('Perdu…','log-red'); }},
    {emo:'✋', nom:'Prudence', desc:'+5 score sûr', effet:()=>{ state.score+=5; }} ]},
  {titre:'SURTENSION', desc:'Le réacteur crache un surplus d\'énergie.', choix:[
-   {emo:'⚡', nom:'Vers l\'ultime', desc:'Jauge d\'ultime pleine', effet:()=>{ state.ultimeJauge=ULTIME_MAX; }},
+   {emo:'⚡', nom:'Vers l\'ultime', desc:'Jauge d\'ultime pleine', effet:()=>{ state.ultimeJauge=state.ultimeSeuil; }},
    {emo:'🛡', nom:'Vers le bouclier', desc:'+30% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.3)); }} ]},
 ];
 export function apresEvenement(){ const suite=state.suiteEvenement||demarrerTourJoueur; state.suiteEvenement=null; suite(); }
