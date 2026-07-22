@@ -2,11 +2,11 @@
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
 import { state, centreCase, saveState, sauvegarderPartie } from './state.js';
-import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_MAX } from './config.js';
+import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_MAX, DIFFICULTES, CAPACITES } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, occupe, dansGrille, trouNoirEn, champEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
          deployerVaisseau, ramasser, getImgAster } from './entities.js';
-import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
+import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
 import { NFRAMES } from './sprites.js';
 import { logMsg, ouvrirBuild, finPartie, checkAchievements } from './ui.js';
 import { gagnerCombat, serialiserCarte } from './map.js';
@@ -18,9 +18,37 @@ export function casesMouvement(f){ const out=[],p=porteeDep(f); for(let dc=-p;dc
   const c=f.c+dc,r=f.r+dr; if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) out.push({c,r}); } return out; }
 export function peutViserBoss(f){ return state.boss&&f.c>=state.boss.c-1&&f.c<=state.boss.c+3; }
 
+/* ---- capacités actives (une fois par combat, second appui sur le vaisseau sélectionné) ---- */
+export function peutActiverCapacite(f){ return !!CAPACITES[f.type] && !f.capUsed; }
+export function casesMouvementCapacite(f){ const out=[],p=porteeDep(f)+2; for(let dc=-p;dc<=p;dc++) for(let dr=-p;dr<=p;dr++){ if((dc===0&&dr===0)||Math.abs(dc)+Math.abs(dr)>p) continue;
+  const c=f.c+dc,r=f.r+dr; if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) out.push({c,r}); } return out; }
+export function activerCapacite(f){
+  if(!peutActiverCapacite(f)) return false;
+  if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); return true; }
+  if(f.type==='rapide'){ state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); return true; }
+  if(f.type==='bombardier'){ state.modeCapacite={ship:f,kind:'charge'}; sonSelect(); return true; }
+  return false;
+}
+export function tirerCharge(f,cible){
+  state.lasers.push({x1:f.x,y1:f.y-6,x2:cible.x,y2:cible.y,t:0,ennemi:false,gros:true});
+  state.trails.push({x1:f.x,y1:f.y-6,x2:cible.x,y2:cible.y,t:0,ennemi:false,gros:true});
+  sonTir(); f.used=true; f.capUsed=true; state.tirsJoueurTotal++; state.selection=null; state.modeCapacite=null;
+  logMsg('💥 Tir chargé !','log-ylw');
+  const c2 = cible.c+1<state.COLS ? cible.c+1 : cible.c-1;
+  setTimeout(()=>{
+    const col=state.ailes.filter(a=>a.c===cible.c||a.c===c2); let kills=0;
+    for(const a of col){ if(frapperAile(a,true)) kills++; }
+    state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
+    if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw');
+    sonBoom(); checkAchievements();
+  }, 130);
+}
+
 export function cibleLaser(a){ if(a.type==='eclaireur'||a.r<0) return null;
   if(a.r<state.RANG_TIR && a.type!=='chasseur') return null;   // le chasseur attaque dès son 1er tour
   if(a.type==='bombardier') return {type:'croiseur',bomber:true};
+  const taunt=state.fighters.find(f=>f.provoque&&Math.abs(f.c-a.c)<=1);   // provocation du cuirassé
+  if(taunt) return {type:'fighter',f:taunt};
   for(let rr=a.r+1;rr<state.RANGS;rr++){ const f=fighterEn(a.c,rr); if(f) return {type:'fighter',f}; } return {type:'croiseur'}; }
 export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0;i<14;i++){ c+=ast.dc; r+=ast.dr; pts.push({c,r}); if(r>state.RANGS-1||c<0||c>state.COLS-1||r<0) break; } return pts; }
 
@@ -46,7 +74,9 @@ export function analyseTir(f){
 
 /* planifie une menace : ajoute une ALERTE visible un tour avant */
 export function programmerMenace(){
-  const kinds = state.bossVaincus>0 ? ['astero','astero','trou','champ'] : ['astero','astero','astero','trou'];
+  const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
+  const base = state.bossVaincus>0 ? ['astero','astero','trou','champ'] : ['astero','astero','astero','trou'];
+  const kinds = d.trousNoirs ? base : base.filter(k=>k!=='trou');
   const kind = kinds[Math.floor(Math.random()*kinds.length)];
   if(kind==='astero'){ state.menacesWarn.push({kind:'astero',r:1+Math.floor(Math.random()*(state.RANGS-2)),dir:Math.random()<0.5?1:-1,s:2+Math.floor(Math.random()*2)}); }
   else if(kind==='trou'){ state.menacesWarn.push({kind:'trou',c:1+Math.floor(Math.random()*(state.COLS-2)),r:2+Math.floor(Math.random()*Math.max(1,state.RANGS-4))}); }
@@ -63,7 +93,7 @@ export function materialiserMenaces(){
   state.menacesWarn=[];
 }
 
-export function demarrerTourJoueur(){ state.phase='joueur'; for(const f of state.fighters) f.used=false; state.actionFaite=false; state.modeTourelle=false; state.tirsGratuits=state.ups.tourelleDouble; for(const a of state.ailes) a.bouclier=!estElite(a)&&porteurAura(a); setMusicPhase('calme'); sauvegarderPartie(serialiserCarte); }
+export function demarrerTourJoueur(){ state.phase='joueur'; for(const f of state.fighters){ f.used=false; f.provoque=false; } state.actionFaite=false; state.modeTourelle=false; state.modeCapacite=null; state.tirsGratuits=state.ups.tourelleDouble; for(const a of state.ailes) a.bouclier=!estElite(a)&&porteurAura(a); setMusicPhase('calme'); sauvegarderPartie(serialiserCarte); }
 
 /* actions du croiseur */
 export function choisirAction(id){
@@ -92,7 +122,7 @@ export function toucherBoss(deg,px,py){ if(!state.boss) return; state.boss.hp-=d
 export function tirer(f,aile){
   state.lasers.push({x1:f.x,y1:f.y-6,x2:aile.x,y2:aile.y,t:0,ennemi:false});
   state.trails.push({x1:f.x,y1:f.y-6,x2:aile.x,y2:aile.y,t:0,ennemi:false});
-  sonTir(); f.used=true; state.selection=null;
+  sonTir(); f.used=true; state.selection=null; state.tirsJoueurTotal++;
   const type=f.type, cible=aile;
   setTimeout(()=>{                          // l'explosion arrive APRÈS le laser
     if(type==='rouge'){ const zone=state.ailes.filter(a=>Math.abs(a.c-cible.c)<=1&&Math.abs(a.r-cible.r)<=1); let kills=0;
@@ -129,6 +159,7 @@ export function laserAile(a,tx,ty){
 }
 export function finDuTour(){
   if(state.phase!=='joueur'||state.paused||state.choixBuild) return;
+  state.toursJoueurTotal++;
   saveState(); state.undoStack=[]; // clear undo after committing
   state.phase='ennemi'; state.selection=null; state.modeTourelle=false; state.lockTimer=0.9; state.comboCount=0; state.comboTimer=0;
   setMusicPhase('tense');
@@ -183,7 +214,7 @@ export function finDuTour(){
 
   // (6) menaces uniquement (combat discret : pas de respawn continu)
   state.tourCompteur++;
-  if(state.tourCompteur>=state.prochainAsteroide){ programmerMenace(); state.prochainAsteroide=state.tourCompteur+3+Math.floor(Math.random()*2); }
+  if(state.tourCompteur>=state.prochainAsteroide){ programmerMenace(); const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal; state.prochainAsteroide=state.tourCompteur+Math.max(1,3+Math.floor(Math.random()*2)+d.menaceDelta); }
   if(state.ups.regen>0) state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.02*state.ups.regen));
 
   // (7) défaite ?

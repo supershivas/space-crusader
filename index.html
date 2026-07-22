@@ -88,6 +88,24 @@
   .card .nom{font-size:9px;color:#ffd23d;line-height:1.4;}
   .card .desc{font-size:7px;color:#9fb0d8;line-height:1.6;}
   .card canvas{image-rendering:pixelated;border-radius:4px;}
+
+  /* Sélecteur de difficulté (accueil) */
+  #diffSelect{display:flex;gap:6px;justify-content:center;}
+  .diff-btn{font-size:8px!important;padding:8px 10px!important;background:#243048;border-bottom-color:#141c2c!important;opacity:.65;}
+  .diff-btn.diff-actif{opacity:1;background:#2fd6a0;border-bottom-color:#1c8d67!important;color:#07240f;}
+  #diffLabel{font-family:var(--pixel);font-size:8px;color:#9fb0d8;}
+
+  /* Tutoriel guidé */
+  #tutoHalo{position:absolute;pointer-events:none;z-index:11;border:3px solid #ffd23d;border-radius:50%;
+    box-shadow:0 0 14px rgba(255,210,61,.8);opacity:0;transition:opacity .2s;transform:translate(-50%,-50%);}
+  #tutoHalo.visible{opacity:1;animation:tutoPulse 1s ease-in-out infinite;}
+  #tutoHalo.rect{border-radius:10px;}
+  @keyframes tutoPulse{0%,100%{box-shadow:0 0 8px rgba(255,210,61,.6);}50%{box-shadow:0 0 20px rgba(255,210,61,1);}}
+  #tutoBar{position:absolute;left:8px;right:8px;bottom:8px;z-index:13;background:rgba(13,21,48,.95);
+    border:2px solid #ffd23d;border-radius:8px;padding:10px 12px;display:none;flex-direction:column;gap:8px;align-items:center;text-align:center;}
+  #tutoBar.visible{display:flex;}
+  #tutoBar p{font-family:var(--pixel);font-size:8px;color:#e8eefc;line-height:1.7;margin:0;}
+  #tutoSkip{font-family:var(--pixel);font-size:7px;color:#9fb0d8;background:none;border:none;text-decoration:underline;cursor:pointer;padding:4px;}
 </style>
 </head>
 <body>
@@ -97,6 +115,8 @@
     <button id="son" class="coin" title="Son on/off">🔊</button>
     <div id="tooltip"></div>
     <div id="log"></div>
+    <div id="tutoHalo"></div>
+    <div id="tutoBar"><p id="tutoTexte"></p><button id="tutoSkip">Passer le tutoriel</button></div>
     <div id="pause"><h2>⏸ PAUSE</h2><p>Espace = reprendre<br>P = pause<br>Échap = annuler</p></div>
     <div id="achieve"><div class="ach-title">🏆 SUCCÈS</div><div id="achieveTxt"></div></div>
     <div id="upgrade" class="modal"><h2>⬆ AMÉLIORATION</h2><div class="hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div></div>
@@ -112,13 +132,22 @@
       ⚡ Ultime : remplis la jauge en haut, puis tape-la.<br>
       Carte : choisis ta route de bas en haut jusqu'au boss.<br>
       Raccourcis : Espace = fin tour · 1/2/3 = actions · U = ultime · Échap = annuler · P = pause</div>
-      <button class="jouer" id="btnFermerInfo" style="margin-top:14px;font-size:12px;padding:11px 22px;">Fermer</button></div>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
+      <button class="jouer" id="btnFermerInfo" style="font-size:12px;padding:11px 22px;">Fermer</button>
+      <button class="jouer" id="btnRelancerTuto" style="font-size:10px;padding:11px 16px;background:#5a6dd6;border-bottom-color:#3a4aa0;">🎓 Revoir le tutoriel</button>
+      </div></div>
     <div id="mission" class="modal"><h2 id="missionTitre">ZONE SÉCURISÉE</h2><div class="hint" id="missionStats"></div><button class="jouer" id="btnMission" style="margin-top:14px;font-size:12px;padding:11px 22px;">Continuer ▶</button></div>
     <div id="meta" class="modal"><h2>⚙ AMÉLIORATIONS PERMANENTES</h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div><button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:11px;padding:10px 18px;">Fermer</button></div>
 
     <div id="accueil" class="ecran">
       <h1>DÉFENSE<br>DU CROISEUR</h1>
       <canvas id="illus" width="240" height="150" style="image-rendering:pixelated;margin:4px 0 10px;"></canvas>
+      <div id="diffSelect">
+        <button class="jouer diff-btn" data-diff="facile">Facile</button>
+        <button class="jouer diff-btn" data-diff="normal">Normal</button>
+        <button class="jouer diff-btn" data-diff="difficile">Difficile</button>
+      </div>
+      <div id="diffLabel">Niveau : Normal</div>
       <button class="jouer" id="btnReprendre" style="display:none;background:#2fa36a;border-bottom-color:#1c6b45;">↻ REPRENDRE</button>
       <button class="jouer" id="btnJouer">▶ JOUER</button>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
