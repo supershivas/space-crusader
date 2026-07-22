@@ -62,8 +62,8 @@ export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0
 /* Visée en ligne de mire : le faisceau monte et s'arrête au 1er obstacle
    (aile/boss = cible ; allié/menace = bloqué). */
 export function analyseTir(f){
-  if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),boss:false,beams:[],jam:true};
-  const ailesOk=new Set(); const obstaclesOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
+  if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),asteroidesOk:new Set(),boss:false,beams:[],jam:true};
+  const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
@@ -72,13 +72,17 @@ export function analyseTir(f){
       const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       if(bossEn(c,rr)){ bossOk=true; kind='ennemi'; r1=rr; break; }
       if(fighterEn(c,rr)){ kind='allie'; r1=rr; break; }
-      if(asterEn(c,rr)||trouNoirEn(c,rr)){ kind='menace'; r1=rr; break; }
+      const as=asterEn(c,rr); if(as){ asteroidesOk.add(as); kind='ennemi'; r1=rr; break; }   // les astéroïdes sont destructibles
+      if(trouNoirEn(c,rr)){ kind='menace'; r1=rr; break; }
       r1=rr;
     }
     beams.push({c,r0:start,r1,kind});
   }
-  return {ailesOk,obstaclesOk,boss:bossOk,beams,jam:false};
+  return {ailesOk,obstaclesOk,asteroidesOk,boss:bossOk,beams,jam:false};
 }
+/* tir allié sur un astéroïde : -1 PV, détruit à 0 */
+export function frapperAster(o){ o.hp--; exploser(o.x,o.y,false); sonBoom();
+  if(o.hp<=0){ const i=state.asteroides.indexOf(o); if(i>=0) state.asteroides.splice(i,1); exploser(o.x,o.y,true); state.score++; } }
 /* MIMIC : faux bonus jaune. Explose au contact d'un vaisseau (le blesse). */
 export function declencheMimic(b,f){ const i=state.bonus.indexOf(b); if(i>=0) state.bonus.splice(i,1);
   exploser(b.x,b.y,true); state.secousse=Math.max(state.secousse,8); sonBoom(); logMsg('Piège ! 🎭','log-red');
@@ -104,15 +108,20 @@ export function programmerMenace(){
   const base = state.bossVaincus>0 ? ['astero','astero','trou','champ'] : ['astero','astero','astero','trou'];
   const kinds = d.trousNoirs ? base : base.filter(k=>k!=='trou');
   const kind = kinds[Math.floor(Math.random()*kinds.length)];
-  if(kind==='astero'){ state.menacesWarn.push({kind:'astero',r:1+Math.floor(Math.random()*(state.RANGS-2)),dir:Math.random()<0.5?1:-1,s:2+Math.floor(Math.random()*2)}); }
+  if(kind==='astero'){ const q=Math.random(); const sub=q<0.15?'gros':q<0.30?'essaim':q<0.45?'diagonal':'normal';
+    state.menacesWarn.push({kind:'astero',sub,r:1+Math.floor(Math.random()*(state.RANGS-2)),dir:Math.random()<0.5?1:-1,s:2+Math.floor(Math.random()*2)}); }
   else if(kind==='trou'){ state.menacesWarn.push({kind:'trou',c:1+Math.floor(Math.random()*(state.COLS-2)),r:2+Math.floor(Math.random()*Math.max(1,state.RANGS-4))}); }
   else { const c0=Math.floor(Math.random()*(state.COLS-2)); state.menacesWarn.push({kind:'champ',c0,c1:Math.min(state.COLS-1,c0+1+Math.floor(Math.random()*2))}); }
 }
 /* transforme les alertes en menaces réelles */
 export function materialiserMenaces(){
   for(const w of state.menacesWarn){
-    if(w.kind==='astero'){ const c=w.dir>0?-1:state.COLS, y=centreCase(0,w.r).y, x=w.dir>0?state.GX-state.CELL/2:state.GX+state.COLS*state.CELL+state.CELL/2;
-      state.asteroides.push({c,r:w.r,dc:w.dir*w.s,dr:0,x,y,ang:0,img:getImgAster(),hp:1,maxhp:1,type:'normal'}); }
+    if(w.kind==='astero'){ const dir=w.dir, cOff=dir>0?-1:state.COLS, xOff=dir>0?state.GX-state.CELL/2:state.GX+state.COLS*state.CELL+state.CELL/2;
+      const push=(r,dc,dr,hp,type)=>{ const rr=Math.max(1,Math.min(state.RANGS-2,r)); state.asteroides.push({c:cOff,r:rr,dc,dr,x:xOff,y:centreCase(0,rr).y,ang:0,img:getImgAster(),hp,maxhp:hp,type}); };
+      if(w.sub==='gros'){ push(w.r, dir*Math.max(1,w.s-1), 0, 2, 'gros'); }                                   // gros : plus lent, 2 PV, laisse une traînée
+      else if(w.sub==='essaim'){ const n=3+Math.floor(Math.random()*3); for(let k=0;k<n;k++) push(w.r+(k-1), dir*w.s, 0, 1, 'essaim'); }  // essaim de 3-5 petits
+      else if(w.sub==='diagonal'){ push(w.r, dir*w.s, 1, 1, 'diagonal'); }                                     // dc ET dr non nuls
+      else push(w.r, dir*w.s, 0, 1, 'normal'); }
     else if(w.kind==='trou'){ const p=centreCase(w.c,w.r); state.trousNoirs.push({c:w.c,r:w.r,turns:3,x:p.x,y:p.y,ang:0}); logMsg('Trou noir !','log-red'); }
     else if(w.kind==='champ'){ state.champs.push({c0:w.c0,c1:w.c1,turns:3}); logMsg('Champ magnétique !','log-ylw'); }
   }
@@ -231,14 +240,20 @@ export function finDuTour(){
 
   // (4) ASTÉROÏDES
   for(const ast of [...state.asteroides]){ const ux=Math.sign(ast.dc), uy=Math.sign(ast.dr), steps=Math.max(Math.abs(ast.dc),Math.abs(ast.dr));
+    const oldC=ast.c, oldR=ast.r;
     let cc=ast.c, rr=ast.r, out=false, crash=false;
     for(let s=0;s<steps;s++){ cc+=ux; rr+=uy; if(rr>state.RANGS-1){ crash=true; break; } if(cc<0||cc>state.COLS-1||rr<0){ out=true; break; }
       const f=fighterEn(cc,rr); if(f){ exploser(f.x,f.y,true); const m=blesser(f); if(m) tuerFighter(f); sonBoom(); }
       const a=aileEn(cc,rr); if(a){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); }
       if(bossEn(cc,rr)){ state.boss.hp-=1; exploser(centreCase(cc,rr).x,centreCase(cc,rr).y,false); if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } } }
     ast.c=cc; ast.r=rr;
+    // gros astéroïde : laisse une traînée de débris bloquants 1 tour derrière lui
+    if(ast.type==='gros' && !crash && !out && oldC>=0 && oldC<state.COLS && oldR>=0 && oldR<state.RANGS-1 && !obstacleEn(oldC,oldR) && !aileEn(oldC,oldR) && !fighterEn(oldC,oldR)){
+      const p=centreCase(oldC,oldR); state.obstacles.push({c:oldC,r:oldR,type:'debris',hp:1,maxhp:1,x:p.x,y:p.y,variante:Math.random()<0.5,ang:0,turns:2}); }
     if(crash){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_ASTEROIDE)); state.damageThisWave+=DEG_ASTEROIDE; state.flashCroiseur=1; state.secousse=12; sonAie(); exploser(centreCase(Math.max(0,Math.min(state.COLS-1,cc)),state.RANGS-1).x,state.GRID_BAS+8,true); state.asteroides.splice(state.asteroides.indexOf(ast),1); logMsg('Astéroïde !','log-red'); }
     else if(out) state.asteroides.splice(state.asteroides.indexOf(ast),1); }
+  // décompte des traînées temporaires (débris laissés par les gros astéroïdes)
+  for(let i=state.obstacles.length-1;i>=0;i--){ const o=state.obstacles[i]; if(o.turns!==undefined){ o.turns--; if(o.turns<=0) state.obstacles.splice(i,1); } }
 
   // (4b) TROUS NOIRS : aspirent tout autour ; CHAMPS MAGNÉTIQUES : décompte
   for(let i=state.trousNoirs.length-1;i>=0;i--){ const tn=state.trousNoirs[i];

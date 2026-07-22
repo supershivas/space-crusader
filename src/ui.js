@@ -9,7 +9,7 @@ import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occup
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
-         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic } from './combat.js';
+         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
 
 const canvas=document.getElementById('jeu');
@@ -186,7 +186,10 @@ function updateTooltip(x,y){
     html='<div class="tt-name">Bonus: '+(names[b.type]||'Renfort')+'</div>';
     if(b.type!=='mimic') html+='<div class="tt-spd">Disparaît dans '+b.ttl+' tour'+(b.ttl>1?'s':'')+'</div>';
   } else if(ast){
-    html='<div class="tt-name">Astéroïde</div>';
+    const an={gros:'Gros astéroïde',essaim:'Essaim',diagonal:'Astéroïde oblique'}[ast.type]||'Astéroïde';
+    html='<div class="tt-name">'+an+'</div>';
+    html+='<div class="tt-spd" style="color:#cbd6f0">Destructible — tire dessus pour le pulvériser.'+(ast.type==='gros'?' Laisse une traînée de débris.':'')+'</div>';
+    if(ast.maxhp>1) html+='<div class="tt-hp">PV: '+ast.hp+'/'+ast.maxhp+'</div>';
     html+='<div class="tt-dmg">Dégâts: '+DEG_ASTEROIDE+'</div>';
   } else if(obstacleEn(c,r)){ const ob=obstacleEn(c,r), def=OBSTACLES[ob.type];
     html='<div class="tt-name">'+def.nom+'</div><div class="tt-spd" style="color:#cbd6f0">'+def.desc+'</div>';
@@ -280,6 +283,7 @@ canvas.addEventListener('pointerdown', ev=>{
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?'Vaisseau brouillé':'Tir bloqué','log-red'); return; }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?'Vaisseau brouillé (champ magnétique)':'Tir bloqué / hors d’atteinte','log-red'); return; }
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
+  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
   if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return; }
   state.selection=null;
 });

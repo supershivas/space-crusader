@@ -119,7 +119,7 @@ export function sauvegarderPartie(serialiserCarte){
     boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil,
     fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,used:f.used,capUsed:f.capUsed||false})),
     ailes: state.ailes.map(a=>({c:a.c,r:a.r,type:a.type,hp:a.hp,maxhp:a.maxhp,vitesse:a.vitesse})),
-    asteroides: state.asteroides.map(o=>({c:o.c,r:o.r,dc:o.dc,dr:o.dr})),
+    asteroides: state.asteroides.map(o=>({c:o.c,r:o.r,dc:o.dc,dr:o.dr,type:o.type,hp:o.hp,maxhp:o.maxhp})),
     bonus: state.bonus.map(b=>({c:b.c,r:b.r,type:b.type,ttl:b.ttl})),
     trousNoirs: state.trousNoirs.map(t=>({c:t.c,r:t.r,turns:t.turns})),
     champs: state.champs.map(c=>({c0:c.c0,c1:c.c1,turns:c.turns})),
