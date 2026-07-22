@@ -2,7 +2,7 @@
    Stratégie : "app shell" mise en cache à l'installation, puis
    cache-first avec repli réseau. Le jeu devient jouable hors-ligne
    et installable. Incrémente CACHE à chaque nouvelle version. */
-const CACHE = 'croiseur-v24';
+const CACHE = 'croiseur-v25';
 const ASSETS = [
   './',
   './index.html',

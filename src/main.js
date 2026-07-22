@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase, loadData, sauvegardeExiste, chargerSauvegarde, effacerSauvegarde,
          chargerDifficultePreferee, definirDifficultePreferee, statsEquilibrage } from './state.js';
-import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
+import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES } from './config.js';
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
@@ -16,7 +16,7 @@ import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreA
 /* ===== ÉTAT VIDE / NOUVELLE PARTIE / REPRISE ===== */
 function etatVide(){
   state.fighters=[];state.ailes=[];state.asteroides=[];state.bonus=[];state.boss=null;state.explosions=[];state.particules=[];state.lasers=[];state.trails=[];
-  state.trousNoirs=[];state.champs=[];state.menacesWarn=[];state.bossVaincus=0;
+  state.trousNoirs=[];state.champs=[];state.menacesWarn=[];state.obstacles=[];state.bossVaincus=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;state.scenePlanete=null;
   state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
@@ -29,7 +29,7 @@ function nouvellePartie(){
   const centre=Math.round((state.COLS-1)/2); let rc=centre; if(fighterEn(rc,state.RANGS-1)){ for(let d=1;d<state.COLS;d++){ if(!fighterEn(centre-d,state.RANGS-1)){rc=centre-d;break;} if(!fighterEn(centre+d,state.RANGS-1)){rc=centre+d;break;} } }
   state.fighters.push(nouveauVaisseau(rc,state.RANGS-1,'rouge',false));
   state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.explosions=[]; state.particules=[]; state.lasers=[]; state.trails=[];
-  state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.bossVaincus=0;
+  state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.obstacles=[]; state.bossVaincus=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false; state.choixBuild=false; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false;
   state.ultimeJauge=0; state.ondeChoc=0; state.pendingEvent=false; state.suiteAmelioration=null; state.suiteEvenement=null; state.enCombat=false;
@@ -67,6 +67,7 @@ function reprendrePartie(){
   for(const b of d.bonus||[]){ const p=centreCase(b.c,b.r); state.bonus.push({c:b.c,r:b.r,type:b.type,ttl:b.ttl,x:p.x,y:p.y}); }
   for(const t of d.trousNoirs||[]){ const p=centreCase(t.c,t.r); state.trousNoirs.push({c:t.c,r:t.r,turns:t.turns,x:p.x,y:p.y,ang:0}); }
   state.champs=(d.champs||[]).map(c=>({...c})); state.menacesWarn=(d.menacesWarn||[]).map(w=>({...w}));
+  for(const o of d.obstacles||[]){ const p=centreCase(o.c,o.r); state.obstacles.push({c:o.c,r:o.r,type:o.type,hp:o.hp,maxhp:(OBSTACLES[o.type]?OBSTACLES[o.type].hp:o.hp),x:p.x,y:p.y,variante:Math.random()<0.5,ang:0}); }
   if(d.boss){ const p=centreCase(d.boss.c+1,d.boss.r); state.boss={c:d.boss.c,r:d.boss.r,w:3,h:2,hp:d.boss.hp,maxhp:d.boss.maxhp,type:d.boss.type,charge:d.boss.charge,x:p.x,y:p.y+state.CELL/2-state.CELL}; }
   deserialiserCarte(d.carte);
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');

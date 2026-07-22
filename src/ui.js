@@ -3,13 +3,13 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
-         estProtege, imgVaisseau, ramasser } from './entities.js';
+         estProtege, imgVaisseau, ramasser, obstacleEn } from './entities.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
-         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel } from './combat.js';
+         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
 
 const canvas=document.getElementById('jeu');
@@ -181,6 +181,9 @@ function updateTooltip(x,y){
   } else if(ast){
     html='<div class="tt-name">Astéroïde</div>';
     html+='<div class="tt-dmg">Dégâts: '+DEG_ASTEROIDE+'</div>';
+  } else if(obstacleEn(c,r)){ const ob=obstacleEn(c,r), def=OBSTACLES[ob.type];
+    html='<div class="tt-name">'+def.nom+'</div><div class="tt-spd" style="color:#cbd6f0">'+def.desc+'</div>';
+    if(def.destructible) html+='<div class="tt-hp">PV: '+ob.hp+'/'+(ob.maxhp||def.hp)+'</div>';
   } else if(trouNoirEn(c,r)){ const tn=trouNoirEn(c,r);
     html='<div class="tt-name">Trou noir</div><div class="tt-dmg">Aspire tout autour (1 case)</div><div class="tt-spd">Encore '+tn.turns+' tour(s)</div>';
   } else if(champEn(c)){
@@ -269,6 +272,7 @@ canvas.addEventListener('pointerdown', ev=>{
   const an=analyseTir(f);
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?'Vaisseau brouillé':'Tir bloqué','log-red'); return; }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?'Vaisseau brouillé (champ magnétique)':'Tir bloqué / hors d’atteinte','log-red'); return; }
+  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
   if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b) ramasser(b); state.selection=null; return; }
   state.selection=null;
 });
@@ -278,7 +282,7 @@ export function undo(){
   if(state.undoStack.length===0||state.phase!=='joueur') return;
   const s=state.undoStack.pop();
   state.fighters=s.fighters; state.ailes=s.ailes; state.asteroides=s.asteroides; state.bonus=s.bonus; state.boss=s.boss;
-  state.trousNoirs=s.trousNoirs||[]; state.champs=s.champs||[]; state.menacesWarn=s.menacesWarn||[]; state.bossVaincus=s.bossVaincus||0;
+  state.trousNoirs=s.trousNoirs||[]; state.champs=s.champs||[]; state.menacesWarn=s.menacesWarn||[]; state.obstacles=s.obstacles||[]; state.bossVaincus=s.bossVaincus||0;
   state.killsThisWave=s.killsThisWave||0; state.shipsLostThisWave=s.shipsLostThisWave||0; state.bossKilledThisWave=s.bossKilledThisWave||false; state.ultimeJauge=s.ultimeJauge||0;
   state.hpCruiser=s.hpCruiser; state.score=s.score; state.vague=s.vague; state.actionFaite=s.actionFaite; state.tirsGratuits=s.tirsGratuits; state.hangar=s.hangar;
   state.tourCompteur=s.tourCompteur; state.prochainAsteroide=s.prochainAsteroide; state.prochainBoss=s.prochainBoss;

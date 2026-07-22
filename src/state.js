@@ -20,6 +20,7 @@ export const state = {
   fighters:undefined, ailes:undefined, asteroides:undefined, bonus:undefined, boss:undefined,
   explosions:undefined, particules:undefined, lasers:undefined, trails:undefined,
   trousNoirs:undefined, champs:undefined, menacesWarn:undefined, bossVaincus:undefined,
+  obstacles:undefined,
 
   // progression de la partie en cours
   ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined,
@@ -98,7 +99,7 @@ export function saveState(){
     asteroides: state.asteroides.map(a=>({...a})),
     bonus: state.bonus.map(b=>({...b})),
     boss: state.boss?{...state.boss}:null,
-    trousNoirs: state.trousNoirs.map(t=>({...t})), champs: state.champs.map(c=>({...c})), menacesWarn: state.menacesWarn.map(w=>({...w})), bossVaincus: state.bossVaincus, killsThisWave: state.killsThisWave, shipsLostThisWave: state.shipsLostThisWave, bossKilledThisWave: state.bossKilledThisWave, ultimeJauge: state.ultimeJauge,
+    trousNoirs: state.trousNoirs.map(t=>({...t})), champs: state.champs.map(c=>({...c})), menacesWarn: state.menacesWarn.map(w=>({...w})), obstacles: state.obstacles.map(o=>({...o})), bossVaincus: state.bossVaincus, killsThisWave: state.killsThisWave, shipsLostThisWave: state.shipsLostThisWave, bossKilledThisWave: state.bossKilledThisWave, ultimeJauge: state.ultimeJauge,
     hpCruiser: state.hpCruiser, score: state.score, vague: state.vague, actionFaite: state.actionFaite, tirsGratuits: state.tirsGratuits, hangar: state.hangar?{...state.hangar}:null,
     tourCompteur: state.tourCompteur, prochainAsteroide: state.prochainAsteroide, prochainBoss: state.prochainBoss
   });
@@ -122,6 +123,7 @@ export function sauvegarderPartie(serialiserCarte){
     bonus: state.bonus.map(b=>({c:b.c,r:b.r,type:b.type,ttl:b.ttl})),
     trousNoirs: state.trousNoirs.map(t=>({c:t.c,r:t.r,turns:t.turns})),
     champs: state.champs.map(c=>({c0:c.c0,c1:c.c1,turns:c.turns})),
+    obstacles: state.obstacles.map(o=>({c:o.c,r:o.r,type:o.type,hp:o.hp})),
     menacesWarn:state.menacesWarn, boss: state.boss?{c:state.boss.c,r:state.boss.r,hp:state.boss.hp,maxhp:state.boss.maxhp,type:state.boss.type,charge:state.boss.charge}:null,
     carte: serialiserCarte()
   })); }catch(e){}

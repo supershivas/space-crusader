@@ -3,11 +3,11 @@
    de la carte de secteur et de l'illustration d'accueil
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES } from './config.js';
+import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES } from './config.js';
 import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom } from './sprites.js';
-import { cuireUnites, imgVaisseau, fighterEn, aileEn, estProtege } from './entities.js';
+import { cuireUnites, imgVaisseau, imgObstacle, fighterEn, aileEn, estProtege } from './entities.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
 import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD } from './map.js';
 
@@ -235,6 +235,20 @@ export function dessiner(t){
   if(state.flashCroiseur>0){ ctx.fillStyle='rgba(229,72,77,'+(state.flashCroiseur*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
   if(state.flashRecharge>0){ ctx.fillStyle='rgba(47,214,160,'+(state.flashRecharge*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
   if(state.hangar){ const him=imgVaisseau(state.hangar.type); ctx.globalAlpha=.5; ctx.drawImage(him,Math.round(state.LARGEUR/2-him.width/2),Math.round(state.cruiserY+8)); ctx.globalAlpha=1; ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('⏳'+(state.hangar.tours>1?' '+state.hangar.tours:''),state.LARGEUR/2,state.cruiserY+6); ctx.textAlign='left'; }
+
+  // obstacles (débris, station, barrière, mines, gaz, gravité)
+  if(state.obstacles) for(const o of state.obstacles){ const def=OBSTACLES[o.type], im=imgObstacle(o), cx=state.GX+o.c*state.CELL+state.CELL/2, cy=state.GY+o.r*state.CELL+state.CELL/2;
+    if(o.type==='gaz'){ ctx.fillStyle='rgba(140,255,90,'+(.14+.10*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
+      ctx.fillStyle='rgba(140,255,90,'+(.4+.3*pulse)+')'; for(let k=0;k<4;k++){ const a=k*1.6+t/500, rr=state.CELL*0.28; ctx.fillRect(Math.round(cx+Math.cos(a)*rr-1),Math.round(cy+Math.sin(a)*rr-1),3,3); } }
+    else if(o.type==='gravite'){ ctx.fillStyle='rgba(74,163,255,'+(.12+.08*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
+      ctx.strokeStyle='rgba(120,180,255,'+(.5+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,state.CELL*0.3*(0.6+0.4*Math.sin(t/300)),0,7); ctx.stroke(); }
+    else if(o.type==='mines'){ ctx.fillStyle='rgba(229,72,77,'+(.10+.08*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
+      for(const[dx,dy]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22],[0,0]]){ ctx.fillStyle='#e5484d'; ctx.beginPath(); ctx.arc(cx+dx*state.CELL,cy+dy*state.CELL,3,0,7); ctx.fill(); ctx.strokeStyle='#8f2b2f'; ctx.lineWidth=1; for(let a=0;a<4;a++){ ctx.beginPath(); ctx.moveTo(cx+dx*state.CELL,cy+dy*state.CELL); ctx.lineTo(cx+dx*state.CELL+Math.cos(a*1.57)*5,cy+dy*state.CELL+Math.sin(a*1.57)*5); ctx.stroke(); } } }
+    else if(im){ ctx.drawImage(im,Math.round(cx-im.width/2),Math.round(cy-im.height/2)); }
+    // PV des obstacles destructibles à plusieurs PV (station)
+    if(def.destructible && (o.maxhp||def.hp)>1){ const n=o.maxhp||def.hp, sq=5, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(cx-tot/2), by=Math.round(cy+state.CELL*0.32);
+      for(let i=0;i<n;i++){ ctx.fillStyle=i<o.hp?'#ff2a5a':'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq); } }
+  }
 
   // bonus
   for(const b of state.bonus){ const img=b.type==='pv'?imgBonusPV:b.type==='tir'?imgBonusTIR:imgBonusVAIS; ctx.globalAlpha=.9+.1*pulse; ctx.drawImage(img,Math.round(b.x-img.width/2),Math.round(b.y-img.height/2)); ctx.globalAlpha=1; }

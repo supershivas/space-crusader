@@ -2,8 +2,9 @@
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
 import { state, centreCase, saveState, sauvegarderPartie } from './state.js';
-import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES } from './config.js';
+import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, occupe, dansGrille, trouNoirEn, champEn,
+         obstacleEn, obstacleBloquant, champObstacleEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
          deployerVaisseau, ramasser, getImgAster } from './entities.js';
 import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
@@ -49,21 +50,22 @@ export function tirerCharge(f,cible){
 
 export function cibleLaser(a){ if(a.type==='eclaireur'||a.r<0) return null;
   if(a.r<state.RANG_TIR && a.type!=='chasseur') return null;   // le chasseur attaque dès son 1er tour
-  if(a.type==='bombardier') return {type:'croiseur',bomber:true};
+  if(a.type==='bombardier'){ for(let rr=a.r+1;rr<state.RANGS;rr++){ if(obstacleBloquant(a.c,rr)) return null; } return {type:'croiseur',bomber:true}; }
   const taunt=state.fighters.find(f=>f.provoque&&Math.abs(f.c-a.c)<=1);   // provocation du cuirassé
   if(taunt) return {type:'fighter',f:taunt};
-  for(let rr=a.r+1;rr<state.RANGS;rr++){ const f=fighterEn(a.c,rr); if(f) return {type:'fighter',f}; } return {type:'croiseur'}; }
+  for(let rr=a.r+1;rr<state.RANGS;rr++){ if(obstacleBloquant(a.c,rr)) return null; const f=fighterEn(a.c,rr); if(f) return {type:'fighter',f}; } return {type:'croiseur'}; }
 export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0;i<14;i++){ c+=ast.dc; r+=ast.dr; pts.push({c,r}); if(r>state.RANGS-1||c<0||c>state.COLS-1||r<0) break; } return pts; }
 
 /* Visée en ligne de mire : le faisceau monte et s'arrête au 1er obstacle
    (aile/boss = cible ; allié/menace = bloqué). */
 export function analyseTir(f){
-  if(champEn(f.c)) return {ailesOk:new Set(),boss:false,beams:[],jam:true};
-  const ailesOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
+  if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),boss:false,beams:[],jam:true};
+  const ailesOk=new Set(); const obstaclesOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
     for(let rr=start; rr>=0; rr--){
+      const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
       const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       if(bossEn(c,rr)){ bossOk=true; kind='ennemi'; r1=rr; break; }
       if(fighterEn(c,rr)){ kind='allie'; r1=rr; break; }
@@ -72,7 +74,20 @@ export function analyseTir(f){
     }
     beams.push({c,r0:start,r1,kind});
   }
-  return {ailesOk,boss:bossOk,beams,jam:false};
+  return {ailesOk,obstaclesOk,boss:bossOk,beams,jam:false};
+}
+/* dégât d'un tir allié sur un obstacle destructible ; gère station (bonus) et mines (explosion de zone) */
+export function frapperObstacle(o){
+  o.hp--; exploser(o.x,o.y,false); sonBoom();
+  if(o.hp<=0){
+    const idx=state.obstacles.indexOf(o); if(idx>=0) state.obstacles.splice(idx,1);
+    exploser(o.x,o.y,true);
+    if(o.type==='station'){ larguerBonus(o.c,o.r); logMsg('Épave détruite : butin','log-grn'); }
+    else if(o.type==='mines'){ logMsg('💥 Mines !','log-red');
+      for(let dc=-1;dc<=1;dc++) for(let dr=-1;dr<=1;dr++){ if(dc===0&&dr===0) continue; const c=o.c+dc,r=o.r+dr;
+        const a=aileEn(c,r); if(a){ a.hp-=2; exploser(a.x,a.y,true); if(a.hp<=0) tuerAile(a); }
+        const f=fighterEn(c,r); if(f){ f.hp=(f.hp||1)-2; exploser(f.x,f.y,true); if(f.hp<=0) tuerFighter(f); } } }
+  }
 }
 
 /* planifie une menace : ajoute une ALERTE visible un tour avant */
@@ -183,8 +198,10 @@ export function finDuTour(){
   // (2) AVANCE des ailes (vitesse par type) + collisions + éperonnage
   for(const a of [...state.ailes].sort((x,y)=>y.r-x.r)){ if(!state.ailes.includes(a)) continue;
     let steps=a.vitesse; if(a.type==='bombardier'&&state.tourCompteur%2===1) steps=0;
+    if(champObstacleEn(a.c,a.r)==='gravite') steps=Math.min(steps,1);   // champ de gravité : ennemi ralenti
     for(let s=0;s<steps;s++){ if(!state.ailes.includes(a)) break; const nr=a.r+1;
       if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
+      if(obstacleBloquant(a.c,nr)){ break; }   // obstacle : l'aile s'arrête devant
       a.r=nr; const f=fighterEn(a.c,nr); if(f){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); sonBoom(); break; } } }
 
   // (3) BOSS avance
@@ -211,6 +228,11 @@ export function finDuTour(){
       const a=aileEn(c,r); if(a){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); } }
     tn.turns--; if(tn.turns<=0){ exploser(tn.x,tn.y,true); state.trousNoirs.splice(i,1); } }
   for(let i=state.champs.length-1;i>=0;i--){ state.champs[i].turns--; if(state.champs[i].turns<=0) state.champs.splice(i,1); }
+
+  // (4c) GAZ TOXIQUE : 1 dégât/tour aux unités présentes dans la nappe
+  for(const o of state.obstacles){ if(OBSTACLES[o.type].champ!=='gaz') continue;
+    const a=aileEn(o.c,o.r); if(a){ a.hp-=1; exploser(a.x,a.y,false); if(a.hp<=0) tuerAile(a); }
+    const f=fighterEn(o.c,o.r); if(f){ const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); } }
 
   // (5) bonus : avancent vers les vaisseaux, ramassés au passage, disparaissent vite
   for(let i=state.bonus.length-1;i>=0;i--){ const b=state.bonus[i]; b.r+=1; b.ttl--;

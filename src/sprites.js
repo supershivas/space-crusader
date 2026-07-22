@@ -61,6 +61,12 @@ export const AILE_LOURD=[
 "..ZSSSZ..","..ZSKSZ..","...ZKZ...","...ZKZ...",
 "....K...."
 ];
+/* ---- OBSTACLES (Lot 1) ---- */
+export const DEBRIS_1=["..N..",".NNN.","NNmNN",".NNN.","..N.."];
+export const DEBRIS_2=[".N.N.","NNmNN",".NmN.","NNmNN",".N.N."];
+export const STATION_PIECE=["BBBBBBBBB","BBBBBBBBB","BB.....BB","BB..O..BB","BB.....BB","BBBBBBBBB","BBBBBBBBB"];
+export const BARRIERE=["CCCCCCCCC","CCCCCCCCC","CCCCCCCCC","CCCCCCCCC","CCCCCCCCC"];
+
 /* ailes d'élite : porteur (doré, renforce) et brouilleur (violet, protège) */
 export const AILE_PORTEUR=["....e....",".e.eMe.e.","eMeMeMeMe","eMeeeeeMe","eMeMeMeMe",".e.eMe.e.","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","...eMe...","...eMe...","...eMe...","...eMe...","....e....","....e....","....e...."];
 export const AILE_BROUILLEUR=["....U....",".U.UuU.U.","UuUuUuUuU","UuUUUUUuU","UuUuUuUuU",".U.UuU.U.","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","...UuU...","...UuU...","...UuU...","...UuU...","....U....","....U....","....u...."];

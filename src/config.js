@@ -50,6 +50,19 @@ export const DIFFICULTES = {
   difficile: { label:'Difficile', hpMult:0.8,  squadDelta:1,  menaceDelta:-1, eliteVagueDelta:-1, eliteProbMult:1.6, trousNoirs:true  },
 };
 
+/* ===== OBSTACLES (Lot 1) =====
+   bloque : empêche déplacement ET tirs (débris, station, barrière, mines)
+   destructible / hp : peut être détruit par un tir allié
+   champ : traversable, applique un effet par tour (gaz, gravité) */
+export const OBSTACLES = {
+  debris:   { nom:'Débris',           desc:'Bloque tirs et déplacements. Destructible (1 PV).', bloque:true,  destructible:true,  hp:1, col:'#8f857a' },
+  station:  { nom:'Épave de station', desc:'Bloque. Largue un bonus si détruite (2 PV).',        bloque:true,  destructible:true,  hp:2, col:'#37e0ff' },
+  barriere: { nom:'Barrière',         desc:'Indestructible. Bloque tout.',                       bloque:true,  destructible:false, hp:0, col:'#37e0ff' },
+  mines:    { nom:'Champ de mines',   desc:'Explose en zone (dégâts 2) si détruit.',             bloque:true,  destructible:true,  hp:1, col:'#e5484d' },
+  gaz:      { nom:'Gaz toxique',      desc:'Traversable. 1 dégât/tour aux unités dedans.',       bloque:false, destructible:false, hp:0, champ:'gaz',     col:'#8cff5a' },
+  gravite:  { nom:'Champ de gravité', desc:'Traversable. Ralentit les ennemis (vitesse 1).',     bloque:false, destructible:false, hp:0, champ:'gravite', col:'#4aa3ff' },
+};
+
 /* ===== CAPACITÉS ACTIVES DES VAISSEAUX (une fois par combat) =====
    Déclenchées par un second appui sur le vaisseau déjà sélectionné. */
 export const CAPACITES = {
