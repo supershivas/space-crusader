@@ -26,6 +26,7 @@ export const state = {
   bossKilledThisWave:undefined, pendingUpgrade:undefined, choixBuild:undefined, pendingEvent:undefined,
   suiteAmelioration:undefined, suiteEvenement:undefined, suiteMission:null,
   carte:undefined, noeudActuel:undefined, secteur:undefined, enCombat:undefined,
+  scenePlanete:null,
 
   ultimeJauge:undefined, ondeChoc:undefined,
   hpCruiser:undefined, score:undefined, phase:undefined, selection:undefined, vague:undefined,

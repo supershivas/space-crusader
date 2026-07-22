@@ -22,6 +22,7 @@ const eventDiv=document.getElementById('event'), eventTitre=document.getElementB
 const carteDiv=document.getElementById('carte'), carteChoixDiv=document.getElementById('carteChoix');
 const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionStats=document.getElementById('missionStats');
 const metaDiv=document.getElementById('meta'), metaCristaux=document.getElementById('metaCristaux'), metaCards=document.getElementById('metaCards');
+const planeteDiv=document.getElementById('planete'), planeteTitre=document.getElementById('planeteTitre'), planeteCards=document.getElementById('planeteCards');
 
 /* =====================================================================
    JOURNAL + ACHIEVEMENTS + HIGHSCORES
@@ -95,6 +96,17 @@ export function ouvrirEvenement(){ state.phase='evenement';
   eventDiv.classList.add('visible');
 }
 
+/* scène de planète sans combat : décor sur le canvas + choix en haut de l'écran */
+export function ouvrirScenePlanete(scene){
+  state.phase='planete'; state.scenePlanete={kind:scene.kind,titre:scene.titre}; state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
+  tooltip.classList.remove('visible');
+  planeteTitre.textContent=scene.titre; planeteCards.innerHTML='';
+  for(const ch of scene.choix){ const b=document.createElement('div'); b.className='card';
+    b.innerHTML='<div class="emo">'+(ch.emo||'▸')+'</div><div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>';
+    b.onclick=()=>{ ch.effet(); planeteDiv.classList.remove('visible'); state.scenePlanete=null; const s=scene.suite; if(s) s(); };
+    planeteCards.appendChild(b); }
+  planeteDiv.classList.add('visible');
+}
 export function ouvrirMeta(){ metaCristaux.textContent='💎 Cristaux : '+(state.meta.cristaux||0); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;
     const b=document.createElement('div'); b.className='card';

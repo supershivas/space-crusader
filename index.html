@@ -92,6 +92,13 @@
   .card .desc{font-size:7px;color:#9fb0d8;line-height:1.6;}
   .card canvas{image-rendering:pixelated;border-radius:4px;}
 
+  /* Barre de choix en haut de l'écran (planètes sans combat) */
+  #planete{position:absolute;top:0;left:0;right:0;z-index:14;display:none;flex-direction:column;align-items:center;gap:10px;
+    padding:12px 10px 14px;background:linear-gradient(180deg,rgba(7,11,24,.94),rgba(7,11,24,.7));border-bottom:2px solid #24406e;}
+  #planete.visible{display:flex;}
+  #planete h3{font-family:var(--pixel);color:#37e0ff;font-size:11px;margin:0;text-shadow:0 2px 0 #10406a;line-height:1.5;text-align:center;}
+  #planete .card{width:100px;min-height:104px;}
+
   /* Sélecteur de difficulté (accueil) */
   #diffSelect{display:flex;gap:6px;justify-content:center;}
   .diff-btn{font-size:8px!important;padding:8px 10px!important;background:#243048;border-bottom-color:#141c2c!important;opacity:.65;}
@@ -120,6 +127,7 @@
     <div id="log"></div>
     <div id="tutoHalo"></div>
     <div id="tutoBar"><p id="tutoTexte"></p><button id="tutoSkip">Passer le tutoriel</button></div>
+    <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
     <div id="pause"><h2>⏸ PAUSE</h2><p>Espace = reprendre<br>P = pause<br>Échap = annuler</p></div>
     <div id="achieve"><div class="ach-title">🏆 SUCCÈS</div><div id="achieveTxt"></div></div>
     <div id="upgrade" class="modal"><h2>⬆ AMÉLIORATION</h2><div class="hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div></div>

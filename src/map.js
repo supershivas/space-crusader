@@ -7,13 +7,13 @@ import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
-import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, checkAchievements } from './ui.js';
+import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements } from './ui.js';
 
-export const ICONE={combat:'⚔️',elite:'☠️',event:'❓',rest:'🛠️',tresor:'💎',boss:'👹'};
-export const NOM_NOEUD={combat:'Combat',elite:'Élite',event:'Signal',rest:'Relais',tresor:'Trésor',boss:'BOSS'};
-export const DESC_NOEUD={combat:'Vague standard',elite:'Plus dur · plus de butin',event:'Événement à choix',rest:'Répare +25% PV',tresor:'Amélioration gratuite',boss:"Un boss t'attend !"};
-function planeteAleatoire(){ const pool=['combat','combat','combat','event','rest','elite','tresor']; return pool[Math.floor(Math.random()*pool.length)]; }
-export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'}};
+export const ICONE={combat:'⚔️',elite:'☠️',event:'❓',rest:'🛠️',tresor:'💎',hangar:'🛰️',forge:'⚙️',boss:'👹'};
+export const NOM_NOEUD={combat:'Combat',elite:'Élite',event:'Signal',rest:'Relais',tresor:'Trésor',hangar:'Hangar',forge:'Atelier',boss:'BOSS'};
+export const DESC_NOEUD={combat:'Vague standard',elite:'Plus dur · plus de butin',event:'Événement à choix',rest:'Station de réparation',tresor:'Chambre forte : amélioration',hangar:'Renfort : +1 vaisseau au choix',forge:'Atelier : amélioration ou ultime',boss:"Un boss t'attend !"};
+function planeteAleatoire(){ const pool=['combat','combat','combat','event','rest','elite','tresor','hangar','forge']; return pool[Math.floor(Math.random()*pool.length)]; }
+export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},hangar:{c1:'#bfe9ff',c2:'#5a8fd6',d:'#2f4a86'},forge:{c1:'#ffe08a',c2:'#e0a13d',d:'#8f6a1f'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'}};
 export function genererCarte(){ const NB=6, cols=[];
   for(let c=0;c<NB;c++){ const n=(c===0||c===NB-1)?1:(2+Math.floor(Math.random()*2)); const col=[];
     for(let r=0;r<n;r++){ const type=c===NB-1?'boss':c===0?'combat':planeteAleatoire(); col.push({col:c,row:r,n,type,liens:[],visite:false}); }
@@ -39,12 +39,35 @@ export function deserialiserCarte(d){ if(!d) { state.carte=null; state.noeudActu
   d.lvls.forEach((l,ci)=>l.forEach((n,ri)=>{ state.carte[ci][ri].liens=n.liens.map(([c,r])=>state.carte[c][r]); }));
   state.noeudActuel = d.cur ? state.carte[d.cur[0]][d.cur[1]] : null; }
 
-export function ouvrirCarte(){ state.phase='carte'; sauvegarderPartie(serialiserCarte); }
+export function ouvrirCarte(){ state.phase='carte'; state.scenePlanete=null; sauvegarderPartie(serialiserCarte); }
 export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const type=nd.type;
   if(type==='combat'||type==='elite'||type==='boss'){ demarrerCombat(type); }
-  else if(type==='rest'){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.25)); state.flashRecharge=1; sonRenfort(); logMsg('Relais : réparation','log-grn'); ouvrirCarte(); }
-  else if(type==='event'){ state.suiteEvenement=ouvrirCarte; ouvrirEvenement(); }
-  else if(type==='tresor'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } }
+  else { ouvrirScenePlanete(construireScene(type)); } }
+
+/* construit le contenu d'une planète sans combat : décor + choix en haut d'écran */
+function construireScene(type){
+  const suite=ouvrirCarte;
+  if(type==='rest'){ return {kind:'station',titre:'STATION DE RÉPARATION',suite,choix:[
+    {emo:'🔧',nom:'Réparation',desc:'+30% PV',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.30)); state.flashRecharge=1; sonRenfort(); logMsg('Réparé','log-grn'); }},
+    {emo:'⚡',nom:'Recalibrage',desc:'+15% PV · +50% ultime',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Recalibré','log-grn'); }},
+  ]}; }
+  if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9));
+    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({emo:u.emo,nom:u.nom,desc:u.desc,effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; logMsg('⬆ '+u.nom,'log-grn'); }}));
+    if(!choix.length) choix.push({emo:'💰',nom:'Butin',desc:'+8 score',effet:()=>{ state.score+=8; }});
+    return {kind:'tresor',titre:'CHAMBRE FORTE',suite,choix}; }
+  if(type==='hangar'){ return {kind:'hangar',titre:'HANGAR ORBITAL',suite,choix:[
+    {emo:'🚀',nom:'Standard',desc:'+1 vaisseau',effet:()=>{ deployerVaisseau('normal'); logMsg('Renfort','log-grn'); }},
+    {emo:'🎯',nom:'Tireur',desc:'+1 tireur (±2)',effet:()=>{ deployerVaisseau('sniper'); logMsg('Renfort : tireur','log-grn'); }},
+    {emo:'🛡',nom:'Cuirassé',desc:'+1 cuirassé (3 PV)',effet:()=>{ deployerVaisseau('bouclier'); logMsg('Renfort : cuirassé','log-grn'); }},
+  ]}; }
+  if(type==='forge'){ return {kind:'forge',titre:'ATELIER',suite,choix:[
+    {emo:'⬆',nom:'Améliorer',desc:'+1 amélioration',effet:()=>{ ameliorationAleatoire(); }},
+    {emo:'⚡',nom:'Surcharger',desc:'Ultime +50%',effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Ultime rechargé','log-ylw'); }},
+  ]}; }
+  // event : événement aléatoire présenté comme une scène
+  const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
+  return {kind:'marche',titre:'✦ '+ev.titre,suite,choix:ev.choix};
+}
 export function demarrerCombat(type){
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   state.ailes=[]; state.asteroides=[]; state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.bonus=[]; if(type!=='boss') state.boss=null;

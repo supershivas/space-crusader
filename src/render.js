@@ -111,10 +111,48 @@ function dessinerMenaceBoss(pulse){
 }
 
 /* =====================================================================
+   SCÈNE DE PLANÈTE (nœud sans combat) — décor pixel-art + nos vaisseaux
+   ===================================================================== */
+function dessinerStructurePlanete(kind){
+  const cx=state.LARGEUR/2, cy=state.HAUTEUR*0.30, u=Math.max(4,Math.round(state.CELL*0.16));
+  const blk=(gx,gy,gw,gh,col)=>{ ctx.fillStyle=col; ctx.fillRect(Math.round(cx+gx*u),Math.round(cy+gy*u),gw*u,gh*u); };
+  if(kind==='hangar'){                       // baie de dock avec un vaisseau à l'intérieur
+    blk(-9,-5,18,10,'#2a3550'); blk(-8,-4,16,8,'#141d34');
+    blk(-8,-4,16,1,'#37e0ff');
+    blk(-1,-3,2,4,'#c3ccd8'); blk(-2,-2,1,3,'#8b95a3'); blk(1,-2,1,3,'#8b95a3');
+    for(let i=-8;i<8;i+=3) blk(i,5,2,1,'#4a5a86');
+  } else if(kind==='station'){               // plateforme de réparation + croix verte
+    blk(-8,3,16,3,'#3a4a6a'); blk(-8,2,16,1,'#4a5a86');
+    blk(-1,-4,2,6,'#2fd6a0'); blk(-3,-1,6,2,'#2fd6a0');
+  } else if(kind==='tresor'){                // coffre-fort
+    blk(-6,-1,12,6,'#8f6a1f'); blk(-6,-3,12,2,'#ffd23d'); blk(-6,1,12,1,'#e0a13d'); blk(-1,1,2,2,'#ffd23d');
+  } else if(kind==='forge'){                 // enclume / atelier
+    blk(-6,-2,12,2,'#8b95a3'); blk(-3,0,6,3,'#4a5262'); blk(-2,3,4,1,'#3a3f4a'); blk(4,-4,1,3,'#e0a13d');
+  } else {                                    // marché / événement : étal avec auvent
+    blk(-8,-4,16,2,'#c94257'); blk(-8,-2,16,1,'#ff8f6b'); blk(-7,-1,14,5,'#2a3550'); blk(-5,1,3,3,'#37e0ff'); blk(2,1,3,3,'#ffd23d');
+  }
+}
+function dessinerScenePlanete(t){
+  const pulse=.5+.5*Math.sin(t/300);
+  ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); fond();
+  // zone jouable (rappel du combat) en plus discret
+  ctx.fillStyle='rgba(18,28,55,.35)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
+  ctx.strokeStyle='rgba(95,135,215,.4)'; ctx.lineWidth=2; ctx.strokeRect(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2);
+  dessinerStructurePlanete(state.scenePlanete?state.scenePlanete.kind:'marche');
+  // titre de la planète
+  if(state.scenePlanete){ ctx.fillStyle='#37e0ff'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(state.scenePlanete.titre,state.LARGEUR/2,state.HAUTEUR*0.58); ctx.fillStyle='rgba(159,176,216,'+(0.6+0.4*pulse)+')'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText('Choisis en haut de l\'écran',state.LARGEUR/2,state.HAUTEUR*0.58+18); ctx.textAlign='left'; }
+  // croiseur + nos vaisseaux (comme en combat)
+  ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
+  for(const f of state.fighters){ ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y-f.img.height/2)); }
+  ctx.restore();
+}
+
+/* =====================================================================
    DESSIN — scène de jeu
    ===================================================================== */
 export function dessiner(t){
   if(state.phase==='carte'){ dessinerCarte(t); return; }
+  if(state.phase==='planete'){ dessinerScenePlanete(t); return; }
   const pulse=.5+.5*Math.sin(t/160);
   ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); if(state.secousse>0) ctx.translate((Math.random()-.5)*state.secousse,(Math.random()-.5)*state.secousse);
   fond();
