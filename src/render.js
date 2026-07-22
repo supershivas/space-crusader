@@ -247,10 +247,10 @@ export function dessiner(t){
     else if(a.type==='brouilleur'){ ctx.strokeStyle='rgba(155,107,214,'+(.4+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.52,0,7); ctx.stroke(); }
     if(a.bouclier){ ctx.strokeStyle='rgba(255,210,61,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,a.y+2,state.CELL*0.4,Math.PI*0.15,Math.PI*0.85); ctx.stroke(); }
     else if(estProtege(a)){ ctx.fillStyle='rgba(155,107,214,.18)'; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.fill(); }
-    // Barre de vie si endommagé
-    if(a.hp<a.maxhp){ const bw=a.img.width, bh=3, bx=Math.round(a.x-bw/2), by=Math.round(a.y-a.img.height/2)-5;
-      ctx.fillStyle='#3a1520'; ctx.fillRect(bx,by,bw,bh);
-      ctx.fillStyle=a.hp===1?'#ff5a5a':'#ffd23d'; ctx.fillRect(bx,by,bw*(a.hp/a.maxhp),bh); }
+    // PV : petits carrés (rouge = plein, gris = vide) pour les ennemis blindés (maxhp>1)
+    if(a.maxhp>1){ const n=a.maxhp, sq=5, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(a.x-tot/2), by=Math.round(a.y+a.img.height/2+2);
+      for(let i=0;i<n;i++){ ctx.fillStyle=i<a.hp?'#ff2a5a':'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq);
+        ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.strokeRect(bx+i*(sq+gap)+.5,by+.5,sq-1,sq-1); } }
   }
   // marqueurs cibles alliées
   if(state.phase==='joueur'){ ctx.strokeStyle='rgba(255,70,70,'+(.55+.4*pulse)+')'; ctx.lineWidth=3; const marque=(x,y)=>{ ctx.beginPath(); ctx.moveTo(x-9,y-9); ctx.lineTo(x+9,y+9); ctx.moveTo(x+9,y-9); ctx.lineTo(x-9,y+9); ctx.stroke(); };

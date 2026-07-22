@@ -8,7 +8,8 @@ export const PAL={'.':null,
  'R':'#e5484d','r':'#ff8f92','K':'#8f2b2f',
  'N':'#8f857a','n':'#b6ab9f','m':'#5c544c',
  'I':'#bfe9ff','i':'#37a0d6','M':'#ffb26b','o':'#e07a2f','y':'#ffd23d','V':'#8cff5a','v':'#4fce2f','x':'#8f2b3a','g':'#3a3f4a',
- 'X':'#c94257','q':'#ff6b3d','k':'#20242e','u':'#6b3fa0','U':'#9b6bd6','c':'#1f7a9c','j':'#2f7a3a','J':'#5fce6a','z':'#4a5262','Z':'#8b95a3'};
+ 'X':'#c94257','q':'#ff6b3d','k':'#20242e','u':'#6b3fa0','U':'#9b6bd6','c':'#1f7a9c','j':'#2f7a3a','J':'#5fce6a','z':'#4a5262','Z':'#8b95a3',
+ 'H':'#ff2a5a','h':'#ff6b8a','L':'#2a8fff','l':'#6bb8ff','P':'#ffcc00','p':'#ffee88','T':'#5a4a3a','t':'#8a7a6a'};
 export const CROISEUR=["...G...G...G...G...G...G...G...G...G...","wWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWw","WWWWWWWCCWWWWWWWWCCCCCWWWWWWWWCCWWWWWWW","WWWWWWWCWWWWWWWWwWCCCWwWWWWWWWWCWWWWWWW","WWWWWWDWWWWWWDWWWWWDWWWWWDWWWWWWDWWWWWW","WWWWWWDWWWWWWDWWWWWDWWWWWDWWWWWWDWWWWWW","DDWWWWDWWWWWWDWWWWWDWWWWWDWWWWWWDWWWWDD","ADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDA","A.EeE...EeE...EeE...EeE...EeE...EeE...A"];
 export const JOUEUR=["BB.......BB","BB..sss..BB","BB.sSSSs.BB","BBbSSOSSbBB","BB.sSSSs.BB","BB..sss..BB","BB.......BB","Bb.......bB","bB.......Bb"];
 export const ROUGE=[".R.......R.","RR.......RR","RR..sss..RR","RR.sSSSs.RR","RRKSSESSKRR","RR.sSSSs.RR","RR..sss..RR","RR.......RR",".R.......R."];

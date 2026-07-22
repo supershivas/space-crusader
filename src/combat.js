@@ -178,18 +178,20 @@ export function finDuTour(){
     else { const dl=degLaserActuel(); degats+=cb.bomber?dl*2:dl; } }
   if(state.boss){ degats+=tirsBoss(); }
   if(tirs.length||state.boss) sonTirEnnemi();
-  if(degats>0){ state.hpCruiser=Math.max(0,state.hpCruiser-degats); state.damageThisWave+=degats; state.flashCroiseur=1; state.secousse=Math.max(state.secousse,7); sonAie(); logMsg('-'+degats+' PV','log-red'); }
+  if(degats>0){ degats=Math.floor(degats); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-degats)); state.damageThisWave+=degats; state.flashCroiseur=1; state.secousse=Math.max(state.secousse,7); sonAie(); logMsg('-'+degats+' PV','log-red'); }
 
   // (2) AVANCE des ailes (vitesse par type) + collisions + éperonnage
   for(const a of [...state.ailes].sort((x,y)=>y.r-x.r)){ if(!state.ailes.includes(a)) continue;
     let steps=a.vitesse; if(a.type==='bombardier'&&state.tourCompteur%2===1) steps=0;
     for(let s=0;s<steps;s++){ if(!state.ailes.includes(a)) break; const nr=a.r+1;
-      if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,state.hpCruiser-DEG_EPERON); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
+      if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
       a.r=nr; const f=fighterEn(a.c,nr); if(f){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); sonBoom(); break; } } }
 
   // (3) BOSS avance
   if(state.boss){ if(!(state.boss.type==='blinde'&&state.tourCompteur%2===1)) state.boss.r+=1;
-    if(state.boss.r+state.boss.h-1>state.RANGS-1){ state.hpCruiser=Math.max(0,state.hpCruiser-DEG_EPERON*2); state.damageThisWave+=DEG_EPERON*2; state.flashCroiseur=1; state.secousse=18; sonAie(); exploser(state.boss.x,state.cruiserY+8,true); exploser(state.boss.x,state.GRID_BAS,true); state.boss=null; logMsg('💥 Le boss percute le croiseur !','log-red'); } }
+    // collision avec les vaisseaux entrés dans la zone du boss : on les blesse (comme une aile), pas de destruction instantanée
+    for(const f of [...state.fighters]){ if(f.c>=state.boss.c&&f.c<=state.boss.c+2&&f.r>=state.boss.r&&f.r<=state.boss.r+1){ exploser(f.x,f.y,false); const m=blesser(f); if(m) tuerFighter(f); sonBoom(); } }
+    if(state.boss.r+state.boss.h-1>state.RANGS-1){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON*2)); state.damageThisWave+=DEG_EPERON*2; state.flashCroiseur=1; state.secousse=18; sonAie(); exploser(state.boss.x,state.cruiserY+8,true); exploser(state.boss.x,state.GRID_BAS,true); state.boss=null; logMsg('💥 Le boss percute le croiseur !','log-red'); } }
 
   // (4) ASTÉROÏDES
   for(const ast of [...state.asteroides]){ const ux=Math.sign(ast.dc), uy=Math.sign(ast.dr), steps=Math.max(Math.abs(ast.dc),Math.abs(ast.dr));
@@ -199,7 +201,7 @@ export function finDuTour(){
       const a=aileEn(cc,rr); if(a){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); }
       if(bossEn(cc,rr)){ state.boss.hp-=1; exploser(centreCase(cc,rr).x,centreCase(cc,rr).y,false); if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } } }
     ast.c=cc; ast.r=rr;
-    if(crash){ state.hpCruiser=Math.max(0,state.hpCruiser-DEG_ASTEROIDE); state.damageThisWave+=DEG_ASTEROIDE; state.flashCroiseur=1; state.secousse=12; sonAie(); exploser(centreCase(Math.max(0,Math.min(state.COLS-1,cc)),state.RANGS-1).x,state.GRID_BAS+8,true); state.asteroides.splice(state.asteroides.indexOf(ast),1); logMsg('Astéroïde !','log-red'); }
+    if(crash){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_ASTEROIDE)); state.damageThisWave+=DEG_ASTEROIDE; state.flashCroiseur=1; state.secousse=12; sonAie(); exploser(centreCase(Math.max(0,Math.min(state.COLS-1,cc)),state.RANGS-1).x,state.GRID_BAS+8,true); state.asteroides.splice(state.asteroides.indexOf(ast),1); logMsg('Astéroïde !','log-red'); }
     else if(out) state.asteroides.splice(state.asteroides.indexOf(ast),1); }
 
   // (4b) TROUS NOIRS : aspirent tout autour ; CHAMPS MAGNÉTIQUES : décompte

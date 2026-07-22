@@ -125,6 +125,8 @@ document.querySelectorAll('.diff-btn').forEach(b=>{
 loadData(); chargerDifficultePreferee(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
 rafraichirBoutonsDifficulte();
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
+// Premier lancement : afficher l'écran d'aide (INFOS) une seule fois
+try{ if(!localStorage.getItem('dc_firstLaunch')){ document.getElementById('info').classList.add('visible'); localStorage.setItem('dc_firstLaunch','1'); } }catch(e){}
 requestAnimationFrame(boucle);
 
 /* PWA : enregistre le service worker (hors-ligne + installable). Sans effet si ouvert en file:// */
