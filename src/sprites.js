@@ -16,6 +16,8 @@ export const ROUGE=[".R.......R.","RR.......RR","RR..sss..RR","RR.sSSSs.RR","RRK
 export const JOUEUR_RAPIDE=["BB...C...BB","BB..sCs..BB","BB.sSCSs.BB","BBbSSCSSbBB","BB.sSCSs.BB","BB..sCs..BB","BB...C...BB","Bb.......bB",".B.......B."];
 export const JOUEUR_BOMBER=["BB.......BB","BB..sss..BB","BB.sSSSs.BB","BBbSSESSbBB","BB.sSSSs.BB","BB..sEs..BB","BB...E...BB","Bb..EEE..bB","bB.......Bb"];
 export const JOUEUR_BOUCLIER=["BBAAAAAAABB","BB..sss..BB","BB.sSSSs.BB","BBbSSASSbBB","BB.sSSSs.BB","BB..sss..BB","BBAAAAAAABB","Bb.......bB","bB.......Bb"];
+/* allié SNIPER : long canon vert, tir à longue portée (±2 colonnes) */
+export const JOUEUR_SNIPER=["BB...V...BB","BB...V...BB","BB..sVs..BB","BBbSSVSSbBB","BB.sSSSs.BB","BB..sss..BB","BB.......BB","Bb.......bB","bB.......Bb"];
 
 /* --- Nouveaux sprites basés sur les images uploadées --- */
 export const AILE=[
@@ -50,6 +52,14 @@ export const ECLAIREUR=[
 "....W....","....W....","....V...."
 ];
 export const ASTER=["...NNNN....","..NnNNNNN..",".NnnNNNNNN.",".NNNNNNNNm.","NNNNNNNNNNm","NNNNNNNNNNm","NNNNNNNNNmm",".NNNNNNNNm.",".mNNNNNNm..","..mmNNmm...","...mmmm...."];
+/* ennemi LOURD : aile blindée acier à noyau rouge (3 PV, avance lentement) */
+export const AILE_LOURD=[
+".ZZ...ZZ.",
+"ZZZZ.ZZZZ","ZZsSSSsZZ","ZsSSKSSsZ","ZsSKRKSsZ",
+"ZsSKRKSsZ","ZsSSKSSsZ","ZZsSSSsZZ",".ZZSSSZZ.",
+"..ZSSSZ..","..ZSKSZ..","...ZKZ...","...ZKZ...",
+"....K...."
+];
 /* ailes d'élite : porteur (doré, renforce) et brouilleur (violet, protège) */
 export const AILE_PORTEUR=["....e....",".e.eMe.e.","eMeMeMeMe","eMeeeeeMe","eMeMeMeMe",".e.eMe.e.","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","...eMe...","...eMe...","...eMe...","...eMe...","....e....","....e....","....e...."];
 export const AILE_BROUILLEUR=["....U....",".U.UuU.U.","UuUuUuUuU","UuUUUUUuU","UuUuUuUuU",".U.UuU.U.","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","...UuU...","...UuU...","...UuU...","...UuU...","....U....","....U....","....u...."];

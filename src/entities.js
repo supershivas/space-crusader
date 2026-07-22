@@ -4,21 +4,21 @@
    ===================================================================== */
 import { state, centreCase } from './state.js';
 import { DIFFICULTES } from './config.js';
-import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER,
-         AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR } from './sprites.js';
+import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER,
+         AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD } from './sprites.js';
 import { sonRenfort } from './audio.js';
 import { logMsg } from './ui.js';
 
 /* images des unités, recuites à la taille de case courante (voir cuireUnites) */
-let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgPorteur,imgBrouilleur;
+let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgPorteur,imgBrouilleur,imgLourd;
 export function cuireUnites(CELL){
   imgJoueur=cuireFit(JOUEUR,CELL); imgRouge=cuireFit(ROUGE,CELL); imgAile=cuireFit(AILE,CELL); imgAster=cuireFit(ASTER,CELL);
   imgChasseur=cuireFit(CHASSEUR,CELL); imgBomber=cuireFit(BOMBARDIER,CELL); imgEclaireur=cuireFit(ECLAIREUR,CELL);
-  imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL);
-  imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL);
+  imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL); imgVSniper=cuireFit(JOUEUR_SNIPER,CELL);
+  imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL); imgLourd=cuireFit(AILE_LOURD,CELL);
 }
 export function getImgAster(){ return imgAster; }
-export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : imgJoueur; }
+export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : imgJoueur; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   const hp = type==='rouge'?2 : type==='bouclier'?3 : 1;
   return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,img:imgVaisseau(type),capUsed:false,provoque:false}; }
@@ -48,10 +48,11 @@ export function typeAile(){
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   if(state.vague>=Math.max(1,2+d.eliteVagueDelta) && Math.random()<0.06*d.eliteProbMult) return 'porteur';
   if(state.vague>=Math.max(1,3+d.eliteVagueDelta) && Math.random()<0.05*d.eliteProbMult) return 'brouilleur';
+  if(state.vague>=3 && Math.random()<0.10) return 'lourd';   // aile blindée à partir de la vague 3
   const r=Math.random(); return r<0.55?'normal':r<0.72?'chasseur':r<0.87?'eclaireur':'bombardier'; }
 export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal';
-  const img=type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:imgAile;
-  const vitesse=(type==='chasseur'||type==='eclaireur')?2:1, hp=(type==='bombardier'||type==='porteur'||type==='brouilleur')?2:1;
+  const img=type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:imgAile;
+  const vitesse=(type==='chasseur'||type==='eclaireur')?2:1, hp=type==='lourd'?3:(type==='bombardier'||type==='porteur'||type==='brouilleur')?2:1;
   state.ailes.push({c,r,x:p.x,y:p.y-state.CELL,img,type,vitesse,hp,maxhp:hp}); }
 export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) return; const forme=Math.random()<0.5?'ligne':'V', taille=2+Math.floor(Math.random()*2), dep=Math.floor(Math.random()*state.COLS);
   if(forme==='ligne'){ for(let k=0;k<taille;k++){ const c=(dep+k)%state.COLS; if(!aileEn(c,0)&&!(state.boss&&bossEn(c,0))&&state.ailes.length<state.AILES_MAX) faireAile(c,0,typeAile()); } }

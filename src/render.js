@@ -20,6 +20,28 @@ let nebuleuses, planete;
 const etoiles=[];
 
 /* =====================================================================
+   THÈMES DE SECTEUR — chaque secteur a ses couleurs, son astre et ses
+   étoiles (tout en pixel art). Cyclés selon le numéro de secteur.
+   ===================================================================== */
+const THEMES=[
+  { neb:['rgba(90,55,150,.16)','rgba(40,95,150,.14)'],  astre:{kind:'planete',c1:'#7fb0e0',c2:'#3a5f9e',c3:'#22355e'}, star:'#cdd8ff' }, // 1 · bleu
+  { neb:['rgba(150,80,50,.16)','rgba(150,100,40,.13)'], astre:{kind:'soleil', c1:'#ffe08a',c2:'#ff9a3d',c3:'#e0561f'}, star:'#ffe6c8' }, // 2 · soleil orange
+  { neb:['rgba(45,120,90,.16)','rgba(40,100,120,.13)'], astre:{kind:'planete',c1:'#8fe89a',c2:'#3f9e6a',c3:'#1f5540'}, star:'#c8ffe0' }, // 3 · vert
+  { neb:['rgba(120,55,150,.17)','rgba(90,50,150,.14)'], astre:{kind:'planete',c1:'#d0a0ff',c2:'#8a5fce',c3:'#4a2f7a'}, star:'#ecd8ff' }, // 4 · violet
+  { neb:['rgba(160,50,70,.17)','rgba(120,40,60,.14)'],  astre:{kind:'soleil', c1:'#ffb0b0',c2:'#ff5a5a',c3:'#a01f2f'}, star:'#ffd6d6' }, // 5 · naine rouge
+  { neb:['rgba(40,110,140,.16)','rgba(60,60,150,.13)'], astre:{kind:'planete',c1:'#a0e8ff',c2:'#37a0d6',c3:'#215f8f'}, star:'#d8f4ff' }, // 6 · cyan glacé
+];
+function themeSecteur(){ return THEMES[(((state.secteur||1)-1)%THEMES.length+THEMES.length)%THEMES.length]; }
+/* astre pixel-art : planète ombrée ou soleil rayonnant */
+function dessinerAstrePixel(px,py,R,a){
+  const pas=Math.max(3,Math.round(R/7)); px=Math.round(px); py=Math.round(py);
+  if(a.kind==='soleil'){ ctx.fillStyle=a.c1; const ray=pas;
+    for(let k=0;k<8;k++){ const aa=k*Math.PI/4, rx=px+Math.cos(aa)*(R+pas*1.6), ry=py+Math.sin(aa)*(R+pas*1.6); ctx.globalAlpha=.6; ctx.fillRect(Math.round(rx-ray/2),Math.round(ry-ray/2),ray,ray); } ctx.globalAlpha=1; }
+  for(let gx=-R;gx<=R;gx+=pas) for(let gy=-R;gy<=R;gy+=pas){ const cx=gx+pas/2, cy=gy+pas/2; if(Math.hypot(cx,cy)>R) continue;
+    const s=(cx+cy)/R; ctx.fillStyle = s<-0.4?a.c1 : (s>0.5?a.c3:a.c2); ctx.fillRect(px+gx,py+gy,pas,pas); }
+}
+
+/* =====================================================================
    DISPOSITION + FOND
    ===================================================================== */
 export function configurer(){
@@ -43,14 +65,14 @@ export function redimensionner(){ const fe=document.fullscreenElement, availW=fe
   const ar=canvas.width/canvas.height; let w=availW,h=w/ar; if(h>availH){ h=availH; w=h*ar; } scene.style.width=w+'px'; scene.style.height=h+'px'; }
 window.addEventListener('resize',redimensionner);
 
-export function initEtoiles(){ etoiles.length=0; const L=[{n:40,v:4,sz:1,a:.35,col:'#8ea0c8'},{n:34,v:11,sz:1.5,a:.6,col:'#cdd8ff'},{n:16,v:22,sz:2,a:.9,col:'#ffffff'}];
-  for(const l of L) for(let i=0;i<l.n;i++) etoiles.push({x:Math.random()*state.LARGEUR,y:Math.random()*state.HAUTEUR,v:l.v,sz:l.sz,a:l.a,col:l.col}); }
+export function initEtoiles(){ etoiles.length=0; const L=[{n:40,v:4,sz:1,a:.35,col:'#8ea0c8',big:false},{n:34,v:11,sz:1.5,a:.6,col:'#cdd8ff',big:false},{n:16,v:22,sz:2,a:.9,col:'#ffffff',big:true}];
+  for(const l of L) for(let i=0;i<l.n;i++) etoiles.push({x:Math.random()*state.LARGEUR,y:Math.random()*state.HAUTEUR,v:l.v,sz:l.sz,a:l.a,col:l.col,big:l.big}); }
 
 function fond(){
-  for(const nb of state.nebuleuses){ const g=ctx.createRadialGradient(nb.x,nb.y,0,nb.x,nb.y,nb.r); g.addColorStop(0,nb.c1); g.addColorStop(1,'rgba(7,11,24,0)'); ctx.fillStyle=g; ctx.fillRect(nb.x-nb.r,nb.y-nb.r,nb.r*2,nb.r*2); }
-  const pl=planete, g=ctx.createRadialGradient(pl.x-pl.r*0.35,pl.y-pl.r*0.35,pl.r*0.1,pl.x,pl.y,pl.r); g.addColorStop(0,'#7fb0e0'); g.addColorStop(1,'#22355e'); ctx.fillStyle=g; ctx.beginPath(); ctx.arc(pl.x,pl.y,pl.r,0,7); ctx.fill();
-  ctx.fillStyle='rgba(7,11,24,.5)'; ctx.beginPath(); ctx.arc(pl.x+pl.r*0.45,pl.y-pl.r*0.1,pl.r,0,7); ctx.fill();
-  for(const s of etoiles){ s.y+=s.v*.016; if(s.y>state.HAUTEUR){s.y=0;s.x=Math.random()*state.LARGEUR;} ctx.globalAlpha=s.a; ctx.fillStyle=s.col; ctx.fillRect(s.x,s.y,s.sz,s.sz); } ctx.globalAlpha=1;
+  const th=themeSecteur();
+  state.nebuleuses.forEach((nb,i)=>{ const col=th.neb[i%th.neb.length]; const g=ctx.createRadialGradient(nb.x,nb.y,0,nb.x,nb.y,nb.r); g.addColorStop(0,col); g.addColorStop(1,'rgba(7,11,24,0)'); ctx.fillStyle=g; ctx.fillRect(nb.x-nb.r,nb.y-nb.r,nb.r*2,nb.r*2); });
+  dessinerAstrePixel(planete.x,planete.y,Math.round(planete.r),th.astre);
+  for(const s of etoiles){ s.y+=s.v*.016; if(s.y>state.HAUTEUR){s.y=0;s.x=Math.random()*state.LARGEUR;} ctx.globalAlpha=s.a; ctx.fillStyle=s.big?th.star:s.col; ctx.fillRect(s.x,s.y,s.sz,s.sz); } ctx.globalAlpha=1;
 }
 
 /* =====================================================================

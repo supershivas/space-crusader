@@ -3,13 +3,13 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage } from './state.js';
-import { DEG_LASER, DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser } from './entities.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
-         peutActiverCapacite, activerCapacite, tirerCharge } from './combat.js';
+         peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
 
 const canvas=document.getElementById('jeu');
@@ -130,18 +130,36 @@ function updateTooltip(x,y){
   let html='';
   const a=aileEn(c,r); const f=fighterEn(c,r); const b=bonusEn(c,r); const ast=asterEn(c,r);
   if(a){
-    const names={'normal':'Aile','chasseur':'Chasseur','bombardier':'Bombardier','eclaireur':'Éclaireur','porteur':'Porteur (renforce)','brouilleur':'Brouilleur (protège)'};
-    html='<div class="tt-name">'+names[a.type]+'</div>';
+    const info={
+      normal:{nom:'Aile',role:'Avance et tire droit devant.'},
+      chasseur:{nom:'Chasseur',role:'Rapide (2 cases/tour), tire dès le 1er rang.'},
+      bombardier:{nom:'Bombardier',role:'Vise le croiseur, dégâts x2. Avance 1 tour sur 2.'},
+      eclaireur:{nom:'Éclaireur',role:'Rapide, ne tire pas : fonce pour éperonner.'},
+      porteur:{nom:'Porteur (élite)',role:'Renforce d\'un bouclier les ailes voisines.'},
+      brouilleur:{nom:'Brouilleur (élite)',role:'Protège de tes tirs les ailes voisines.'},
+      lourd:{nom:'Aile lourde',role:'Blindée : encaisse 3 tirs. Avance lentement.'},
+    }[a.type]||{nom:'Aile',role:''};
+    const deg=a.type==='eclaireur'?0:(a.type==='bombardier'?degLaserActuel()*2:degLaserActuel());
+    html='<div class="tt-name">'+info.nom+'</div>';
+    html+='<div class="tt-spd" style="color:#cbd6f0">'+info.role+'</div>';
     html+='<div class="tt-hp">PV: '+a.hp+'/'+a.maxhp+'</div>';
-    html+='<div class="tt-dmg">Dégâts: '+(a.type==='bombardier'?DEG_LASER*2:DEG_LASER)+'</div>';
+    html+='<div class="tt-dmg">Dégâts: '+(deg>0?deg:'aucun (éperonnage)')+'</div>';
     html+='<div class="tt-spd">Avance: '+a.vitesse+' case'+(a.vitesse>1?'s':'')+'/tour</div>';
     if(a.bouclier) html+='<div class="tt-spd" style="color:#ffd23d">🛡 Renforcé (1 tir absorbé)</div>';
     if(estProtege(a)) html+='<div class="tt-spd" style="color:#b06bff">Protégé — vise le brouilleur</div>';
   } else if(f){
-    html='<div class="tt-name">'+(f.type==='rouge'?'Vaisseau Rouge':'Vaisseau')+'</div>';
+    const info={
+      normal:{nom:'Vaisseau standard',role:'Tir en colonne ±1.'},
+      rouge:{nom:'Vaisseau Rouge',role:'Tir de zone (3×3) · 2 PV · +1 déplacement.'},
+      rapide:{nom:'Intercepteur',role:'+1 déplacement.'},
+      bombardier:{nom:'Bombardier',role:'Tir qui détruit toute une colonne.'},
+      bouclier:{nom:'Cuirassé',role:'Encaisse 3 PV.'},
+      sniper:{nom:'Tireur',role:'Tir à longue portée (±2 colonnes).'},
+    }[f.type]||{nom:'Vaisseau',role:''};
+    html='<div class="tt-name">'+info.nom+'</div>';
+    html+='<div class="tt-spd" style="color:#cbd6f0">'+info.role+'</div>';
     html+='<div class="tt-hp">PV: '+f.hp+'</div>';
     html+='<div class="tt-spd">Déplacement: '+porteeDep(f)+' case'+(porteeDep(f)>1?'s':'')+'</div>';
-    html+='<div class="tt-dmg">Tir: colonne ±1</div>';
     const cap=CAPACITES[f.type];
     if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+cap.nom+' — '+(f.capUsed?'déjà utilisée':cap.desc+' (2e appui)')+'</div>';
   } else if(b){
@@ -156,7 +174,7 @@ function updateTooltip(x,y){
   } else if(champEn(c)){
     html='<div class="tt-name">Champ magnétique</div><div class="tt-dmg">Brouille tes tirs dans cette colonne</div>';
   } else if(bossEn(c,r)){
-    const bn={canon:'Canonnier · 3 colonnes',sniper:'Sniper · vise 3 vaisseaux',rayon:'Rayon · charge puis balaye'};
+    const bn={canon:'Canonnier · 3 colonnes',sniper:'Sniper · vise 3 vaisseaux',rayon:'Rayon · charge puis balaye',nuee:'Nuée · lâche des ailes',blinde:'Blindé · gros tir central'};
     html='<div class="tt-name">BOSS — '+(state.boss?bn[state.boss.type]:'')+'</div>';
     html+='<div class="tt-hp">PV: '+(state.boss?state.boss.hp+'/'+state.boss.maxhp:'?')+'</div>';
   }

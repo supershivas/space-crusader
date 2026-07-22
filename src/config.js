@@ -25,6 +25,7 @@ export const SHIPS=[
  {id:'rapide',    emo:'💨', nom:'Intercepteur',desc:'+1 déplacement · 2 tours'},
  {id:'bombardier',emo:'💥', nom:'Bombardier',  desc:'Détruit la colonne · 2 tours'},
  {id:'bouclier',  emo:'🛡', nom:'Cuirassé',    desc:'3 PV · 2 tours'},
+ {id:'sniper',    emo:'🎯', nom:'Tireur',      desc:'Tir à ±2 colonnes · 2 tours'},
 ];
 export const SHIP_ROUGE={id:'rouge', nom:'Vaisseau Rouge', desc:'Tir de zone · 2 PV · prend 2 tours'};
 

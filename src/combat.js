@@ -59,7 +59,7 @@ export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0
    (aile/boss = cible ; allié/menace = bloqué). */
 export function analyseTir(f){
   if(champEn(f.c)) return {ailesOk:new Set(),boss:false,beams:[],jam:true};
-  const ailesOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0);
+  const ailesOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
