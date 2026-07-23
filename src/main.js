@@ -10,7 +10,8 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
-import { ouvrirMeta } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil } from './ui.js';
+import { cuireFit, JOUEUR } from './sprites.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
 
 /* ===== ÉTAT VIDE / NOUVELLE PARTIE / REPRISE ===== */
@@ -46,6 +47,7 @@ function nouvellePartie(){
   state.comboCount=0; state.comboTimer=0; state.bestCombo=0; state.undoStack=[]; state.paused=false;
   state.achievements.asteroid_dodge=(state.achievements.asteroid_dodge||0); state.achievements.boss_slayer=state.achievements.boss_slayer||false; state.achievements.no_turret=state.achievements.no_turret||false; state.achievements.perfect_wave=state.achievements.perfect_wave||false;
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');
+  document.getElementById('pause').classList.remove('visible'); document.getElementById('pauseBtn').style.display='block';
   document.getElementById('log').innerHTML=''; state.secteur=1; state.enCombat=false; genererCarte(); startMusic(); ouvrirCarte();
 }
 
@@ -71,6 +73,7 @@ function reprendrePartie(){
   if(d.boss){ const p=centreCase(d.boss.c+1,d.boss.r); state.boss={c:d.boss.c,r:d.boss.r,w:3,h:2,hp:d.boss.hp,maxhp:d.boss.maxhp,type:d.boss.type,charge:d.boss.charge,x:p.x,y:p.y+state.CELL/2-state.CELL}; }
   deserialiserCarte(d.carte);
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');
+  document.getElementById('pause').classList.remove('visible'); document.getElementById('pauseBtn').style.display='block';
   document.getElementById('log').innerHTML=''; startMusic(); redimensionner();
   if(state.enCombat) demarrerTourJoueur(); else ouvrirCarte();
   return true;
@@ -108,6 +111,13 @@ document.getElementById('btnRelancerTuto').addEventListener('click',()=>{
   state.difficulte='facile'; nouvellePartie(); relancerTuto();
 });
 
+/* ===== Menu pause ===== */
+document.getElementById('btnPauseReprendre').addEventListener('click',()=>{ if(state.paused) togglePause(); });
+document.getElementById('btnPauseRecommencer').addEventListener('click',()=>{ state.paused=false; document.getElementById('pause').classList.remove('visible'); initAudio(); nouvellePartie(); });
+document.getElementById('btnPauseOptions').addEventListener('click',()=>{ document.getElementById('info').classList.add('visible'); });
+document.getElementById('btnPauseAccueil').addEventListener('click',()=>{ retourAccueil(); });
+document.getElementById('pauseBtn').addEventListener('click',()=>{ if(state.phase!=='accueil'&&state.phase!=='fin'&&state.phase!=='attente') togglePause(); });
+
 document.getElementById('btnRejouer').addEventListener('click',()=>{ initAudio(); state.difficulte=state.difficultePreferee; nouvellePartie(); });
 document.getElementById('btnMeta').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnMeta2').addEventListener('click',()=>{ ouvrirMeta(); });
@@ -123,7 +133,20 @@ document.querySelectorAll('.diff-btn').forEach(b=>{
   b.addEventListener('click',()=>{ definirDifficultePreferee(b.dataset.diff); rafraichirBoutonsDifficulte(); });
 });
 
+/* ===== Favicon généré depuis le sprite du vaisseau (pixel-art) ===== */
+function genererFavicon(){
+  try{
+    const S=64, cv=document.createElement('canvas'); cv.width=S; cv.height=S;
+    const cx=cv.getContext('2d'); cx.imageSmoothingEnabled=false;
+    cx.fillStyle='#070b18'; cx.fillRect(0,0,S,S);
+    const ship=cuireFit(JOUEUR,S);
+    cx.drawImage(ship,Math.round((S-ship.width)/2),Math.round((S-ship.height)/2));
+    const lien=document.getElementById('favicon'); if(lien) lien.href=cv.toDataURL('image/png');
+  }catch(e){}
+}
+
 loadData(); chargerDifficultePreferee(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
+genererFavicon();
 rafraichirBoutonsDifficulte();
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Premier lancement : afficher l'écran d'aide (INFOS) une seule fois

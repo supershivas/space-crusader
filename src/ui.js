@@ -2,7 +2,7 @@
    UI — DOM (modales, infobulle, journal, HUD texte) + entrées
    (souris + clavier)
    ===================================================================== */
-import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage } from './state.js';
+import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste } from './state.js';
 import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet } from './entities.js';
@@ -31,6 +31,17 @@ export function logMsg(txt,cls=''){
   const d=document.createElement('div'); d.className='log-entry '+cls; d.textContent=txt;
   logDiv.appendChild(d); if(logDiv.children.length>6) logDiv.removeChild(logDiv.firstChild);
   setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); }, 5000);
+}
+/* Toast : notification temporaire, lisible (10px), fond coloré, bordure 3px, 3s. */
+const toastZone=document.getElementById('toast');
+export function montrerToast(txt,type=''){
+  if(!toastZone) return;
+  const d=document.createElement('div');
+  d.className='toast'+(type?(' t-'+type):''); d.textContent=txt;
+  toastZone.appendChild(d);
+  requestAnimationFrame(()=>d.classList.add('show'));
+  setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); },300); }, 3000);
+  while(toastZone.children.length>3) toastZone.removeChild(toastZone.firstChild);
 }
 export function checkAchievements(){
   for(const [id,def] of Object.entries(ACHIEVEMENTS_DEF)){
@@ -129,7 +140,27 @@ export function finPartie(){
   document.getElementById('cristauxGagnes').textContent='💎 +'+gagne+' cristaux (total : '+state.meta.cristaux+')';
   addHighscore();
   document.getElementById('scoreFin').textContent='Score : '+state.score+'   ·   Vague '+state.vague;
+  document.getElementById('pauseBtn').style.display='none';
+  // Bilan de la partie
+  const fs=document.getElementById('finStats');
+  if(fs) fs.innerHTML='📍 Secteur atteint : '+state.secteur+'&nbsp;·&nbsp;🏆 Boss vaincus : '+(state.bossVaincus||0)+'<br>⚡ Meilleur combo : '+(state.bestCombo||0)+'&nbsp;·&nbsp;🎖 '+Object.keys(state.achievements).filter(k=>state.achievements[k]===true).length+' succès débloqués';
+  // Succès débloqués (liste)
+  const succ=document.getElementById('finSucces');
+  if(succ){
+    const noms=Object.entries(ACHIEVEMENTS_DEF).filter(([id])=>state.achievements[id]).map(([,def])=>def.name);
+    succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
+  }
   document.getElementById('fin').classList.remove('cache');
+}
+
+/* Retour à l'écran d'accueil depuis le menu pause. */
+export function retourAccueil(){
+  state.paused=false; pauseDiv.classList.remove('visible');
+  stopMusic(); state.phase='accueil';
+  document.getElementById('pauseBtn').style.display='none';
+  document.getElementById('fin').classList.add('cache');
+  document.getElementById('accueil').classList.remove('cache');
+  document.getElementById('btnReprendre').style.display = sauvegardeExiste()?'':'none';
 }
 
 /* =====================================================================

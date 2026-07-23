@@ -7,7 +7,7 @@ import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
-import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements } from './ui.js';
+import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast } from './ui.js';
 
 export const ICONE={combat:'⚔️',elite:'☠️',event:'❓',rest:'🛠️',tresor:'💎',hangar:'🛰️',forge:'⚙️',boss:'👹'};
 export const NOM_NOEUD={combat:'Combat',elite:'Élite',event:'Signal',rest:'Relais',tresor:'Trésor',hangar:'Hangar',forge:'Atelier',boss:'BOSS'};
@@ -80,7 +80,7 @@ export function demarrerCombat(type){
   const squads=Math.max(1, 2+Math.round(diff)+(type==='elite'?2:0)+d.squadDelta);
   for(let s=0;s<squads;s++) apparaitreEscadrille();
   if(type==='elite'){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,Math.random()<0.5?'porteur':'brouilleur'); }
-  if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS'); logMsg('FORTERESSE !','log-red'); }
+  if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS'); logMsg('FORTERESSE !','log-red'); montrerToast('⚠ Forteresse en approche !','bad'); }
   assignerObjectif(); if(type==='boss') state.objectifVague={type:'boss',texte:'Détruis le boss'};
   demarrerTourJoueur(); }
 export function gagnerCombat(){ state.enCombat=false;
@@ -101,7 +101,7 @@ export function reorganiserVaisseaux(){
   libres.sort((a,b)=>(Math.abs(a.r-r0)-Math.abs(b.r-r0)) || (Math.abs(a.c-centre)-Math.abs(b.c-centre)));
   state.fighters.forEach((f,i)=>{ const pos=libres[i%libres.length]; f.c=pos.c; f.r=pos.r; const p=centreCase(f.c,f.r); f.x=p.x; f.y=p.y; });
 }
-export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); reorganiserVaisseaux(); logMsg('★ SECTEUR '+state.secteur,'log-ylw'); genererCarte(); ouvrirCarte(); }
+export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); reorganiserVaisseaux(); logMsg('★ SECTEUR '+state.secteur,'log-ylw'); montrerToast('★ Secteur '+state.secteur,'ok'); genererCarte(); ouvrirCarte(); }
 
 /* ===== OBJECTIFS DE VAGUE ===== */
 export function assignerObjectif(){

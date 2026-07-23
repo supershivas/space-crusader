@@ -9,7 +9,7 @@ import { fighterEn, aileEn, asterEn, bossEn, occupe, dansGrille, trouNoirEn, cha
          deployerVaisseau, ramasser, getImgAster } from './entities.js';
 import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
 import { NFRAMES } from './sprites.js';
-import { logMsg, ouvrirBuild, finPartie, checkAchievements } from './ui.js';
+import { logMsg, ouvrirBuild, finPartie, checkAchievements, montrerToast } from './ui.js';
 import { gagnerCombat, serialiserCarte } from './map.js';
 
 /* dégâts d'un tir laser ennemi (aile ou boss) : augmente avec le secteur */
@@ -165,7 +165,7 @@ export function toucherBoss(deg,px,py){ if(!state.boss) return; state.boss.hp-=d
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
     state.secousse=18; state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null;
-    logMsg('BOSS DÉTRUIT !','log-ylw'); sonVoix('BOSS');
+    logMsg('BOSS DÉTRUIT !','log-ylw'); montrerToast('🏆 Forteresse détruite !','gold'); sonVoix('BOSS');
     checkAchievements();
   } }
 
@@ -196,7 +196,7 @@ export function declencheUltime(){
   if(state.boss){ state.boss.hp-=4; if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } }
   state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2));
   state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0; state.ultimeSeuil+=ULTIME_INCREMENT;
-  sonBoom(); sonVague(); logMsg('⚡ FRAPPE ORBITALE !','log-ylw'); checkAchievements();
+  sonBoom(); sonVague(); logMsg('⚡ FRAPPE ORBITALE !','log-ylw'); montrerToast('⚡ Frappe orbitale !','gold'); checkAchievements();
 }
 export function frapperAile(a,grand){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
   a.hp=(a.hp||1)-1;
