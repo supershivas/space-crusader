@@ -241,14 +241,19 @@ export function finDuTour(){
     if(champObstacleEn(a.c,a.r)==='gravite') steps=Math.min(steps,1);   // champ de gravité : ennemi ralenti
     for(let s=0;s<steps;s++){ if(!state.ailes.includes(a)) break; const nr=a.r+1;
       if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
+      // colonne visée (diagonale = rebond sur les bords)
       let nc=a.c;
-      if(a.dc){ nc=a.c+a.dc; if(nc<0||nc>=state.COLS){ a.dc=-a.dc; nc=a.c+a.dc; } }   // diagonal : rebond sur les bords
-      // une menace devant (colonne courante) OU sur la case cible arrête l'aile — pas de contournement latéral
-      const obl = obstacleBloquant(a.c,nr) || obstacleBloquant(nc,nr);
-      if(obl){ a.bloque=(a.bloque||0)+1;
-        if(a.bloque>=3){ const oi=state.obstacles.indexOf(obl); if(oi>=0) state.obstacles.splice(oi,1); exploser(obl.x,obl.y,false); sonBoom(); a.bloque=0; }   // anti-blocage : après 3 tours coincée, l'aile force le passage
-        break; }
-      a.bloque=0; a.r=nr; a.c=nc; const f=fighterEn(nc,nr); if(f){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); sonBoom(); break; } } }
+      if(a.dc){ nc=a.c+a.dc; if(nc<0||nc>=state.COLS){ a.dc=-a.dc; nc=a.c+a.dc; } }
+      // Face à une menace : l'aile la DÉTRUIT (si destructible) ou la CONTOURNE (colonne libre adjacente).
+      // Ordre des cases essayées : cible, tout droit, côtés — elle ne reste jamais coincée derrière.
+      const prefs = a.dc ? [nc, a.c, a.c-a.dc, a.c+a.dc] : [a.c, a.c+1, a.c-1];
+      let dest=null, aDetruire=null;
+      for(const cc of prefs){ if(cc<0||cc>=state.COLS) continue; const ob=obstacleBloquant(cc,nr);
+        if(!ob){ dest=cc; break; }
+        if(OBSTACLES[ob.type].destructible){ dest=cc; aDetruire=ob; break; } }
+      if(dest===null){ break; }   // entièrement muré (barrières) : s'arrête ce tour
+      if(aDetruire){ const oi=state.obstacles.indexOf(aDetruire); if(oi>=0) state.obstacles.splice(oi,1); exploser(aDetruire.x,aDetruire.y,false); sonBoom(); if(aDetruire.type==='mines'){ exploser(aDetruire.x,aDetruire.y,true); state.ailes.splice(state.ailes.indexOf(a),1); break; } }
+      a.r=nr; a.c=dest; const f=fighterEn(dest,nr); if(f){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); const m=blesser(f); exploser(f.x,f.y,false); if(m) tuerFighter(f); sonBoom(); break; } } }
   // Régénérateurs : se soignent après quelques tours ; Void : attire tes vaisseaux et bonus
   for(const a of state.ailes){ if(a.type==='regenerateur'){ a.regenTimer=(a.regenTimer||3)-1; if(a.regenTimer<=0){ if(a.hp<a.maxhp) a.hp++; a.regenTimer=3; } } }
   for(const v of [...state.ailes]){ if(v.type!=='void'||!state.ailes.includes(v)) continue;
