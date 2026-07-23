@@ -117,7 +117,7 @@ export function sauvegarderPartie(serialiserCarte){
     enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave,
     hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte,
     boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil,
-    fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,used:f.used,capUsed:f.capUsed||false})),
+    fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,used:f.used,capUsed:f.capUsed||false,kills:f.kills||0})),
     ailes: state.ailes.map(a=>({c:a.c,r:a.r,type:a.type,hp:a.hp,maxhp:a.maxhp,vitesse:a.vitesse})),
     asteroides: state.asteroides.map(o=>({c:o.c,r:o.r,dc:o.dc,dr:o.dr,type:o.type,hp:o.hp,maxhp:o.maxhp})),
     bonus: state.bonus.map(b=>({c:b.c,r:b.r,type:b.type,ttl:b.ttl})),

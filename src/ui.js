@@ -5,7 +5,7 @@
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage } from './state.js';
 import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
-         estProtege, imgVaisseau, ramasser, obstacleEn } from './entities.js';
+         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet } from './entities.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
@@ -55,7 +55,7 @@ export function addHighscore(){
    AMÉLIORATIONS / CONSTRUCTION / ÉVÉNEMENTS / MÉTA (fenêtres modales)
    ===================================================================== */
 export function ouvrirAmelioration(){
-  const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9));
+  const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
   if(dispo.length===0){ const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); return; }
   state.phase='amelioration';
   const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3);
@@ -66,7 +66,7 @@ export function ouvrirAmelioration(){
     b.onclick=()=>appliquerAmelioration(u.id); upgradeCards.appendChild(b); }
   upgradeDiv.classList.add('visible');
 }
-function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; upgradeDiv.classList.remove('visible'); sonAchievement(); logMsg('⬆ Amélioration acquise','log-grn'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
+function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); logMsg('⬆ Amélioration acquise','log-grn'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
 
 function apercuVaisseau(type){
   const src=imgVaisseau(type), box=52;
@@ -179,6 +179,7 @@ function updateTooltip(x,y){
     html+='<div class="tt-spd" style="color:#cbd6f0">'+info.role+'</div>';
     html+='<div class="tt-hp">PV: '+f.hp+'</div>';
     html+='<div class="tt-spd">Déplacement: '+porteeDep(f)+' case'+(porteeDep(f)>1?'s':'')+'</div>';
+    { const k=f.kills||0, grade=k>=15?'★ As':k>=10?'••• Vétéran':k>=5?'•• Confirmé':k>=1?'• Recrue':'Bleu'; html+='<div class="tt-spd" style="color:#ffe14d">Grade : '+grade+' ('+k+' kill'+(k>1?'s':'')+')</div>'; }
     const cap=CAPACITES[f.type];
     if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+cap.nom+' — '+(f.capUsed?'déjà utilisée':cap.desc+' (2e appui)')+'</div>';
   } else if(b){

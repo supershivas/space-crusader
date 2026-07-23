@@ -42,6 +42,7 @@ export function tirerCharge(f,cible){
   setTimeout(()=>{
     const col=state.ailes.filter(a=>a.c===cible.c||a.c===c2); let kills=0;
     for(const a of col){ if(frapperAile(a,true)) kills++; }
+    f.kills=(f.kills||0)+kills;
     state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
     if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw');
     sonBoom(); checkAchievements();
@@ -77,6 +78,20 @@ export function analyseTir(f){
       r1=rr;
     }
     beams.push({c,r0:start,r1,kind});
+  }
+  // Rétro-tir du Vaisseau Rouge : vise aussi les ennemis passés en dessous
+  if(f.type==='rouge' && state.ups && state.ups.rouge_back){
+    for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue; const start=f.r+1; if(start>state.RANGS-1) continue;
+      let kind='vide', r1=state.RANGS-1;
+      for(let rr=start; rr<=state.RANGS-1; rr++){
+        const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
+        const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
+        if(fighterEn(c,rr)){ kind='allie'; r1=rr; break; }
+        const as=asterEn(c,rr); if(as){ asteroidesOk.add(as); kind='ennemi'; r1=rr; break; }
+        r1=rr;
+      }
+      beams.push({c,r0:start,r1,kind});
+    }
   }
   return {ailesOk,obstaclesOk,asteroidesOk,boss:bossOk,beams,jam:false};
 }
@@ -160,15 +175,17 @@ export function tirer(f,aile){
   sonTir(); f.used=true; state.selection=null; state.tirsJoueurTotal++;
   const type=f.type, cible=aile;
   setTimeout(()=>{                          // l'explosion arrive APRÈS le laser
-    if(type==='rouge'){ const zone=state.ailes.filter(a=>Math.abs(a.c-cible.c)<=1&&Math.abs(a.r-cible.r)<=1); let kills=0;
+    if(type==='rouge'){ const rad=1+((state.ups&&state.ups.rouge_range)||0); const zone=state.ailes.filter(a=>Math.abs(a.c-cible.c)<=rad&&Math.abs(a.r-cible.r)<=rad); let kills=0;
       for(const a of zone){ if(frapperAile(a,true)) kills++; }
+      f.kills=(f.kills||0)+kills;
       state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
       if(kills>=3) logMsg(kills+' ENNEMIS ! 🔥','log-ylw'); }
     else if(type==='bombardier'){ const col=state.ailes.filter(a=>a.c===cible.c); let kills=0;
       for(const a of col){ if(frapperAile(a,true)) kills++; }
+      f.kills=(f.kills||0)+kills;
       state.secousse=Math.max(state.secousse,8); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
       if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw'); }
-    else if(state.ailes.includes(cible)){ if(frapperAile(cible,false)){ state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; } }
+    else if(state.ailes.includes(cible)){ if(frapperAile(cible,false)){ f.kills=(f.kills||0)+1; state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; } }
     sonBoom(); checkAchievements();
   }, 130);
 }

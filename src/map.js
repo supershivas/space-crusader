@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase, sauvegarderPartie } from './state.js';
 import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
-import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic } from './entities.js';
+import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
 import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements } from './ui.js';
@@ -51,8 +51,8 @@ function construireScene(type){
     {emo:'🔧',nom:'Réparation',desc:'+30% PV',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.30)); state.flashRecharge=1; sonRenfort(); logMsg('Réparé','log-grn'); }},
     {emo:'⚡',nom:'Recalibrage',desc:'+15% PV · +50% ultime',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Recalibré','log-grn'); }},
   ]}; }
-  if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9));
-    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({emo:u.emo,nom:u.nom,desc:u.desc,effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; logMsg('⬆ '+u.nom,'log-grn'); }}));
+  if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
+    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({emo:u.emo,nom:u.nom,desc:u.desc,effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+u.nom,'log-grn'); }}));
     if(!choix.length) choix.push({emo:'💰',nom:'Butin',desc:'+8 score',effet:()=>{ state.score+=8; }});
     return {kind:'tresor',titre:'CHAMBRE FORTE',suite,choix}; }
   if(type==='hangar'){ return {kind:'hangar',titre:'HANGAR ORBITAL',suite,choix:[
@@ -119,7 +119,7 @@ export function objectifReussi(){ const o=state.objectifVague; if(!o) return fal
        : o.type==='boss'      ? state.bossKilledThisWave : false; }
 
 /* ===== ÉVÉNEMENTS entre les vagues ===== */
-export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9)); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; logMsg('⬆ '+u.nom,'log-grn'); }
+export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge'))); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+u.nom,'log-grn'); }
 export const EVENEMENTS=[
  {titre:'MARCHAND', desc:'Un marchand échange une cache d\'armes contre un peu de coque.', choix:[
    {emo:'🛒', nom:'Acheter', desc:'-25% PV, +1 amélioration', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.75)); ameliorationAleatoire(); }},

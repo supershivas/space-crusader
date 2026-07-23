@@ -312,9 +312,16 @@ export function dessiner(t){
 
   // vaisseaux joueur
   for(const f of state.fighters){ if(f===state.selection){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=4; const cc=centreCase(f.c,f.r); ctx.strokeRect(cc.x-state.CELL/2+5,cc.y-state.CELL/2+5,state.CELL-10,state.CELL-10); }
+    // améliorations du Vaisseau Rouge : aura élargie (rouge_range) + réacteurs arrière (rouge_back)
+    if(f.type==='rouge'&&state.ups){ if(state.ups.rouge_range){ ctx.strokeStyle='rgba(229,72,77,'+(.25+.2*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,f.y,state.CELL*0.62,0,7); ctx.stroke(); }
+      if(state.ups.rouge_back){ ctx.fillStyle='#ff8a3d'; for(const dx of [-6,0,6]){ ctx.fillRect(Math.round(f.x+dx-1),Math.round(f.y+f.img.height/2+1),3,4); } } }
     ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y-f.img.height/2)); ctx.globalAlpha=1;
     if(f.type==='rouge'){ for(let i=0;i<f.hp;i++){ ctx.fillStyle='#ff5a5a'; ctx.fillRect(f.x-8+i*10,f.y-f.img.height/2-8,6,6); } }
     if(f.type==='bouclier'){ for(let i=0;i<f.hp;i++){ ctx.fillStyle='#4aa3ff'; ctx.fillRect(f.x-9+i*7,f.y-f.img.height/2-8,5,5); } }
+    // grade du vaisseau (kills) : 1-3 points jaunes puis étoile dorée à 15+
+    { const k=f.kills||0; if(k>=1){ const gy=Math.round(f.y-f.img.height/2-16);
+      if(k>=15){ ctx.fillStyle='#ffd23d'; ctx.beginPath(); for(let i=0;i<10;i++){ const ang=-Math.PI/2+i*Math.PI/5, rr=(i%2)?2.4:5.5, x=f.x+Math.cos(ang)*rr, y=gy+Math.sin(ang)*rr; i?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.closePath(); ctx.fill(); ctx.strokeStyle='#fff6c0'; ctx.lineWidth=1; ctx.stroke(); }
+      else { const n=k<5?1:k<10?2:3; ctx.fillStyle='#ffe14d'; for(let i=0;i<n;i++){ ctx.beginPath(); ctx.arc(f.x-(n-1)*3.5+i*7, gy, 2, 0, 7); ctx.fill(); } } } }
     // pastille de capacité active disponible
     if(CAPACITES[f.type] && !f.capUsed){ const bx=f.x+f.img.width/2-2, by=f.y-f.img.height/2-2;
       ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.beginPath(); ctx.arc(bx,by,4,0,7); ctx.fill();

@@ -19,6 +19,10 @@ export const UPGRADES=[
  {id:'tourelleDouble',emo:'⚡', nom:'Double tourelle',  desc:'+1 tir de tourelle / tour', max:2},
  {id:'bonusPlus',    emo:'🧲', nom:'Aimant à bonus',    desc:'Bonus plus fréquents', max:2},
  {id:'regen',        emo:'🔧', nom:'Auto-réparation',   desc:'+2% PV / tour', max:3},
+ // améliorations spécifiques au Vaisseau Rouge (proposées seulement s'il est en jeu)
+ {id:'rouge_pv',     emo:'❤',  nom:'Blindage rouge',    desc:'Vaisseau Rouge : +1 PV', max:2},
+ {id:'rouge_range',  emo:'💥', nom:'Onde de choc',      desc:'Vaisseau Rouge : zone de tir ±2', max:1},
+ {id:'rouge_back',   emo:'🔥', nom:'Rétro-tir',         desc:'Vaisseau Rouge : tire aussi vers l\'arrière', max:1},
 ];
 export const SHIPS=[
  {id:'normal',    emo:'🚀', nom:'Standard',    desc:'Prêt en 1 tour'},

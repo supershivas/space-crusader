@@ -30,8 +30,10 @@ export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:
 export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : imgJoueur; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
-  const hp = type==='rouge'?2 : type==='bouclier'?3 : 1;
-  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,img:imgVaisseau(type),capUsed:false,provoque:false}; }
+  const hp = type==='rouge'?(2+((state.ups&&state.ups.rouge_pv)||0)) : type==='bouclier'?3 : 1;
+  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0}; }
+/* effets spéciaux à l'acquisition d'une amélioration (ex : PV du Vaisseau Rouge) */
+export function appliquerAmeliorationEffet(id){ if(id==='rouge_pv'){ for(const f of state.fighters){ if(f.type==='rouge') f.hp+=1; } } }
 export function spread(n){ const out=[]; for(let i=0;i<n;i++) out.push(Math.max(0,Math.min(state.COLS-1,Math.round((i+0.5)*state.COLS/n-0.5)))); return [...new Set(out)]; }
 
 export function fighterEn(c,r){ return state.fighters.find(f=>f.c===c&&f.r===r); }
