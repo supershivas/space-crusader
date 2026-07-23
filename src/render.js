@@ -227,9 +227,9 @@ export function dessiner(t){
   if(state.selection){ const an=analyseTir(state.selection); const sx=state.selection.x, sy=state.selection.y;
     // faisceaux de visée : partent DU vaisseau vers la cible (diagonale pour une colonne latérale)
     ctx.save(); ctx.setLineDash([5,6]); ctx.lineWidth=2;
-    for(const bm of an.beams){ const cc=centreCase(bm.c,bm.r1);
+    for(const bm of an.beams){ if(bm.kind==='allie') continue;   // pas de ligne de tir entre alliés
+      const cc=centreCase(bm.c,bm.r1);
       const col = bm.kind==='ennemi' ? 'rgba(255,80,80,.6)'
-                : bm.kind==='allie'  ? 'rgba(150,160,180,.35)'   // gris = bloqué par un allié
                 : bm.kind==='menace' ? 'rgba(255,176,61,.5)'     // orange = bloqué par une menace
                 :                      'rgba(255,120,120,.16)';  // rouge pâle = voie libre
       ctx.strokeStyle=col; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(cc.x,cc.y); ctx.stroke(); }
@@ -239,6 +239,7 @@ export function dessiner(t){
     ctx.fillStyle=enBond?'rgba(255,210,61,.85)':'rgba(80,150,255,.85)'; for(const p of (enBond?casesMouvementCapacite(state.selection):casesMouvement(state.selection))){ const c2=centreCase(p.c,p.r); ctx.beginPath(); ctx.arc(c2.x,c2.y,7,0,7); ctx.fill(); }
     // cercle rouge UNIQUEMENT sur les ennemis réellement atteignables (ligne de mire dégagée)
     ctx.strokeStyle='#ff5a5a'; ctx.lineWidth=3; for(const a of an.ailesOk){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); }
+    if(an.mimicsOk) for(const m of an.mimicsOk){ ctx.beginPath(); ctx.arc(m.x,m.y,state.CELL*0.42,0,7); ctx.stroke(); }
     if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('BROUILLÉ',state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
   if(state.modeTourelle){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=3; for(const a of state.ailes){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); } if(state.boss){ ctx.strokeRect(state.GX+state.boss.c*state.CELL+4,state.GY+state.boss.r*state.CELL+4,3*state.CELL-8,2*state.CELL-8); } }
 
@@ -268,7 +269,8 @@ export function dessiner(t){
   }
 
   // bonus (le mimic se déguise en bonus jaune)
-  for(const b of state.bonus){ const img=b.type==='mimic'?getImgMimic():b.type==='pv'?imgBonusPV:b.type==='tir'?imgBonusTIR:imgBonusVAIS; ctx.globalAlpha=.9+.1*pulse; ctx.drawImage(img,Math.round(b.x-img.width/2),Math.round(b.y-img.height/2)); ctx.globalAlpha=1; }
+  for(const b of state.bonus){ const img=b.type==='mimic'?getImgMimic():b.type==='pv'?imgBonusPV:b.type==='tir'?imgBonusTIR:imgBonusVAIS; ctx.globalAlpha=.9+.1*pulse; ctx.drawImage(img,Math.round(b.x-img.width/2),Math.round(b.y-img.height/2)); ctx.globalAlpha=1;
+    if(b.type==='mimic'){ ctx.strokeStyle='rgba(255,60,80,'+(.35+.35*pulse)+')'; ctx.lineWidth=2; const s=state.CELL*0.42; ctx.strokeRect(Math.round(b.x-s),Math.round(b.y-s),Math.round(s*2),Math.round(s*2)); } }
 
   // ailes + barres de vie
   for(const a of state.ailes){

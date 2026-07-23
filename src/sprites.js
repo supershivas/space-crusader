@@ -72,10 +72,10 @@ export const MIMIC=["....y....",".y.yMy.y.","yMyMyMyMy","yMyyyyyMy","yMyMyMyMy",
 export const VOID=["....k....",".k.kkk.k.","kkkUUUkkk","kkUUUUUkk","kkkUUUkkk",".k.kUk.k.","..kUUUk..","..kUUUk..","..kUUUk..","..kUUUk..","...kUk...","...kUk...","...kUk...","....k....","....k...."];
 
 /* ---- OBSTACLES (Lot 1) ---- */
-export const DEBRIS_1=["..N..",".NNN.","NNmNN",".NNN.","..N.."];
-export const DEBRIS_2=[".N.N.","NNmNN",".NmN.","NNmNN",".N.N."];
-export const STATION_PIECE=["BBBBBBBBB","BBBBBBBBB","BB.....BB","BB..O..BB","BB.....BB","BBBBBBBBB","BBBBBBBBB"];
-export const BARRIERE=["CCCCCCCCC","CCCCCCCCC","CCCCCCCCC","CCCCCCCCC","CCCCCCCCC"];
+export const DEBRIS_1=[".nNNn.","NmWmmN","NmmmWn","nWmmmN","NmmWmN",".nNNn."];
+export const DEBRIS_2=["..NNn.",".NmWmN","NmWmmn","nmmWmN","NmWmN.","nNNn.."];
+export const STATION_PIECE=["bBBBBBBBb","BSWssWSB.","BsCiiCsBB","BSiOOOiSB","BsCiiCsB.","BSWssWSBb","bBB..BBb.",".b..bB..."];
+export const BARRIERE=["WDDDDDW","DCiCiCD","DiCiCiD","DCiCiCD","DiCiCiD","DCiCiCD","WDDDDDW"];
 
 /* ailes d'élite : porteur (doré, renforce) et brouilleur (violet, protège) */
 export const AILE_PORTEUR=["....e....",".e.eMe.e.","eMeMeMeMe","eMeeeeeMe","eMeMeMeMe",".e.eMe.e.","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","...eMe...","...eMe...","...eMe...","...eMe...","....e....","....e....","....e...."];

@@ -187,7 +187,7 @@ function updateTooltip(x,y){
       mini_sniper:{nom:'Traqueur',role:'Vise tes 2 vaisseaux les plus proches du croiseur.'},
       diagonal_d:{nom:'Intercepteur oblique',role:'Avance en diagonale, rebondit sur les bords.'},
       diagonal_g:{nom:'Intercepteur oblique',role:'Avance en diagonale, rebondit sur les bords.'},
-      void:{nom:'Faille',role:'Attire tes vaisseaux (sauf cuirassés) d\'une case.'},
+      void:{nom:'Faille',role:'Attire tes vaisseaux (sauf cuirassés). Avance lentement (1 case/2 tours).'},
     }[a.type]||{nom:'Aile',role:''};
     const deg=a.type==='eclaireur'?0:(a.type==='bombardier'?degLaserActuel()*2:degLaserActuel());
     html='<div class="tt-name">'+info.nom+'</div>';
@@ -214,9 +214,14 @@ function updateTooltip(x,y){
     const cap=CAPACITES[f.type];
     if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+cap.nom+' — '+(f.capUsed?'déjà utilisée':cap.desc+' (2e appui)')+'</div>';
   } else if(b){
-    const names={'pv':'Soin','tir':'Tir gratuit','vaisseau':'Renfort','mimic':'Renfort'};
-    html='<div class="tt-name">Bonus: '+(names[b.type]||'Renfort')+'</div>';
-    if(b.type!=='mimic') html+='<div class="tt-spd">Disparaît dans '+b.ttl+' tour'+(b.ttl>1?'s':'')+'</div>';
+    if(b.type==='mimic'){
+      html='<div class="tt-name" style="color:#ff8f92">⚠ Leurre</div>';
+      html+='<div class="tt-spd" style="color:#cbd6f0">Imite un renfort mais ne bouge pas : c\'est un piège. Tire dessus ou évite-le.</div>';
+    } else {
+      const names={'pv':'Soin','tir':'Tir gratuit','vaisseau':'Renfort'};
+      html='<div class="tt-name">Bonus: '+(names[b.type]||'Renfort')+'</div>';
+      html+='<div class="tt-spd">Disparaît dans '+b.ttl+' tour'+(b.ttl>1?'s':'')+'</div>';
+    }
   } else if(ast){
     const an={gros:'Gros astéroïde',essaim:'Essaim',diagonal:'Astéroïde oblique'}[ast.type]||'Astéroïde';
     html='<div class="tt-name">'+an+'</div>';
@@ -298,7 +303,7 @@ canvas.addEventListener('pointerdown', ev=>{
     if(kind==='bond'){
       if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvementCapacite(ship).some(p=>p.c===c&&p.r===r)){
         ship.c=c; ship.r=r; ship.capUsed=true; state.modeCapacite=null; state.deplacementsJoueurTotal++; sonTir(); logMsg('💨 Bond !','log-ylw');
-        const b=bonusEn(c,r); if(b) ramasser(b);
+        const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,ship); else ramasser(b); }
       } else { state.modeCapacite=null; state.selection=null; }
     } else if(kind==='charge'){
       const cible=aileEn(c,r); const an=analyseTir(ship);
@@ -316,6 +321,7 @@ canvas.addEventListener('pointerdown', ev=>{
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?'Vaisseau brouillé (champ magnétique)':'Tir bloqué / hors d’atteinte','log-red'); return; }
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
   const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
+  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
   if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return; }
   state.selection=null;
 });
