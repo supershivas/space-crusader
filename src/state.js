@@ -51,6 +51,9 @@ export const state = {
   // difficulté (préférence mémorisée + difficulté active de la partie en cours)
   difficultePreferee:'normal', difficulte:'normal',
 
+  // langue de l'interface ('fr' | 'en')
+  langue:'fr',
+
   // compteurs de session (utilisés par le tutoriel pour détecter les actions du joueur)
   tirsJoueurTotal:0, deplacementsJoueurTotal:0, toursJoueurTotal:0,
 };

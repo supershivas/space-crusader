@@ -12,6 +12,7 @@ import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil } from './ui.js';
 import { cuireFit, JOUEUR } from './sprites.js';
+import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
 
 /* ===== ÉTAT VIDE / NOUVELLE PARTIE / REPRISE ===== */
@@ -91,30 +92,54 @@ function boucle(t){ const dt=Math.min((t-dernier)/1000,.05); dernier=t;
    PLEIN ÉCRAN + DÉMARRAGE
    ===================================================================== */
 document.getElementById('btnMission').addEventListener('click',()=>{ document.getElementById('mission').classList.remove('visible'); const s=state.suiteMission; state.suiteMission=null; if(s) s(); });
-document.getElementById('btnJouer').addEventListener('click',()=>{
+
+/* ===== Choix de la difficulté (après « Jouer ») ===== */
+const EMO_DIFF={facile:'🙂',normal:'😐',difficile:'😈'};
+function ouvrirDifficulte(){
+  const cont=document.getElementById('difficulteCards'); cont.innerHTML='';
+  for(const id of ['facile','normal','difficile']){
+    const card=document.createElement('div'); card.className='card';
+    if(id===state.difficultePreferee) card.style.borderColor='#ffd23d';
+    card.innerHTML='<div class="emo">'+EMO_DIFF[id]+'</div><div class="nom">'+t('diff_'+id)+'</div><div class="desc">'+t('diff_'+id+'_d')+'</div>';
+    card.addEventListener('click',()=>demarrerAvecDifficulte(id));
+    cont.appendChild(card);
+  }
+  document.getElementById('difficulte').classList.add('visible');
+}
+function demarrerAvecDifficulte(diff){
+  document.getElementById('difficulte').classList.remove('visible');
   initAudio(); loadData(); effacerSauvegarde();
   const premiereFois=!tutorielVu();
-  state.difficulte = premiereFois ? 'facile' : state.difficultePreferee;
+  definirDifficultePreferee(diff);
   nouvellePartie();
   if(premiereFois) demarrerTuto();
-});
+}
+document.getElementById('btnJouer').addEventListener('click',()=>{ initAudio(); ouvrirDifficulte(); });
+document.getElementById('btnDiffAnnuler').addEventListener('click',()=>{ document.getElementById('difficulte').classList.remove('visible'); });
 document.getElementById('btnReprendre').addEventListener('click',()=>{ initAudio(); loadData(); reprendrePartie(); });
-document.getElementById('btnInfo').addEventListener('click',()=>{
+
+/* ===== Paramètres (menu) ===== */
+function ouvrirParams(){ document.getElementById('params').classList.add('visible'); }
+function ouvrirInfos(){
   const st=statsEquilibrage();
   document.getElementById('infoStats').textContent = st.total>0 ? '📊 Secteur moyen atteint : '+st.moyenneSecteur.toFixed(1)+' ('+st.total+' partie'+(st.total>1?'s':'')+')' : '';
   document.getElementById('info').classList.add('visible');
-});
+}
+document.getElementById('btnInfo').addEventListener('click',ouvrirParams);
+document.getElementById('btnParamsInfos').addEventListener('click',ouvrirInfos);
+document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); });
+document.getElementById('btnParamsFermer').addEventListener('click',()=>{ document.getElementById('params').classList.remove('visible'); });
 document.getElementById('btnFermerInfo').addEventListener('click',()=>{ document.getElementById('info').classList.remove('visible'); });
 document.getElementById('btnRelancerTuto').addEventListener('click',()=>{
-  document.getElementById('info').classList.remove('visible');
+  document.getElementById('info').classList.remove('visible'); document.getElementById('params').classList.remove('visible');
   initAudio(); loadData(); effacerSauvegarde();
-  state.difficulte='facile'; nouvellePartie(); relancerTuto();
+  definirDifficultePreferee('facile'); nouvellePartie(); relancerTuto();
 });
 
 /* ===== Menu pause ===== */
 document.getElementById('btnPauseReprendre').addEventListener('click',()=>{ if(state.paused) togglePause(); });
 document.getElementById('btnPauseRecommencer').addEventListener('click',()=>{ state.paused=false; document.getElementById('pause').classList.remove('visible'); initAudio(); nouvellePartie(); });
-document.getElementById('btnPauseOptions').addEventListener('click',()=>{ document.getElementById('info').classList.add('visible'); });
+document.getElementById('btnPauseOptions').addEventListener('click',ouvrirParams);
 document.getElementById('btnPauseAccueil').addEventListener('click',()=>{ retourAccueil(); });
 document.getElementById('pauseBtn').addEventListener('click',()=>{ if(state.phase!=='accueil'&&state.phase!=='fin'&&state.phase!=='attente') togglePause(); });
 
@@ -122,16 +147,6 @@ document.getElementById('btnRejouer').addEventListener('click',()=>{ initAudio()
 document.getElementById('btnMeta').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnMeta2').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnFermerMeta').addEventListener('click',()=>{ document.getElementById('meta').classList.remove('visible'); });
-
-/* ===== Sélecteur de difficulté (accueil) ===== */
-function rafraichirBoutonsDifficulte(){
-  document.querySelectorAll('.diff-btn').forEach(b=>{ b.classList.toggle('diff-actif', b.dataset.diff===state.difficultePreferee); });
-  const lbl=document.getElementById('diffLabel');
-  if(lbl) lbl.textContent='Niveau : '+DIFFICULTES[state.difficultePreferee].label;
-}
-document.querySelectorAll('.diff-btn').forEach(b=>{
-  b.addEventListener('click',()=>{ definirDifficultePreferee(b.dataset.diff); rafraichirBoutonsDifficulte(); });
-});
 
 /* ===== Favicon généré depuis le sprite du vaisseau (pixel-art) ===== */
 function genererFavicon(){
@@ -145,9 +160,9 @@ function genererFavicon(){
   }catch(e){}
 }
 
-loadData(); chargerDifficultePreferee(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
+loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
 genererFavicon();
-rafraichirBoutonsDifficulte();
+appliquerLangue();
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Premier lancement : afficher l'écran d'aide (INFOS) une seule fois
 try{ if(!localStorage.getItem('dc_firstLaunch')){ document.getElementById('info').classList.add('visible'); localStorage.setItem('dc_firstLaunch','1'); } }catch(e){}
