@@ -31,7 +31,7 @@ export const AILE=[
 ];
 export const CHASSEUR=[
 "....W....",
-".W.WyW.W.","WyWyWyWyW","WyWWWWWwW","WyWyWyWyW",
+".W.WyW.W.","WyWyWyWyW","WyWWWWWyW","WyWyWyWyW",
 ".W.WyW.W.","..WyWyW..","..WyWyW..","..WyWyW..",
 "...WyW...","...WyW...","...WyW...",
 "....W....","....y...."
@@ -39,10 +39,10 @@ export const CHASSEUR=[
 export const BOMBARDIER=[
 ".....W.....",
 ".W..WwW..W.","WwWWWWWWWwW","WwWWWWWWWwW","WwWWWWWWWwW",
-"WwWWWWWWWwW","WwWWWWWWWwW","WwWWCCWWWwW","WwWWWCWWWwW",
-".W.WWCW.W.","..WWWCWW..","..WWWCWW..","..WWWCWW..",
-"...WWCW...","...WWCW...","...WWCW...",
-"....WCW...","....WCW...","....WWW...","....WQW..."
+"WwWWWWWWWwW","WwWWWWWWWwW","WwWWCCCWWwW","WwWWWCWWWwW",
+".W.WWCWW.W.","..WWWCWWW..","..WWWCWWW..","..WWWCWWW..",
+"...WWCWW...","...WWCWW...","...WWCWW...",
+"....WCW....","....WCW....","....WWW....","....WQW...."
 ];
 export const ECLAIREUR=[
 "....W....",
@@ -66,10 +66,16 @@ export const STRONGHOLD=["...BBBBBBBBB...","..BBBBBBBBBBB..",".BBBBBBBBBBBBB.","
 export const MINI_NAVETTE=["..B..",".BBB.","BBRBB",".BBB.","..B.."];
 export const REGENERATEUR=["....G....",".G.GwG.G.","GwGwGwGwG","GwWWWWWwG","GwWwWwWwG",".G.WwW.G.","..GwWwG..","..GvWvG..","..GvWvG..","..GvWvG..","...vWv...","...vWv...","...vWv...","....W....","....W...."];
 export const MINI_SNIPER=["....W....",".W.WyW.W.","WyWyWyWyW","WyWWWWWwW","WyWyWyWyW",".W.WyW.W.","..WyWyW..","..WyWyW..","..WyWyW..","..WyWyW..","...WyW...","...WyW...","...WyW...","....W....","....W...."];
-export const DIAGONAL_D=["....W....",".W.WwW...","WwWwWwW..","WwWWWWW..","WwWwWwW..",".W.WwW...","..WwWwW..","..WwWwW..","..WwWwW..","..WwWwW..","...WwW...","...WwW...","...WwW...","....W....","....W...."];
-export const DIAGONAL_G=["....W....","...WwW.W.","..WwWwWwW","..WWWWWwW","..WwWwWwW","...WwW.W.","..WwWwW..","..WwWwW..","..WwWwW..","..WwWwW..","...WwW...","...WwW...","...WwW...","....W....","....W...."];
+export const DIAGONAL_D=["....W....",".W.WAW.W.","WAWAWAWAW","WAWWWWWAW","WAWAWAWAW",".W.WAW.W.","..WAWAW..","..WAWAW..","..WAWAW..","..WAWAW..","...WAW...","...WAW...","...WAW...","....W....","....A...."];
+export const DIAGONAL_G=["....W....",".W.WHW.W.","WHWHWHWHW","WHWWWWWHW","WHWHWHWHW",".W.WHW.W.","..WHWHW..","..WHWHW..","..WHWHW..","..WHWHW..","...WHW...","...WHW...","...WHW...","....W....","....H...."];
 export const MIMIC=["....y....",".y.yMy.y.","yMyMyMyMy","yMyyyyyMy","yMyMyMyMy",".y.yMy.y.","..yMyMy..","..yMyMy..","..yMyMy..","..yMyMy..","...yMy...","...yMy...","...yMy...","....y....","....y...."];
 export const VOID=["....k....",".k.kkk.k.","kkkUUUkkk","kkUUUUUkk","kkkUUUkkk",".k.kUk.k.","..kUUUk..","..kUUUk..","..kUUUk..","..kUUUk..","...kUk...","...kUk...","...kUk...","....k....","....k...."];
+/* ennemi SABOTEUR : décharge électrique, gèle un allié 1 tour */
+export const SABOTEUR=["....W....",".W.WCW.W.","WCWCWCWCW","WCWWWWWCW","WCWCWCWCW",".W.WCW.W.","..WCWCW..","..WCWCW..","..WCWCW..","...WCW...","...WCW...","...WCW...","....W....","....C...."];
+/* ennemi BRÛLEUR : tir incendiaire, brûle le croiseur (1 PV/tour) */
+export const BRULEUR=["....W....",".W.WEW.W.","WEWEWEWEW","WEWWWWWEW","WEWEWEWEW",".W.WEW.W.","..WEWEW..","..WEWEW..","..WEWEW..","...WEW...","...WEW...","...WEW...","....W....","....E...."];
+/* élite TITAN : variante dorée de l'aile blindée, encore plus de PV */
+export const TITAN=[".ZZ...ZZ.","ZZZZ.ZZZZ","ZZsSSSsZZ","ZsSSeSSsZ","ZsSeMeSsZ","ZsSeMeSsZ","ZsSSeSSsZ","ZZsSSSsZZ",".ZZSSSZZ.","..ZSSSZ..","..ZSeSZ..","...ZeZ...","...ZeZ...","....e...."];
 
 /* ---- OBSTACLES (Lot 1) ---- */
 export const DEBRIS_1=[".nNNn.","NmWmmN","NmmmWn","nWmmmN","NmmWmN",".nNNn."];
@@ -83,9 +89,17 @@ export const AILE_BROUILLEUR=["....U....",".U.UuU.U.","UuUuUuUuU","UuUUUUUuU","U
 export const BOSS_CANON=["..XXXXXXXXXXX..",".XXXXXXXXXXXXX.","XXXXggqqqggXXXX","XXXXgqqqqqgXXXX","XXXXXXXXXXXXXXX","XXXXXXXXXXXXXXX",".XX.XXXXXXX.XX.",".yy.XXXXXXX.yy.",".yy.........yy."];
 export const BOSS_SNIPER=[".....uUu.....",".....uUu.....","...uuUUUuu...","..uUUUUUUUu..",".uUUUqqqUUUu.","uUUUUqQqUUUUu","uUUUUUUUUUUUu",".uUU.....UUu.","..u.......u.."];
 export const BOSS_RAYON=["...cccCccc...","..ccCCCCCcc..",".ccCCCCCCCcc.","ccCCCqqqCCCcc","ccCCqqQqqCCcc","ccCCCqqqCCCcc",".ccCCCCCCCcc.","..cc.CCC.cc..","...c..C..c..."];
-export const BOSS_NUEE=[".JJJJJJJJJJJ.","JJJJJJJJJJJJJ","JkkJJkkJJkkJJ","JkkJJkkJJkkJJ","JJJJJJJJJJJJJ","JJJqJJqJJqJJJ",".JJJJJJJJJJJ.","..JJJJJJJJJ..","...JJJJJJJ..."];
-export const BOSS_BLINDE=["ZZZZZZZZZZZZZ","ZkZZkZZkZZkZZ","ZZZZZZZZZZZZZ","ZZzzzZqZzzzZZ","ZZzzzqQqzzzZZ","ZZZZZZZZZZZZZ","ZkZZkZZkZZkZZ","ZZZZZZZZZZZZZ",".ZZZZZZZZZZZ."];
-export const BOSS_GRIDS={canon:BOSS_CANON,sniper:BOSS_SNIPER,rayon:BOSS_RAYON,nuee:BOSS_NUEE,blinde:BOSS_BLINDE};
+export const BOSS_NUEE=[".JJJJJJJJJJJ.","JJJJJJJJJJJJJ","JkkJJkkkJJkkJ","JkkJJkkkJJkkJ","JJJJJJJJJJJJJ","JJJqJJqJJqJJJ",".JJJJJJJJJJJ.","..JJJJJJJJJ..","...JJJJJJJ..."];
+export const BOSS_BLINDE=["ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ","ZZzzzZqZzzzZZ","ZZzzzqQqzzzZZ","ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ",".ZZZZZZZZZZZ."];
+/* ---- NOUVEAUX BOSS ---- */
+export const BOSS_FEU=["..EEEEEEEEEEE..",".EEEEEEEEEEEEE.","EEEEQQMMMQQEEEE","EEEEQMMMMMQEEEE","EEEEEEEEEEEEEEE","EEEEEEEEEEEEEEE",".EE.EEEEEEE.EE.",".oo.EEEEEEE.oo.",".oo.........oo."];
+export const BOSS_ELECTRIQUE=[".....ACA.....",".....ACA.....","...AACCCAA...","..ACCCCCCCCA..",".ACCCWWWCCCA.","ACCCCWWWCCCCA","ACCCCCCCCCCCA",".ACC.....CCA.","..A.......A.."];
+export const BOSS_NID=[".nnnnnnnnnnn.","nnnnnnnnnnnnn","nmmnnmmmnnmmn","nmmnnmmmnnmmn","nnnnnnnnnnnnn","nnnVnnVnnVnnn",".nnnnnnnnnnn.","..nnnnnnnnn..","...nnnnnnn..."];
+export const BOSS_MIROIR=["...iiiIiii...","..iiIIIIIii..",".iiIIIIIIIii.","iiIIIWWWIIIii","iiIIWWWWWIIii","iiIIIWWWIIIii",".iiIIIIIIIii.","..ii.III.ii..","...i..I..i..."];
+export const BOSS_FORGE=["ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ","ZZzzzZoZzzzZZ","ZZzzzoMozzzZZ","ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ",".ZZZZZZZZZZZ."];
+export const BOSS_ECLIPSE=[".....kuk.....",".....kuk.....","...kkuuukk...","..kuuuuuuuuk..",".kuuuUUUuuuk.","kuuuuUUUuuuuk","kuuuuuuuuuuuk",".kuu.....uuk.","..k.......k.."];
+export const BOSS_GRIDS={canon:BOSS_CANON,sniper:BOSS_SNIPER,rayon:BOSS_RAYON,nuee:BOSS_NUEE,blinde:BOSS_BLINDE,
+ feu:BOSS_FEU,electrique:BOSS_ELECTRIQUE,nid:BOSS_NID,miroir:BOSS_MIROIR,forge:BOSS_FORGE,eclipse:BOSS_ECLIPSE};
 
 export function cuire(grille,echelle){ const w=grille[0].length,h=grille.length,off=document.createElement('canvas'); off.width=w*echelle; off.height=h*echelle;
   const c=off.getContext('2d'); for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const col=PAL[grille[y][x]]; if(!col) continue; c.fillStyle=col; c.fillRect(x*echelle,y*echelle,echelle,echelle); } return off; }

@@ -55,6 +55,7 @@ export function cibleLaser(a){ if(a.type==='eclaireur'||a.type==='void'||a.r<0) 
     const cibles=[...state.fighters].sort((x,y)=>(y.r-x.r)||(Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))).slice(0,2);
     return cibles.length?{type:'multi',targets:cibles}:{type:'croiseur'}; }
   if(a.type==='bombardier'){ for(let rr=a.r+1;rr<state.RANGS;rr++){ if(obstacleBloquant(a.c,rr)) return null; } return {type:'croiseur',bomber:true}; }
+  if(a.type==='bruleur'){ for(let rr=a.r+1;rr<state.RANGS;rr++){ if(obstacleBloquant(a.c,rr)) return null; } return {type:'croiseur',feu:true}; }   // le brûleur lobe son tir incendiaire directement sur le croiseur
   const taunt=state.fighters.find(f=>f.provoque&&Math.abs(f.c-a.c)<=1);   // provocation du cuirassé
   if(taunt) return {type:'fighter',f:taunt};
   for(let rr=a.r+1;rr<state.RANGS;rr++){ if(obstacleBloquant(a.c,rr)) return null; const f=fighterEn(a.c,rr); if(f) return {type:'fighter',f}; } return {type:'croiseur'}; }
@@ -145,14 +146,17 @@ export function materialiserMenaces(){
   state.menacesWarn=[];
 }
 
-export function demarrerTourJoueur(){ state.phase='joueur'; for(const f of state.fighters){ f.used=false; f.provoque=false; } state.actionFaite=false; state.modeTourelle=false; state.modeCapacite=null; state.tirsGratuits=state.ups.tourelleDouble; for(const a of state.ailes) a.bouclier=!estElite(a)&&porteurAura(a); setMusicPhase('calme'); sauvegarderPartie(serialiserCarte); }
+export function demarrerTourJoueur(){ state.phase='joueur';
+  for(const f of state.fighters){ if(f.gele>0){ f.gele--; f.used=true; } else f.used=false; f.provoque=false; }
+  state.actionFaite=false; state.modeTourelle=false; state.modeCapacite=null; state.tirsGratuits=state.ups.tourelleDouble; for(const a of state.ailes) a.bouclier=!estElite(a)&&porteurAura(a); setMusicPhase('calme'); sauvegarderPartie(serialiserCarte); }
 
 /* actions du croiseur */
 export function choisirAction(id){
   if(id==='tourelle'){ if(state.actionFaite&&state.tirsGratuits<=0) return; state.modeTourelle=!state.modeTourelle; state.selection=null; return; }
   if(state.actionFaite) return;
   if(id==='vaisseau'){ if(!state.hangar&&state.fighters.length<state.MAX_VAISSEAUX){ ouvrirBuild(); } }
-  else if(id==='bouclier'){ if(state.boucliersRestants<=0) return; const soin=Math.round(state.RECHARGE*(1+0.25*state.ups.bouclier)); state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+soin); state.boucliersRestants--; state.actionFaite=true; state.modeTourelle=false; state.flashRecharge=1; sonRenfort(); logMsg('Bouclier +'+soin+' ('+state.boucliersRestants+' restante'+(state.boucliersRestants>1?'s':'')+')','log-grn'); }
+  else if(id==='bouclier'){ if(state.boucliersRestants<=0) return; const soin=Math.round(state.RECHARGE*(1+0.25*state.ups.bouclier)); state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+soin); state.boucliersRestants--; state.actionFaite=true; state.modeTourelle=false; state.flashRecharge=1;
+    const eteint=state.enFeu>0; state.enFeu=0; sonRenfort(); logMsg('Bouclier +'+soin+(eteint?' · 🔥 éteint':'')+' ('+state.boucliersRestants+' restante'+(state.boucliersRestants>1?'s':'')+')','log-grn'); }
 }
 export function tirerTourelle(a){
   state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:a.x,y2:a.y,t:0,ennemi:false,gros:true});
@@ -162,7 +166,9 @@ export function tirerTourelle(a){
   setTimeout(()=>{ if(state.ailes.includes(cible)){ exploser(cible.x,cible.y,true); tuerAile(cible); state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; sonBoom(); checkAchievements(); } }, 120);
 }
 export function finirTourelle(){ if(state.actionFaite&&state.tirsGratuits>0) state.tirsGratuits--; else state.actionFaite=true; state.modeTourelle=false; }
-export function toucherBoss(deg,px,py){ if(!state.boss) return; state.boss.hp-=deg; exploser(px,py,false); sonBoom();
+export function toucherBoss(deg,px,py){ if(!state.boss) return;
+  if(state.boss.type==='miroir'){ const reflet=Math.max(1,Math.round(deg*0.25)); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-reflet)); state.damageThisWave+=reflet; state.flashCroiseur=1; sonAie(); logMsg('🪞 Reflet ! -'+reflet+' PV','log-red'); }
+  state.boss.hp-=deg; exploser(px,py,false); sonBoom();
   if(state.boss.hp<=0){
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
@@ -227,9 +233,12 @@ export function finDuTour(){
   for(const {a,cb} of tirs){
     if(cb.type==='multi'){ for(const f of cb.targets){ if(state.fighters.includes(f)){ laserAile(a,f.x,f.y); const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } } continue; }
     const tx=cb.type==='fighter'?cb.f.x:a.x, ty=cb.type==='fighter'?cb.f.y:(state.GRID_BAS+10);
-    if(a.type==='bombardier'){ state.lasers.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); state.trails.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); }
+    if(a.type==='bombardier'||a.type==='bruleur'){ state.lasers.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); state.trails.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); }
     else { laserAile(a,tx,ty); }
-    if(cb.type==='fighter'){ const f=cb.f; if(state.fighters.includes(f)){ const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } }
+    if(cb.type==='fighter'){ const f=cb.f; if(state.fighters.includes(f)){
+        if(a.type==='saboteur'){ f.gele=1; f.used=true; exploser(f.x,f.y,false); logMsg('⚡ Vaisseau gelé !','log-ylw'); }
+        else { const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } } }
+    else if(cb.feu){ state.enFeu=Math.min(6,(state.enFeu||0)+3); exploser(a.x,ty,false); logMsg('🔥 Incendie à bord !','log-red'); }
     else { const dl=degLaserActuel(); degats+=cb.bomber?dl*2:dl; } }
   if(state.boss){ degats+=tirsBoss(); }
   if(tirs.length||state.boss) sonTirEnnemi();
@@ -313,6 +322,20 @@ export function finDuTour(){
   if(state.tourCompteur>=state.prochainAsteroide){ programmerMenace(); const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal; state.prochainAsteroide=state.tourCompteur+Math.max(1,3+Math.floor(Math.random()*2)+d.menaceDelta); }
   if(state.ups.regen>0) state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.02*state.ups.regen));
 
+  // (6b) INCENDIE (brûleur) : 1 PV/tour jusqu'à extinction (dure quelques tours, ou soignée via BOUCLIER)
+  if(state.enFeu>0){ state.enFeu--; state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-1)); state.damageThisWave+=1; state.flashCroiseur=1; logMsg('🔥 -1 PV (incendie)','log-red'); }
+
+  // (6c) BOSS FORGE : se répare, ainsi que les ailes proches
+  if(state.boss&&state.boss.type==='forge'){
+    if(state.boss.hp<state.boss.maxhp) state.boss.hp=Math.min(state.boss.maxhp,state.boss.hp+1);
+    for(const a of state.ailes){ if(a.hp<a.maxhp&&Math.abs(a.c-(state.boss.c+1))<=2&&Math.abs(a.r-state.boss.r)<=3) a.hp++; }
+  }
+  // (6d) BOSS ÉCLIPSE : invoque un trou noir temporaire tous les 3 tours
+  if(state.boss&&state.boss.type==='eclipse'&&state.tourCompteur%3===0){
+    const c=Math.max(1,Math.min(state.COLS-2,state.boss.c+1)), r=2+Math.floor(Math.random()*Math.max(1,state.RANGS-4));
+    const p=centreCase(c,r); state.trousNoirs.push({c,r,turns:2,x:p.x,y:p.y,ang:0}); logMsg('🕳 Le boss ouvre une faille !','log-red');
+  }
+
   // (7) défaite ?
   if(state.hpCruiser<=0){ finPartie(); return; }
 }
@@ -334,6 +357,21 @@ export function tirsBoss(){
   } else if(state.boss.type==='nuee'){          // porte-vaisseaux : lâche des ailes + 1 colonne
     for(let n=0;n<2;n++){ const cc=state.boss.c+Math.floor(Math.random()*3), rr=Math.min(state.RANGS-1,state.boss.r+2);
       if(!aileEn(cc,rr)&&state.ailes.length<state.AILES_MAX) faireAile(cc,rr,Math.random()<0.5?'chasseur':'normal'); }
+    tirColonne(state.boss.c+1);
+  } else if(state.boss.type==='feu'){          // canonnier incendiaire : 3 colonnes, embrase le croiseur au lieu de dégâts francs
+    for(let dc=0;dc<3;dc++){ const bc=state.boss.c+dc; if(bc<0||bc>=state.COLS) continue;
+      let hf=null; for(let rr=state.boss.r+2;rr<state.RANGS;rr++){ const f=fighterEn(bc,rr); if(f){hf=f;break;} }
+      const fx=centreCase(bc,state.boss.r).x, fy=state.boss.y;
+      if(hf){ state.lasers.push({x1:fx,y1:fy,x2:hf.x,y2:hf.y,t:0,ennemi:true,gros:true}); if(state.fighters.includes(hf)){ const m=blesser(hf); exploser(hf.x,hf.y,false); if(m) tuerFighter(hf); } }
+      else { state.enFeu=Math.min(6,(state.enFeu||0)+2); state.lasers.push({x1:fx,y1:fy,x2:fx,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); } }
+  } else if(state.boss.type==='electrique'){   // décharge : gèle les 2 vaisseaux les plus proches au lieu de les blesser
+    const cibles=[...state.fighters].sort((a,b)=>Math.hypot(a.x-state.boss.x,a.y-state.boss.y)-Math.hypot(b.x-state.boss.x,b.y-state.boss.y)).slice(0,2);
+    if(cibles.length===0){ deg+=degLaserActuel(); state.lasers.push({x1:state.boss.x,y1:state.boss.y,x2:state.boss.x,y2:state.GRID_BAS+10,t:0,ennemi:true,gros:true}); }
+    for(const f of cibles){ state.lasers.push({x1:state.boss.x,y1:state.boss.y,x2:f.x,y2:f.y,t:0,ennemi:true,gros:true}); f.gele=1; f.used=true; }
+    if(cibles.length) logMsg('⚡ Vaisseaux gelés !','log-ylw');
+  } else if(state.boss.type==='nid'){          // mère-nid : fait naître des mini-navettes en continu + tire 1 colonne
+    for(let n=0;n<2;n++){ const cc=state.boss.c+Math.floor(Math.random()*3), rr=Math.min(state.RANGS-1,state.boss.r+2);
+      if(!aileEn(cc,rr)&&state.ailes.length<state.AILES_MAX) faireAile(cc,rr,'mini_navette'); }
     tirColonne(state.boss.c+1);
   } else if(state.boss.type==='blinde'){        // forteresse : gros tir central lourd
     const bc=state.boss.c+1; let hf=null; for(let rr=state.boss.r+2;rr<state.RANGS;rr++){ const f=fighterEn(bc,rr); if(f){hf=f;break;} }

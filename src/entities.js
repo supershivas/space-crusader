@@ -7,7 +7,8 @@ import { DIFFICULTES, OBSTACLES } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE,
-         STRONGHOLD, MINI_NAVETTE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID } from './sprites.js';
+         STRONGHOLD, MINI_NAVETTE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
+         SABOTEUR, BRULEUR, TITAN } from './sprites.js';
 import { sonRenfort } from './audio.js';
 import { logMsg } from './ui.js';
 
@@ -15,6 +16,7 @@ import { logMsg } from './ui.js';
 let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgPorteur,imgBrouilleur,imgLourd;
 let imgDebris1,imgDebris2,imgStation,imgBarriere;
 let imgStronghold,imgMiniNavette,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
+let imgSaboteur,imgBruleur,imgTitan;
 export function cuireUnites(CELL){
   imgJoueur=cuireFit(JOUEUR,CELL); imgRouge=cuireFit(ROUGE,CELL); imgAile=cuireFit(AILE,CELL); imgAster=cuireFit(ASTER,CELL);
   imgChasseur=cuireFit(CHASSEUR,CELL); imgBomber=cuireFit(BOMBARDIER,CELL); imgEclaireur=cuireFit(ECLAIREUR,CELL);
@@ -23,17 +25,18 @@ export function cuireUnites(CELL){
   imgDebris1=cuireFit(DEBRIS_1,CELL); imgDebris2=cuireFit(DEBRIS_2,CELL); imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
   imgStronghold=cuireFit(STRONGHOLD,CELL); imgMiniNavette=cuireFit(MINI_NAVETTE,CELL); imgRegen=cuireFit(REGENERATEUR,CELL); imgMiniSniper=cuireFit(MINI_SNIPER,CELL);
   imgDiagD=cuireFit(DIAGONAL_D,CELL); imgDiagG=cuireFit(DIAGONAL_G,CELL); imgMimic=cuireFit(MIMIC,CELL); imgVoid=cuireFit(VOID,CELL);
+  imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL);
 }
-function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:imgAile; }
+function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:imgAile; }
 export function getImgMimic(){ return imgMimic; }
 export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : null; }
 export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : imgJoueur; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   const hp = type==='rouge'?(2+((state.ups&&state.ups.rouge_pv)||0)) : type==='bouclier'?3 : 1;
-  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0}; }
+  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0}; }
 /* effets spéciaux à l'acquisition d'une amélioration (ex : PV du Vaisseau Rouge) */
-export function appliquerAmeliorationEffet(id){ if(id==='rouge_pv'){ for(const f of state.fighters){ if(f.type==='rouge') f.hp+=1; } } }
+export function appliquerAmeliorationEffet(id){ if(id==='rouge_pv'){ for(const f of state.fighters){ if(f.type==='rouge'){ f.hp+=1; f.maxhp=(f.maxhp||f.hp-1)+1; } } } }
 export function spread(n){ const out=[]; for(let i=0;i<n;i++) out.push(Math.max(0,Math.min(state.COLS-1,Math.round((i+0.5)*state.COLS/n-0.5)))); return [...new Set(out)]; }
 
 export function fighterEn(c,r){ return state.fighters.find(f=>f.c===c&&f.r===r); }
@@ -51,7 +54,7 @@ export function champEn(c){ return state.champs.some(ch=>c>=ch.c0&&c<=ch.c1); }
 
 export function tuerFighter(f){ if(state.fighters.includes(f)){ state.fighters.splice(state.fighters.indexOf(f),1); state.shipsLostThisWave++; } }
 
-export function estElite(a){ return a.type==='porteur'||a.type==='brouilleur'; }
+export function estElite(a){ return a.type==='porteur'||a.type==='brouilleur'||a.type==='titan'; }
 export function porteurAura(a){ return state.ailes.some(p=>p.type==='porteur'&&p!==a&&Math.abs(p.c-a.c)<=1&&Math.abs(p.r-a.r)<=1); }
 export function brouilleurAura(a){ return state.ailes.some(p=>p.type==='brouilleur'&&p!==a&&Math.abs(p.c-a.c)<=1&&Math.abs(p.r-a.r)<=1); }
 export function estProtege(a){ return !estElite(a)&&brouilleurAura(a); }
@@ -63,17 +66,20 @@ export function typeAile(){
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   if(state.vague>=Math.max(1,2+d.eliteVagueDelta) && Math.random()<0.06*d.eliteProbMult) return 'porteur';
   if(state.vague>=Math.max(1,3+d.eliteVagueDelta) && Math.random()<0.05*d.eliteProbMult) return 'brouilleur';
+  if(state.vague>=Math.max(1,5+d.eliteVagueDelta) && Math.random()<0.035*d.eliteProbMult) return 'titan'; // élite blindée : encore plus de PV
   if(state.vague>=4 && Math.random()<0.05) return 'stronghold';   // forteresse (3 PV, se scinde)
   if(state.vague>=3 && Math.random()<0.06) return 'regenerateur'; // se régénère
   if(state.vague>=3 && Math.random()<0.06) return 'mini_sniper';  // vise l'arrière-garde
   if(state.vague>=2 && Math.random()<0.07) return Math.random()<0.5?'diagonal_d':'diagonal_g'; // trajectoire en diagonale
   if(state.vague>=4 && Math.random()<0.04) return 'void';         // attire tes vaisseaux
   if(state.vague>=3 && Math.random()<0.10) return 'lourd';   // aile blindée à partir de la vague 3
+  if(state.vague>=2 && Math.random()<0.06) return 'saboteur'; // décharge électrique : gèle un allié 1 tour
+  if(state.vague>=2 && Math.random()<0.06) return 'bruleur';  // tir incendiaire : brûle le croiseur (1 PV/tour)
   const r=Math.random(); return r<0.55?'normal':r<0.72?'chasseur':r<0.87?'eclaireur':'bombardier'; }
 export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal';
   const img=imgAilePourType(type);
   const vitesse=type==='void'?0:(type==='chasseur'||type==='eclaireur')?2:1;   // la faille (void) est immobile mais attire
-  const hp=type==='stronghold'?3:type==='lourd'?3:(type==='bombardier'||type==='porteur'||type==='brouilleur'||type==='regenerateur')?2:1;
+  const hp=type==='titan'?5:type==='stronghold'?3:type==='lourd'?3:(type==='bombardier'||type==='porteur'||type==='brouilleur'||type==='regenerateur')?2:1;
   const a={c,r,x:p.x,y:p.y-state.CELL,img,type,vitesse,hp,maxhp:hp};
   if(type==='regenerateur') a.regenTimer=3;
   if(type==='diagonal_d') a.dc=1; if(type==='diagonal_g') a.dc=-1;
@@ -132,7 +138,11 @@ export function genererObstacles(){
   }
 }
 export function spawnBoss(){ const c=Math.max(0,Math.min(state.COLS-3,Math.round((state.COLS-3)/2))); const p=centreCase(c+1,0);
-  const pool = state.bossVaincus>=3 ? ['canon','sniper','rayon','nuee','blinde'] : ['canon','sniper','rayon'];
+  const pool = state.bossVaincus>=6 ? ['canon','sniper','rayon','nuee','blinde','feu','electrique','nid','miroir','forge','eclipse']
+             : state.bossVaincus>=3 ? ['canon','sniper','rayon','nuee','blinde','feu','electrique']
+             : ['canon','sniper','rayon'];
   const type=pool[Math.floor(Math.random()*pool.length)];
-  let hp=6+Math.floor(state.vague/3); if(type==='rayon') hp+=3; if(type==='blinde') hp+=6;
+  let hp=6+Math.floor(state.vague/3);
+  if(type==='rayon') hp+=3; if(type==='blinde') hp+=6; if(type==='feu') hp+=3; if(type==='electrique') hp+=3;
+  if(type==='nid') hp+=2; if(type==='miroir') hp+=4; if(type==='forge') hp+=5; if(type==='eclipse') hp+=4;
   state.boss={c,r:0,w:3,h:2,hp,maxhp:hp,x:p.x,y:p.y+state.CELL/2-state.CELL,type,charge:false}; }

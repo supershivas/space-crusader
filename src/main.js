@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase, loadData, sauvegardeExiste, chargerSauvegarde, effacerSauvegarde,
          chargerDifficultePreferee, definirDifficultePreferee, statsEquilibrage } from './state.js';
-import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES } from './config.js';
+import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS } from './config.js';
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
@@ -22,16 +22,17 @@ function etatVide(){
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;state.scenePlanete=null;
   state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
-  state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.banniereTimer=0;
+  state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.banniereTimer=0;state.enFeu=0;
   state.comboCount=0;state.comboTimer=0;state.bestCombo=0;state.undoStack=[];state.paused=false;
 }
 
 function nouvellePartie(){
-  state.fighters=[]; for(const c of spread(state.STARTF)) state.fighters.push(nouveauVaisseau(c,state.RANGS-1,'normal',false));
-  const centre=Math.round((state.COLS-1)/2); let rc=centre; if(fighterEn(rc,state.RANGS-1)){ for(let d=1;d<state.COLS;d++){ if(!fighterEn(centre-d,state.RANGS-1)){rc=centre-d;break;} if(!fighterEn(centre+d,state.RANGS-1)){rc=centre+d;break;} } }
-  state.fighters.push(nouveauVaisseau(rc,state.RANGS-1,'rouge',false));
+  // pool de départ : le Vaisseau Rouge + 1 Standard + 1 vaisseau spécial tiré au hasard
+  const special=SHIPS.filter(s=>s.id!=='normal')[Math.floor(Math.random()*(SHIPS.length-1))].id;
+  const [cN,cS,cR]=spread(3);
+  state.fighters=[nouveauVaisseau(cN,state.RANGS-1,'normal',false), nouveauVaisseau(cS,state.RANGS-1,special,false), nouveauVaisseau(cR,state.RANGS-1,'rouge',false)];
   state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.explosions=[]; state.particules=[]; state.lasers=[]; state.trails=[];
-  state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.obstacles=[]; state.bossVaincus=0;
+  state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.obstacles=[]; state.bossVaincus=0; state.enFeu=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false; state.choixBuild=false; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false;
   state.ultimeJauge=0; state.ondeChoc=0; state.pendingEvent=false; state.suiteAmelioration=null; state.suiteEvenement=null; state.enCombat=false;
@@ -63,8 +64,8 @@ function reprendrePartie(){
   state.hangar=d.hangar||null; state.actionFaite=!!d.actionFaite; state.tirsGratuits=d.tirsGratuits||0; state.bossVaincus=d.bossVaincus||0;
   state.difficulte=d.difficulte||state.difficultePreferee;
   state.boucliersRestants=(d.boucliersRestants!==undefined)?d.boucliersRestants:BOUCLIER_USAGES_MAX;
-  state.ultimeSeuil=d.ultimeSeuil||ULTIME_MAX;
-  for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,used:f.used,capUsed:!!f.capUsed,kills:f.kills||0});
+  state.ultimeSeuil=d.ultimeSeuil||ULTIME_MAX; state.enFeu=d.enFeu||0;
+  for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,maxhp:f.maxhp||f.hp,used:f.used,capUsed:!!f.capUsed,kills:f.kills||0,gele:f.gele||0});
   for(const a of d.ailes||[]){ faireAile(a.c,a.r,a.type); const na=state.ailes[state.ailes.length-1]; na.hp=a.hp; na.maxhp=a.maxhp; na.vitesse=a.vitesse; const p=centreCase(a.c,a.r); na.x=p.x; na.y=p.y; }
   for(const o of d.asteroides||[]){ const p=centreCase(Math.max(0,Math.min(state.COLS-1,o.c)),Math.max(0,Math.min(state.RANGS-1,o.r))); state.asteroides.push({c:o.c,r:o.r,dc:o.dc,dr:o.dr,x:p.x,y:p.y,ang:0,img:getImgAster(),hp:o.hp||1,maxhp:o.maxhp||1,type:o.type||'normal'}); }
   for(const b of d.bonus||[]){ const p=centreCase(b.c,b.r); state.bonus.push({c:b.c,r:b.r,type:b.type,ttl:b.ttl,x:p.x,y:p.y}); }
