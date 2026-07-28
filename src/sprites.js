@@ -19,6 +19,10 @@ export const JOUEUR_BOMBER=["BB.......BB","BB..sss..BB","BB.sSSSs.BB","BBbSSESSb
 export const JOUEUR_BOUCLIER=["BBAAAAAAABB","BB..sss..BB","BB.sSSSs.BB","BBbSSASSbBB","BB.sSSSs.BB","BB..sss..BB","BBAAAAAAABB","Bb.......bB","bB.......Bb"];
 /* allié SNIPER : long canon vert, tir à longue portée (±2 colonnes) */
 export const JOUEUR_SNIPER=["BB...V...BB","BB...V...BB","BB..sVs..BB","BBbSSVSSbBB","BB.sSSSs.BB","BB..sss..BB","BB.......BB","Bb.......bB","bB.......Bb"];
+/* allié TRANSPORTEUR : large soute (baie de largage), largue des mini-navettes près du croiseur */
+export const JOUEUR_TRANSPORTEUR=["BB.......BB","BB.ggggg.BB","BG.sSSSs.GB","BGbSSOSSbGB","BG.sSSSs.GB","BB.ggggg.BB","BB.......BB","Bb.......bB","bB.......Bb"];
+/* mini-navette alliée, larguée par le Transporteur (case libre proche du croiseur, diagonales incluses) */
+export const MINI_NAVETTE_ALLIEE=["..B..",".BBB.","BBCBB",".BBB.","..B.."];
 
 /* --- Nouveaux sprites basés sur les images uploadées --- */
 export const AILE=[
@@ -86,18 +90,18 @@ export const BARRIERE=["WDDDDDW","DCiCiCD","DiCiCiD","DCiCiCD","DiCiCiD","DCiCiC
 /* ailes d'élite : porteur (doré, renforce) et brouilleur (violet, protège) */
 export const AILE_PORTEUR=["....e....",".e.eMe.e.","eMeMeMeMe","eMeeeeeMe","eMeMeMeMe",".e.eMe.e.","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","...eMe...","...eMe...","...eMe...","...eMe...","....e....","....e....","....e...."];
 export const AILE_BROUILLEUR=["....U....",".U.UuU.U.","UuUuUuUuU","UuUUUUUuU","UuUuUuUuU",".U.UuU.U.","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","..UuUuU..","...UuU...","...UuU...","...UuU...","...UuU...","....U....","....U....","....u...."];
-export const BOSS_CANON=["..XXXXXXXXXXX..",".XXXXXXXXXXXXX.","XXXXggqqqggXXXX","XXXXgqqqqqgXXXX","XXXXXXXXXXXXXXX","XXXXXXXXXXXXXXX",".XX.XXXXXXX.XX.",".yy.XXXXXXX.yy.",".yy.........yy."];
-export const BOSS_SNIPER=[".....uUu.....",".....uUu.....","...uuUUUuu...","..uUUUUUUUu..",".uUUUqqqUUUu.","uUUUUqQqUUUUu","uUUUUUUUUUUUu",".uUU.....UUu.","..u.......u.."];
-export const BOSS_RAYON=["...cccCccc...","..ccCCCCCcc..",".ccCCCCCCCcc.","ccCCCqqqCCCcc","ccCCqqQqqCCcc","ccCCCqqqCCCcc",".ccCCCCCCCcc.","..cc.CCC.cc..","...c..C..c..."];
-export const BOSS_NUEE=[".JJJJJJJJJJJ.","JJJJJJJJJJJJJ","JkkJJkkkJJkkJ","JkkJJkkkJJkkJ","JJJJJJJJJJJJJ","JJJqJJqJJqJJJ",".JJJJJJJJJJJ.","..JJJJJJJJJ..","...JJJJJJJ..."];
-export const BOSS_BLINDE=["ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ","ZZzzzZqZzzzZZ","ZZzzzqQqzzzZZ","ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ",".ZZZZZZZZZZZ."];
+export const BOSS_CANON=["..XxXxXgXxXxX..",".XxXXxXGXxXXxX.","XXggqQqGqQqggXX","XxgqQQqGqQQqgxX","XXGgGgXGXgGgGXX","XxgGgGXGXGgGgxX",".XXkXXXGXXXkXX.",".yykXXXGXXXkyy.",".yy.XXXGXXX.yy."];
+export const BOSS_SNIPER=[".....uUu.....",".....uUu.....","...uuUUUuu...","..uUUUuUUUu..",".uUUqQuQqUUu.","uUUUqQuQqUUUu","uUUUUUuUUUUUu",".uUUUUuUUUUu.","..u...u...u.."];
+export const BOSS_RAYON=["...cccCccc...","..ccCCCCCcc..",".ccCCiIiCCcc.","ccCCqQiQqCCcc","ccCiqQIQqiCcc","ccCCqQiQqCCcc",".ccCCiIiCCcc.","..cc.CCC.cc..","...c..C..c..."];
+export const BOSS_NUEE=[".JjJjJJJjJjJ.","JjJjJJJJJjJjJ","JkJkkJJJkkJkJ","JkjkkjJjkkjkJ","JjJvJJJJJvJjJ","JJJqJJJJJqJJJ",".JjJjJJJjJjJ.","..JjJJJJJjJ..","...JjJJJjJ..."];
+export const BOSS_BLINDE=["ZzZzZzZzZzZzZ","ZkzZkzZzkZzkZ","ZzZzZzZzZzZzZ","ZzzzZqZqZzzzZ","ZzzzqQzQqzzzZ","ZzZzZzZzZzZzZ","ZkzZkzZzkZzkZ","ZzZzZzZzZzZzZ",".ZzZzZZZzZzZ."];
 /* ---- NOUVEAUX BOSS ---- */
-export const BOSS_FEU=["..EEEEEEEEEEE..",".EEEEEEEEEEEEE.","EEEEQQMMMQQEEEE","EEEEQMMMMMQEEEE","EEEEEEEEEEEEEEE","EEEEEEEEEEEEEEE",".EE.EEEEEEE.EE.",".oo.EEEEEEE.oo.",".oo.........oo."];
-export const BOSS_ELECTRIQUE=[".....ACA.....",".....ACA.....","...AACCCAA...","..ACCCCCCCCA..",".ACCCWWWCCCA.","ACCCCWWWCCCCA","ACCCCCCCCCCCA",".ACC.....CCA.","..A.......A.."];
-export const BOSS_NID=[".nnnnnnnnnnn.","nnnnnnnnnnnnn","nmmnnmmmnnmmn","nmmnnmmmnnmmn","nnnnnnnnnnnnn","nnnVnnVnnVnnn",".nnnnnnnnnnn.","..nnnnnnnnn..","...nnnnnnn..."];
-export const BOSS_MIROIR=["...iiiIiii...","..iiIIIIIii..",".iiIIIIIIIii.","iiIIIWWWIIIii","iiIIWWWWWIIii","iiIIIWWWIIIii",".iiIIIIIIIii.","..ii.III.ii..","...i..I..i..."];
-export const BOSS_FORGE=["ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ","ZZzzzZoZzzzZZ","ZZzzzoMozzzZZ","ZZZZZZZZZZZZZ","ZkZZkZZZkZZkZ","ZZZZZZZZZZZZZ",".ZZZZZZZZZZZ."];
-export const BOSS_ECLIPSE=[".....kuk.....",".....kuk.....","...kkuuukk...","..kuuuuuuuuk..",".kuuuUUUuuuk.","kuuuuUUUuuuuk","kuuuuuuuuuuuk",".kuu.....uuk.","..k.......k.."];
+export const BOSS_FEU=["..EeEeEoEeEeE..",".EeEEeEMEeEEeE.","EEMMQqmMmqQMMEE","EeMqQQmMmQQqMeE","EEMoMoEMEoMoMEE","EeoMoMEMEMoMoeE",".EEkEEEMEEEkEE.",".ookEEEMEEEkoo.",".oo.EEEMEEE.oo."];
+export const BOSS_ELECTRIQUE=[".....ACA.....",".....ACA.....","...AAcCcAA...","..ACCcCcCCA..",".ACCcWWWcCCA.","ACCCcWWWcCCCA","ACCCCcCcCCCCA",".ACC..C..CCA.","..A...A...A.."];
+export const BOSS_NID=[".nNnNnNnNnNn.","nNnNnNNNnNnNn","nmNmmNNNmmNmn","nmnmmnNnmmnmn","nNnVnNNNnVnNn","nnNVnNNNnVNnn",".nNnNnNnNnNn.","..nNnNNNnNn..","...nNnNnNn..."];
+export const BOSS_MIROIR=["...iiiIiii...","..iiIIIIIii..",".iiIIiIiIIii.","iiIIWLWLWIIii","iiIiWLWLWiIii","iiIIWLWLWIIii",".iiIIiIiIIii.","..ii.III.ii..","...i..I..i..."];
+export const BOSS_FORGE=["ZzZzZzZzZzZzZ","ZkzZkzZzkZzkZ","ZzZzZzZzZzZzZ","ZzzzZoZoZzzzZ","ZzzzoMzMozzzZ","ZzZzZzZzZzZzZ","ZkzZkzZzkZzkZ","ZzZzZzZzZzZzZ",".ZzZzZZZzZzZ."];
+export const BOSS_ECLIPSE=[".....kuk.....",".....kuk.....","...kkuuukk...","..kuuuUuuuk..",".kuuUUUUUuuk.","kuuuUUUUUuuuk","kuuuuuUuuuuuk",".kuu..u..uuk.","..k...k...k.."];
 export const BOSS_GRIDS={canon:BOSS_CANON,sniper:BOSS_SNIPER,rayon:BOSS_RAYON,nuee:BOSS_NUEE,blinde:BOSS_BLINDE,
  feu:BOSS_FEU,electrique:BOSS_ELECTRIQUE,nid:BOSS_NID,miroir:BOSS_MIROIR,forge:BOSS_FORGE,eclipse:BOSS_ECLIPSE};
 

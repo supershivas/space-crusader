@@ -30,6 +30,7 @@ export const SHIPS=[
  {id:'bombardier',ico:'explosion', nom:'Bombardier',  desc:'Détruit la colonne · 2 tours'},
  {id:'bouclier',  ico:'bouclier',  nom:'Cuirassé',    desc:'3 PV · 2 tours'},
  {id:'sniper',    ico:'cible',     nom:'Tireur',      desc:'Tir à ±2 colonnes · 2 tours'},
+ {id:'transporteur',ico:'satellite',nom:'Transporteur',desc:'Largue des mini-navettes · 2 tours'},
 ];
 export const SHIP_ROUGE={id:'rouge', nom:'Vaisseau Rouge', desc:'Tir de zone · 2 PV · prend 2 tours'};
 
@@ -73,4 +74,5 @@ export const CAPACITES = {
   rapide:     { nom:'Bond',        desc:'Bond de 2 cases en plus, sans perdre le tir' },
   bouclier:   { nom:'Provocation', desc:'Les ailes adjacentes le ciblent au tour suivant' },
   bombardier: { nom:'Tir chargé',  desc:'Vise une cible : détruit 2 colonnes au lieu d\'une' },
+  transporteur:{ nom:'Largage',    desc:'Lance une mini-navette sur une case libre adjacente (diagonales incluses)' },
 };

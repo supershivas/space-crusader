@@ -6,7 +6,7 @@ import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CA
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
-         deployerVaisseau, ramasser, getImgAster } from './entities.js';
+         deployerVaisseau, ramasser, getImgAster, nouveauVaisseau, caseLibreProche } from './entities.js';
 import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
 import { NFRAMES } from './sprites.js';
 import { logMsg, ouvrirBuild, finPartie, checkAchievements, montrerToast } from './ui.js';
@@ -31,6 +31,12 @@ export function activerCapacite(f){
   if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); return true; }
   if(f.type==='rapide'){ state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); return true; }
   if(f.type==='bombardier'){ state.modeCapacite={ship:f,kind:'charge'}; sonSelect(); return true; }
+  if(f.type==='transporteur'){
+    if(state.fighters.length>=state.MAX_VAISSEAUX) return false;
+    const libre=caseLibreProche(f.c,f.r); if(!libre) return false;
+    state.fighters.push(nouveauVaisseau(libre.c,libre.r,'navette',false));
+    f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛰 Mini-navette larguée !','log-grn'); return true;
+  }
   return false;
 }
 export function tirerCharge(f,cible){
@@ -69,7 +75,7 @@ export function analyseTir(f){
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
-    for(let rr=start; rr>=0; rr--){
+    for(let rr=start; rr>=-8; rr--){   // -8 : couvre aussi les ailes qui apparaissent hors grille (formation en V), sinon injouables
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
       const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }   // le mimic est ciblable comme un ennemi
