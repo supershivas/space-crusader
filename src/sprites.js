@@ -117,6 +117,60 @@ export const ICO_BOUCLIER=["..A..",".AAA.","AAAAA","AAAAA",".AAA.","..A.."];
 export const imgBonusPV=cuire(BONUS_PV,4), imgBonusTIR=cuire(BONUS_TIR,4), imgBonusVAIS=cuire(BONUS_VAIS,4);
 export const imgIcoVaisseau=cuire(ICO_VAISSEAU,3), imgIcoTourelle=cuire(ICO_TOURELLE,3), imgIcoBouclier=cuire(ICO_BOUCLIER,3);
 
+/* =====================================================================
+   LIBRAIRIE D'ICÔNES PIXEL ART — remplace les emoji d'interface
+   (améliorations, vaisseaux, carte, difficulté, boutons, superpositions)
+   ===================================================================== */
+export const ICONS={
+  vaisseau:   ["..F..",".FFF.","FC.CF",".FFF.","..F.."],
+  bouclier:   ["..A..",".AAA.","AAAAA","AAAAA",".AAA.","..A.."],
+  cible:      [".RRRRR.","RR...RR","R.RRR.R","R.R.R.R","R.RRR.R","RR...RR",".RRRRR."],
+  coeur:      [".RR.RR.","RRRRRRR","RRRRRRR",".RRRRR.","..RRR..","...R...","......."],
+  explosion:  ["..e.e..",".eEQEe.","eEQQQEe","EQQQQQE","eEQQQEe",".eEQEe.","..e.e.."],
+  eclair:     ["...ee..","..ee...",".eee...","eeeee..","...eee.","...ee..","..ee..."],
+  aimant:     ["SS...SS","SS...SS","SS...SS","SSSSSSS","RR...RR","RR...RR","RR...RR"],
+  cle:        ["..SS...",".S..S..",".S..S..","..SS...","...SS..","....SS.",".....SS"],
+  feu:        ["...e...","..eEe..",".eEQEe.",".EQQQE.",".eEQEe.","..eEe..","...e..."],
+  vent:       ["CC.....",".CC....","..CC...","CCC....",".CC....","..CC...","......."],
+  epee:       ["S.....S",".S...S.","..S.S..","...X...","..S.S..",".S...S.","S.....S"],
+  crane:      [".WWWWW.","WWWWWWW","WWBWBWW","WWWWWWW","W.WWW.W","WW.W.WW",".WWWWW."],
+  point:      [".eee...","e...e..","....e..","...e...","..e....",".......","..e...."],
+  gemme:      ["...I...","..IiI..",".IiiiI.","IiiiiiI",".IiiiI.","..IiI..","...I..."],
+  satellite:  ["..SSS..",".S...S.","S..C..S","S..C..S",".S...S.","..SSS..","......."],
+  engrenage:  [".S.S.S.","SSSSSSS","S.SSS.S","SSSSSSS","S.SSS.S","SSSSSSS",".S.S.S."],
+  demon:      ["X.....X",".X...X.","..WWW..",".WBWBW.","..WWW..",".W...W.","X.....X"],
+  sourire_facile:   [".eeeee.","eeeeeee","eeBeBee","eeeeeee","eeeeeee","eBeeeBe","eeeBeee"],
+  sourire_normal:   [".eeeee.","eeeeeee","eeBeBee","eeeeeee","eeeeeee","eeeeeee","eeBBBee"],
+  sourire_difficile:[".eeeee.","eeeeeee","eeBeBee","eeeeeee","eeeeeee","eeeBeee","eBeeeBe"],
+  son_on:     ["..S....",".SS....","SSS.C..","SSS..C.","SSS.C..",".SS....","..S...."],
+  son_off:    ["..S....",".SS....","SSS..X.","SSS.X.X","SSS..X.",".SS....","..S...."],
+  pause:      [".......",".SS.SS.",".SS.SS.",".SS.SS.",".SS.SS.",".SS.SS.","......."],
+  play:       [".......","e......","ee.....","eee....","ee.....","e......","......."],
+  restart:    [".SSS...","S...S..","S....S.","S....S.","S...S..",".SSS...","...SS.."],
+  maison:     ["...W...","..WWW..",".WWWWW.","WWWWWWW","W.SSS.W","W.S.S.W","WWWWWWW"],
+  globe:      [".AAAAA.","A.....A","A.AAA.A","AAAAAAA","A.AAA.A","A.....A",".AAAAA."],
+  chapeau:    ["...W...","..WWW..",".WWWWW.","WWWWWWW","..WWW..","..W.W..","..W.W.."],
+  info:       [".SSSSS.","S.....S","S..W..S","S.....S","S..W..S","S..W..S",".SSSSS."],
+  carte:      ["..W.W..",".WWWWW.","W.WWW.W","WW.W.WW","W.WWW.W",".WWWWW.","..W.W.."],
+  alerte:     ["...e...","..eee..",".eeeee.",".eeBee.",".eeBee.",".eeeee.","eeeeeee"],
+  gel:        ["...C...",".C.C.C.","..CCC..","CCCCCCC","..CCC..",".C.C.C.","...C..."],
+  panier:     [".......","W.....W","WWWWWWW",".WWWWW.","..WWW..","...W...","......."],
+  refuser:    ["R.....R",".R...R.","..R.R..","...R...","..R.R..",".R...R.","R.....R"],
+  loupe:      [".SSS...","S...S..","S...S..",".SSS...","...SS..","....SS.",".....SS"],
+  de:         [".WWWWW.","W.....W","W.R.R.W","W.....W","W.R.R.W","W.....W",".WWWWW."],
+  main:       ["..W.W..",".WWWWW.","WWWWWWW","WWWWWWW",".WWWWW.","..WWW..","...W..."],
+  fleche_haut:["...W...","..WWW..",".WWWWW.","...W...","...W...","...W...","......."],
+  trophee:    [".eeeee.","eeeeeee","eeeeeee",".eeeee.","..eee..","..eee..",".eeeee."],
+};
+/* fournit un <canvas> pixel-art prêt à insérer dans le DOM (taille ~px, mise à l'échelle entière la plus proche) */
+export function iconCanvas(key,px=20){
+  const g=ICONS[key]; if(!g) return document.createElement('canvas');
+  const echelle=Math.max(1,Math.round(px/g[0].length));
+  return cuire(g,echelle);
+}
+/* fournit l'image déjà cuite (pour dessiner sur le canvas de jeu via drawImage) */
+export function iconImage(key,echelle=3){ return cuire(ICONS[key],echelle); }
+
 /* explosions : anneaux qui grandissent */
 export const NFRAMES=6, EG=15, EPS=4;
 export const framesBoom=(function(){ const fr=[]; for(let f=0;f<NFRAMES;f++){ const off=document.createElement('canvas'); off.width=EG*EPS; off.height=EG*EPS; const c=off.getContext('2d');

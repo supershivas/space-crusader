@@ -6,7 +6,7 @@ import { state, centreCase } from './state.js';
 import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES } from './config.js';
 import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
-         NFRAMES, framesBoom } from './sprites.js';
+         NFRAMES, framesBoom, iconImage } from './sprites.js';
 import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
 import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD } from './map.js';
@@ -14,6 +14,10 @@ import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD } from './map.js';
 const canvas=document.getElementById('jeu'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const wrap=document.getElementById('wrap'), scene=document.getElementById('scene');
+
+/* petites icônes pixel-art dessinées directement sur le canvas de jeu (remplacent les emoji ⚠❄⚡🔥) */
+const imgAlerte=iconImage('alerte',3), imgGel=iconImage('gel',3), imgEclairIco=iconImage('eclair',3), imgFeuIco=iconImage('feu',3);
+function dessinerIcone(img,cx,cy,alpha=1){ ctx.globalAlpha=alpha; ctx.drawImage(img,Math.round(cx-img.width/2),Math.round(cy-img.height/2)); ctx.globalAlpha=1; }
 
 let imgCroiseur, imgBossMap;
 let nebuleuses, planete;
@@ -194,9 +198,11 @@ export function dessiner(t){
   // ---- ALERTES (prévention un tour avant) ----
   for(const w of state.menacesWarn){ const al=.45+.45*pulse; ctx.save();
     if(w.kind==='astero'){ ctx.fillStyle='rgba(255,176,61,.16)'; ctx.fillRect(state.GX,state.GY+w.r*state.CELL,state.COLS*state.CELL,state.CELL);
-      ctx.fillStyle='rgba(255,176,61,'+al+')'; ctx.font='18px monospace'; ctx.textAlign=w.dir>0?'left':'right'; ctx.fillText('⚠',w.dir>0?state.GX+4:state.GX+state.COLS*state.CELL-4,state.GY+w.r*state.CELL+state.CELL*0.7); }
-    else if(w.kind==='trou'){ ctx.strokeStyle='rgba(180,120,255,'+al+')'; ctx.lineWidth=3; ctx.strokeRect(state.GX+(w.c-1)*state.CELL+3,state.GY+(w.r-1)*state.CELL+3,3*state.CELL-6,3*state.CELL-6); ctx.fillStyle='rgba(190,140,255,'+al+')'; ctx.font='16px monospace'; ctx.textAlign='center'; ctx.fillText('⚠',centreCase(w.c,w.r).x,centreCase(w.c,w.r).y+6); }
-    else { ctx.fillStyle='rgba(155,107,214,'+(.12+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL); ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText('⚠ CHAMP',state.GX+((w.c0+w.c1+1)/2)*state.CELL,state.GY+18); }
+      dessinerIcone(imgAlerte,w.dir>0?state.GX+4+imgAlerte.width/2:state.GX+state.COLS*state.CELL-4-imgAlerte.width/2,state.GY+w.r*state.CELL+state.CELL*0.7-6,al); }
+    else if(w.kind==='trou'){ ctx.strokeStyle='rgba(180,120,255,'+al+')'; ctx.lineWidth=3; ctx.strokeRect(state.GX+(w.c-1)*state.CELL+3,state.GY+(w.r-1)*state.CELL+3,3*state.CELL-6,3*state.CELL-6); dessinerIcone(imgAlerte,centreCase(w.c,w.r).x,centreCase(w.c,w.r).y,al); }
+    else { ctx.fillStyle='rgba(155,107,214,'+(.12+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL);
+      dessinerIcone(imgAlerte,state.GX+((w.c0+w.c1+1)/2)*state.CELL-24,state.GY+14,al);
+      ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText('CHAMP',state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
     ctx.textAlign='left'; ctx.restore(); }
 
   if(state.phase==='joueur'){
@@ -289,8 +295,8 @@ export function dessiner(t){
     // PV : petits carrés (rouge = plein, gris = vide) pour les ennemis blindés (maxhp>1)
     if(a.maxhp>1) dessinerPV(a.x,Math.round(a.y+a.img.height/2+2),a.hp,a.maxhp,'#ff2a5a');
     // marqueurs des attaques spéciales (saboteur : électrique, brûleur : incendiaire)
-    if(a.type==='saboteur'){ ctx.fillStyle='rgba(55,224,255,'+(.5+.5*pulse)+')'; ctx.font='10px monospace'; ctx.textAlign='center'; ctx.fillText('⚡',a.x,a.y-a.img.height/2-4); ctx.textAlign='left'; }
-    else if(a.type==='bruleur'){ ctx.fillStyle='rgba(255,138,61,'+(.5+.5*pulse)+')'; ctx.font='10px monospace'; ctx.textAlign='center'; ctx.fillText('🔥',a.x,a.y-a.img.height/2-4); ctx.textAlign='left'; }
+    if(a.type==='saboteur') dessinerIcone(imgEclairIco,a.x,a.y-a.img.height/2-7,.6+.4*pulse);
+    else if(a.type==='bruleur') dessinerIcone(imgFeuIco,a.x,a.y-a.img.height/2-7,.6+.4*pulse);
   }
   // marqueurs cibles alliées
   if(state.phase==='joueur'){ ctx.strokeStyle='rgba(255,70,70,'+(.55+.4*pulse)+')'; ctx.lineWidth=3; const marque=(x,y)=>{ ctx.beginPath(); ctx.moveTo(x-9,y-9); ctx.lineTo(x+9,y+9); ctx.moveTo(x+9,y-9); ctx.lineTo(x-9,y+9); ctx.stroke(); };
@@ -306,7 +312,10 @@ export function dessiner(t){
     const bw=3*state.CELL-14, bx=state.GX+state.boss.c*state.CELL+7, by=state.GY+state.boss.r*state.CELL-8; ctx.fillStyle='#3a1520'; ctx.fillRect(bx,by,bw,6); ctx.fillStyle=tint; ctx.fillRect(bx,by,bw*Math.max(0,state.boss.hp/state.boss.maxhp),6);
     const noms={canon:'CANONNIER',sniper:'SNIPER',rayon:'RAYON',nuee:'NUÉE',blinde:'BLINDÉ',
       feu:'BRASIER',electrique:'FOUDRE',nid:'MÈRE-NID',miroir:'MIROIR',forge:'FORGERON',eclipse:'ÉCLIPSE'};
-    ctx.fillStyle=tint; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('BOSS '+noms[state.boss.type]+(state.boss.type==='rayon'&&state.boss.charge?' ⚡':''),state.boss.x,by-4); ctx.textAlign='left'; }
+    ctx.fillStyle=tint; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
+    const txtBoss='BOSS '+noms[state.boss.type]; ctx.fillText(txtBoss,state.boss.x,by-4);
+    if(state.boss.type==='rayon'&&state.boss.charge) dessinerIcone(imgEclairIco,state.boss.x+ctx.measureText(txtBoss).width/2+8,by-6,1);
+    ctx.textAlign='left'; }
 
   // astéroïdes (le gros est plus grand ; PV affichés s'il est blindé)
   for(const o of state.asteroides){ const sc=o.type==='gros'?1.4:o.type==='essaim'?0.7:1;
@@ -326,7 +335,7 @@ export function dessiner(t){
     if(f.type==='rouge'&&state.ups){ if(state.ups.rouge_range){ ctx.strokeStyle='rgba(229,72,77,'+(.25+.2*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,f.y,state.CELL*0.62,0,7); ctx.stroke(); }
       if(state.ups.rouge_back){ ctx.fillStyle='#ff8a3d'; for(const dx of [-6,0,6]){ ctx.fillRect(Math.round(f.x+dx-1),Math.round(f.y+f.img.height/2+1),3,4); } } }
     ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y-f.img.height/2)); ctx.globalAlpha=1;
-    if(f.gele>0){ ctx.fillStyle='rgba(55,224,255,'+(.6+.4*pulse)+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText('❄',f.x,f.y+3); ctx.textAlign='left'; }
+    if(f.gele>0) dessinerIcone(imgGel,f.x,f.y,.7+.3*pulse);
     // PV : mêmes carrés harmonisés que les ennemis, sous le vaisseau (rouge = coque renforcée, bleu = cuirassé)
     if(f.maxhp>1){ const coul=f.type==='rouge'?'#ff5a5a':f.type==='bouclier'?'#4aa3ff':'#ff2a5a'; dessinerPV(f.x,Math.round(f.y+f.img.height/2+2),f.hp,f.maxhp,coul); }
     // grade du vaisseau (kills) : 1-3 points jaunes puis étoile dorée à 15+
@@ -362,7 +371,7 @@ export function dessiner(t){
   if(state.flashCroiseur>0){ ctx.fillStyle='rgba(255,255,255,'+(state.flashCroiseur*.5)+')'; ctx.fillRect(bx+2,by+2,bw-4,bh-4); }
   arrondi(bx,by,bw,bh,5); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
   ctx.fillStyle='#9fb0d8'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',14,hudBase-3);
-  if(state.enFeu>0){ ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='10px monospace'; ctx.fillText('🔥×'+state.enFeu,bx+bw+8,hudBase-4); }
+  if(state.enFeu>0){ dessinerIcone(imgFeuIco,bx+bw+16,hudBase-9,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='10px monospace'; ctx.fillText('×'+state.enFeu,bx+bw+26,hudBase-4); }
   ctx.fillStyle='#ffd23d'; ctx.font='15px "Press Start 2P", monospace'; ctx.textAlign='right'; ctx.fillText(String(state.score).padStart(3,'0'),state.LARGEUR-14,hudBase-2);
   ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('VAGUE '+state.vague,14,hudBase-32);
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
@@ -373,7 +382,9 @@ export function dessiner(t){
     ctx.fillStyle=pret?('rgba(255,210,61,'+(0.6+0.4*pulse)+')'):'#7a3fd6'; ctx.fillRect(state.ULT.x+2,state.ULT.y+2,(state.ULT.w-4)*pr,state.ULT.h-4);
     arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,7); ctx.strokeStyle=pret?'#ffd23d':'#4a5a86'; ctx.lineWidth=2; ctx.stroke();
     ctx.fillStyle=pret?'#241a00':'#cbd6f0'; ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center';
-    ctx.fillText(pret?'⚡ FRAPPE ORBITALE':'ULTIME '+Math.floor(pr*100)+'%',state.LARGEUR/2,state.ULT.y+state.ULT.h-4); ctx.textAlign='left'; }
+    const txtUlt=pret?'FRAPPE ORBITALE':'ULTIME '+Math.floor(pr*100)+'%', cyUlt=state.ULT.y+state.ULT.h-4;
+    if(pret){ const w=ctx.measureText(txtUlt).width; dessinerIcone(imgEclairIco,state.LARGEUR/2-w/2-9,cyUlt-5,1); }
+    ctx.fillText(txtUlt,state.LARGEUR/2,cyUlt); ctx.textAlign='left'; }
 
   // boutons d'action
   for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;

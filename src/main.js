@@ -11,7 +11,7 @@ import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil } from './ui.js';
-import { cuireFit, JOUEUR } from './sprites.js';
+import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
 
@@ -95,13 +95,14 @@ function boucle(t){ const dt=Math.min((t-dernier)/1000,.05); dernier=t;
 document.getElementById('btnMission').addEventListener('click',()=>{ document.getElementById('mission').classList.remove('visible'); const s=state.suiteMission; state.suiteMission=null; if(s) s(); });
 
 /* ===== Choix de la difficulté (après « Jouer ») ===== */
-const EMO_DIFF={facile:'🙂',normal:'😐',difficile:'😈'};
+const ICO_DIFF={facile:'sourire_facile',normal:'sourire_normal',difficile:'sourire_difficile'};
 function ouvrirDifficulte(){
   const cont=document.getElementById('difficulteCards'); cont.innerHTML='';
   for(const id of ['facile','normal','difficile']){
     const card=document.createElement('div'); card.className='card';
     if(id===state.difficultePreferee) card.style.borderColor='#ffd23d';
-    card.innerHTML='<div class="emo">'+EMO_DIFF[id]+'</div><div class="nom">'+t('diff_'+id)+'</div><div class="desc">'+t('diff_'+id+'_d')+'</div>';
+    const emo=document.createElement('div'); emo.className='emo'; emo.appendChild(iconCanvas(ICO_DIFF[id],26)); card.appendChild(emo);
+    const t2=document.createElement('div'); t2.innerHTML='<div class="nom">'+t('diff_'+id)+'</div><div class="desc">'+t('diff_'+id+'_d')+'</div>'; card.appendChild(t2);
     card.addEventListener('click',()=>demarrerAvecDifficulte(id));
     cont.appendChild(card);
   }
@@ -161,8 +162,12 @@ function genererFavicon(){
   }catch(e){}
 }
 
+/* remplace les emplacements <span class="ico-slot" data-ico="..."> par leur icône pixel-art */
+function poserIcones(){ document.querySelectorAll('[data-ico]').forEach(el=>{ el.innerHTML=''; el.appendChild(iconCanvas(el.dataset.ico,16)); }); }
+
 loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
 genererFavicon();
+poserIcones();
 appliquerLangue();
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Premier lancement : afficher l'écran d'aide (INFOS) une seule fois

@@ -13,23 +13,23 @@ export const BOUCLIER_USAGES_MAX=2;  // nombre d'utilisations de l'action BOUCLI
 
 /* ===== PROFONDEUR : améliorations, vaisseaux ===== */
 export const UPGRADES=[
- {id:'portee',       emo:'🎯', nom:'Tir élargi',       desc:'+1 colonne de portée', max:1},
- {id:'deplacement',  emo:'🚀', nom:'Propulseurs',      desc:'+1 case de déplacement', max:1},
- {id:'bouclier',     emo:'🛡', nom:'Bouclier renforcé',desc:'Recharge +25%', max:2},
- {id:'tourelleDouble',emo:'⚡', nom:'Double tourelle',  desc:'+1 tir de tourelle / tour', max:2},
- {id:'bonusPlus',    emo:'🧲', nom:'Aimant à bonus',    desc:'Bonus plus fréquents', max:2},
- {id:'regen',        emo:'🔧', nom:'Auto-réparation',   desc:'+2% PV / tour', max:3},
+ {id:'portee',       ico:'cible',     nom:'Tir élargi',       desc:'+1 colonne de portée', max:1},
+ {id:'deplacement',  ico:'vent',      nom:'Propulseurs',      desc:'+1 case de déplacement', max:1},
+ {id:'bouclier',     ico:'bouclier',  nom:'Bouclier renforcé',desc:'Recharge +25%', max:2},
+ {id:'tourelleDouble',ico:'eclair',   nom:'Double tourelle',  desc:'+1 tir de tourelle / tour', max:2},
+ {id:'bonusPlus',    ico:'aimant',    nom:'Aimant à bonus',    desc:'Bonus plus fréquents', max:2},
+ {id:'regen',        ico:'cle',       nom:'Auto-réparation',   desc:'+2% PV / tour', max:3},
  // améliorations spécifiques au Vaisseau Rouge (proposées seulement s'il est en jeu)
- {id:'rouge_pv',     emo:'❤',  nom:'Blindage rouge',    desc:'Vaisseau Rouge : +1 PV', max:2},
- {id:'rouge_range',  emo:'💥', nom:'Onde de choc',      desc:'Vaisseau Rouge : zone de tir ±2', max:1},
- {id:'rouge_back',   emo:'🔥', nom:'Rétro-tir',         desc:'Vaisseau Rouge : tire aussi vers l\'arrière', max:1},
+ {id:'rouge_pv',     ico:'coeur',     nom:'Blindage rouge',    desc:'Vaisseau Rouge : +1 PV', max:2},
+ {id:'rouge_range',  ico:'explosion', nom:'Onde de choc',      desc:'Vaisseau Rouge : zone de tir ±2', max:1},
+ {id:'rouge_back',   ico:'feu',       nom:'Rétro-tir',         desc:'Vaisseau Rouge : tire aussi vers l\'arrière', max:1},
 ];
 export const SHIPS=[
- {id:'normal',    emo:'🚀', nom:'Standard',    desc:'Prêt en 1 tour'},
- {id:'rapide',    emo:'💨', nom:'Intercepteur',desc:'+1 déplacement · 2 tours'},
- {id:'bombardier',emo:'💥', nom:'Bombardier',  desc:'Détruit la colonne · 2 tours'},
- {id:'bouclier',  emo:'🛡', nom:'Cuirassé',    desc:'3 PV · 2 tours'},
- {id:'sniper',    emo:'🎯', nom:'Tireur',      desc:'Tir à ±2 colonnes · 2 tours'},
+ {id:'normal',    ico:'vaisseau',  nom:'Standard',    desc:'Prêt en 1 tour'},
+ {id:'rapide',    ico:'vent',      nom:'Intercepteur',desc:'+1 déplacement · 2 tours'},
+ {id:'bombardier',ico:'explosion', nom:'Bombardier',  desc:'Détruit la colonne · 2 tours'},
+ {id:'bouclier',  ico:'bouclier',  nom:'Cuirassé',    desc:'3 PV · 2 tours'},
+ {id:'sniper',    ico:'cible',     nom:'Tireur',      desc:'Tir à ±2 colonnes · 2 tours'},
 ];
 export const SHIP_ROUGE={id:'rouge', nom:'Vaisseau Rouge', desc:'Tir de zone · 2 PV · prend 2 tours'};
 

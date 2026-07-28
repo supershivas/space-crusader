@@ -9,7 +9,7 @@ import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur } from './combat.js';
 import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast } from './ui.js';
 
-export const ICONE={combat:'⚔️',elite:'☠️',event:'❓',rest:'🛠️',tresor:'💎',hangar:'🛰️',forge:'⚙️',boss:'👹'};
+export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon'};
 export const NOM_NOEUD={combat:'Combat',elite:'Élite',event:'Signal',rest:'Relais',tresor:'Trésor',hangar:'Hangar',forge:'Atelier',boss:'BOSS'};
 export const DESC_NOEUD={combat:'Vague standard',elite:'Plus dur · plus de butin',event:'Événement à choix',rest:'Station de réparation',tresor:'Chambre forte : amélioration',hangar:'Renfort : +1 vaisseau au choix',forge:'Atelier : amélioration ou ultime',boss:"Un boss t'attend !"};
 function planeteAleatoire(){ const pool=['combat','combat','combat','event','rest','elite','tresor','hangar','forge']; return pool[Math.floor(Math.random()*pool.length)]; }
@@ -48,21 +48,21 @@ export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const typ
 function construireScene(type){
   const suite=ouvrirCarte;
   if(type==='rest'){ return {kind:'station',titre:'STATION DE RÉPARATION',suite,choix:[
-    {emo:'🔧',nom:'Réparation',desc:'+30% PV',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.30)); state.flashRecharge=1; sonRenfort(); logMsg('Réparé','log-grn'); }},
-    {emo:'⚡',nom:'Recalibrage',desc:'+15% PV · +50% ultime',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Recalibré','log-grn'); }},
+    {ico:'cle',nom:'Réparation',desc:'+30% PV',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.30)); state.flashRecharge=1; sonRenfort(); logMsg('Réparé','log-grn'); }},
+    {ico:'eclair',nom:'Recalibrage',desc:'+15% PV · +50% ultime',effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Recalibré','log-grn'); }},
   ]}; }
   if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
-    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({emo:u.emo,nom:u.nom,desc:u.desc,effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+u.nom,'log-grn'); }}));
-    if(!choix.length) choix.push({emo:'💰',nom:'Butin',desc:'+8 score',effet:()=>{ state.score+=8; }});
+    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({ico:u.ico,nom:u.nom,desc:u.desc,effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+u.nom,'log-grn'); }}));
+    if(!choix.length) choix.push({ico:'gemme',nom:'Butin',desc:'+8 score',effet:()=>{ state.score+=8; }});
     return {kind:'tresor',titre:'CHAMBRE FORTE',suite,choix}; }
   if(type==='hangar'){ return {kind:'hangar',titre:'HANGAR ORBITAL',suite,choix:[
-    {emo:'🚀',nom:'Standard',desc:'+1 vaisseau',effet:()=>{ deployerVaisseau('normal'); logMsg('Renfort','log-grn'); }},
-    {emo:'🎯',nom:'Tireur',desc:'+1 tireur (±2)',effet:()=>{ deployerVaisseau('sniper'); logMsg('Renfort : tireur','log-grn'); }},
-    {emo:'🛡',nom:'Cuirassé',desc:'+1 cuirassé (3 PV)',effet:()=>{ deployerVaisseau('bouclier'); logMsg('Renfort : cuirassé','log-grn'); }},
+    {ico:'vaisseau',nom:'Standard',desc:'+1 vaisseau',effet:()=>{ deployerVaisseau('normal'); logMsg('Renfort','log-grn'); }},
+    {ico:'cible',nom:'Tireur',desc:'+1 tireur (±2)',effet:()=>{ deployerVaisseau('sniper'); logMsg('Renfort : tireur','log-grn'); }},
+    {ico:'bouclier',nom:'Cuirassé',desc:'+1 cuirassé (3 PV)',effet:()=>{ deployerVaisseau('bouclier'); logMsg('Renfort : cuirassé','log-grn'); }},
   ]}; }
   if(type==='forge'){ return {kind:'forge',titre:'ATELIER',suite,choix:[
-    {emo:'⬆',nom:'Améliorer',desc:'+1 amélioration',effet:()=>{ ameliorationAleatoire(); }},
-    {emo:'⚡',nom:'Surcharger',desc:'Ultime +50%',effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Ultime rechargé','log-ylw'); }},
+    {ico:'fleche_haut',nom:'Améliorer',desc:'+1 amélioration',effet:()=>{ ameliorationAleatoire(); }},
+    {ico:'eclair',nom:'Surcharger',desc:'Ultime +50%',effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Ultime rechargé','log-ylw'); }},
   ]}; }
   // event : événement aléatoire présenté comme une scène
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
@@ -122,22 +122,22 @@ export function objectifReussi(){ const o=state.objectifVague; if(!o) return fal
 export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge'))); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+u.nom,'log-grn'); }
 export const EVENEMENTS=[
  {titre:'MARCHAND', desc:'Un marchand échange une cache d\'armes contre un peu de coque.', choix:[
-   {emo:'🛒', nom:'Acheter', desc:'-25% PV, +1 amélioration', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.75)); ameliorationAleatoire(); }},
-   {emo:'🚫', nom:'Refuser', desc:'+10% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }} ]},
+   {ico:'panier', nom:'Acheter', desc:'-25% PV, +1 amélioration', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.75)); ameliorationAleatoire(); }},
+   {ico:'refuser', nom:'Refuser', desc:'+10% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }} ]},
  {titre:'ÉPAVE À LA DÉRIVE', desc:'Une épave flotte non loin. La fouiller ?', choix:[
-   {emo:'🔦', nom:'Fouiller', desc:'Gros butin… ou embuscade', effet:()=>{ if(Math.random()<0.5){ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); state.score+=8; logMsg('Butin ! +50% ultime','log-ylw'); } else { for(let k=0;k<3;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('Embuscade !','log-red'); } }},
-   {emo:'🧲', nom:'Récupérer', desc:'+1 vaisseau', effet:()=>{ deployerVaisseau('normal'); }} ]},
+   {ico:'loupe', nom:'Fouiller', desc:'Gros butin… ou embuscade', effet:()=>{ if(Math.random()<0.5){ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); state.score+=8; logMsg('Butin ! +50% ultime','log-ylw'); } else { for(let k=0;k<3;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('Embuscade !','log-red'); } }},
+   {ico:'aimant', nom:'Récupérer', desc:'+1 vaisseau', effet:()=>{ deployerVaisseau('normal'); }} ]},
  {titre:'DOCK DE FORTUNE', desc:'Des réparations sont possibles ici.', choix:[
-   {emo:'🔧', nom:'Réparer', desc:'+40% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.4)); }},
-   {emo:'⚙️', nom:'Bricoler', desc:'+2 améliorations, -15% PV', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.85)); ameliorationAleatoire(); ameliorationAleatoire(); }} ]},
+   {ico:'cle', nom:'Réparer', desc:'+40% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.4)); }},
+   {ico:'engrenage', nom:'Bricoler', desc:'+2 améliorations, -15% PV', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.85)); ameliorationAleatoire(); ameliorationAleatoire(); }} ]},
  {titre:'RENFORTS', desc:'La flotte propose du soutien.', choix:[
-   {emo:'🚀', nom:'Deux chasseurs', desc:'+2 vaisseaux standards', effet:()=>{ deployerVaisseau('normal'); deployerVaisseau('normal'); }},
-   {emo:'🛡', nom:'Un cuirassé', desc:'+1 cuirassé (3 PV)', effet:()=>{ deployerVaisseau('bouclier'); }} ]},
+   {ico:'vaisseau', nom:'Deux chasseurs', desc:'+2 vaisseaux standards', effet:()=>{ deployerVaisseau('normal'); deployerVaisseau('normal'); }},
+   {ico:'bouclier', nom:'Un cuirassé', desc:'+1 cuirassé (3 PV)', effet:()=>{ deployerVaisseau('bouclier'); }} ]},
  {titre:'PARI RISQUÉ', desc:'Pile tu gagnes gros, face tu perds ta mise.', choix:[
-   {emo:'🎲', nom:'Parier', desc:'50% : +score & ultime', effet:()=>{ if(Math.random()<0.5){ state.score+=15; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Gagné ! +50% ultime','log-ylw'); } else logMsg('Perdu…','log-red'); }},
-   {emo:'✋', nom:'Prudence', desc:'+5 score sûr', effet:()=>{ state.score+=5; }} ]},
+   {ico:'de', nom:'Parier', desc:'50% : +score & ultime', effet:()=>{ if(Math.random()<0.5){ state.score+=15; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Gagné ! +50% ultime','log-ylw'); } else logMsg('Perdu…','log-red'); }},
+   {ico:'main', nom:'Prudence', desc:'+5 score sûr', effet:()=>{ state.score+=5; }} ]},
  {titre:'SURTENSION', desc:'Le réacteur crache un surplus d\'énergie.', choix:[
-   {emo:'⚡', nom:'Vers l\'ultime', desc:'Jauge d\'ultime pleine', effet:()=>{ state.ultimeJauge=state.ultimeSeuil; }},
-   {emo:'🛡', nom:'Vers le bouclier', desc:'+30% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.3)); }} ]},
+   {ico:'eclair', nom:'Vers l\'ultime', desc:'Jauge d\'ultime pleine', effet:()=>{ state.ultimeJauge=state.ultimeSeuil; }},
+   {ico:'bouclier', nom:'Vers le bouclier', desc:'+30% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.3)); }} ]},
 ];
 export function apresEvenement(){ const suite=state.suiteEvenement||demarrerTourJoueur; state.suiteEvenement=null; suite(); }

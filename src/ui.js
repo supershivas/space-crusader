@@ -11,6 +11,12 @@ import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourell
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
+import { iconCanvas } from './sprites.js';
+
+/* icône pixel-art (clé de ICONS) suivie d'un libellé texte, pour un conteneur DOM */
+function icone(container,ico,px=18){ if(!ico) return; const cv=iconCanvas(ico,px); cv.className='pixel-ico'; container.appendChild(cv); }
+/* div .emo contenant une icône pixel-art, pour les cartes de choix (améliorations/événements) */
+function divEmo(ico){ const d=document.createElement('div'); d.className='emo'; icone(d,ico||'point',26); return d; }
 
 const canvas=document.getElementById('jeu');
 const scene=document.getElementById('scene');
@@ -51,7 +57,7 @@ export function checkAchievements(){
   }
 }
 export function showAchievement(title,desc){
-  achieveTxt.innerHTML='<div class="ach-title">🏆 '+title+'</div><div>'+desc+'</div>';
+  achieveTxt.innerHTML='<div class="ach-title">'+title+'</div><div>'+desc+'</div>';
   achieveDiv.classList.add('visible'); sonAchievement();
   setTimeout(()=>achieveDiv.classList.remove('visible'), 3000);
 }
@@ -59,7 +65,10 @@ export function addHighscore(){
   const entry={score:state.score,vague:state.vague,date:new Date().toLocaleDateString('fr-FR')};
   state.highscores.push(entry); state.highscores.sort((a,b)=>b.score-a.score); state.highscores=state.highscores.slice(0,5); saveData();
   const tbl=document.getElementById('highscores');
-  tbl.innerHTML='<tr><td colspan="3" style="color:#ffd23d">🏆 MEILLEURS SCORES</td></tr>'+state.highscores.map((h,i)=>'<tr class="'+(h.score===state.score?'hs-new':'')+'"><td>#'+(i+1)+'</td><td>'+h.score+'</td><td>V'+h.vague+'</td></tr>').join('');
+  tbl.innerHTML='';
+  const trHead=document.createElement('tr'); const tdHead=document.createElement('td'); tdHead.colSpan=3; tdHead.style.color='#ffd23d'; tdHead.style.display='flex'; tdHead.style.alignItems='center'; tdHead.style.justifyContent='center';
+  icone(tdHead,'trophee',14); tdHead.appendChild(document.createTextNode(' MEILLEURS SCORES')); trHead.appendChild(tdHead); tbl.appendChild(trHead);
+  tbl.insertAdjacentHTML('beforeend',state.highscores.map((h,i)=>'<tr class="'+(h.score===state.score?'hs-new':'')+'"><td>#'+(i+1)+'</td><td>'+h.score+'</td><td>V'+h.vague+'</td></tr>').join(''));
 }
 
 /* =====================================================================
@@ -73,7 +82,8 @@ export function ouvrirAmelioration(){
   upgradeCards.innerHTML='';
   for(const u of choix){ const niv=state.ups[u.id]?' · Niv.'+(state.ups[u.id]+1):'';
     const b=document.createElement('div'); b.className='card';
-    b.innerHTML='<div class="emo">'+u.emo+'</div><div class="nom">'+u.nom+niv+'</div><div class="desc">'+u.desc+'</div>';
+    b.appendChild(divEmo(u.ico));
+    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+u.nom+niv+'</div><div class="desc">'+u.desc+'</div>'; b.appendChild(t);
     b.onclick=()=>appliquerAmelioration(u.id); upgradeCards.appendChild(b); }
   upgradeDiv.classList.add('visible');
 }
@@ -102,7 +112,8 @@ export function ouvrirEvenement(){ state.phase='evenement';
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
   eventTitre.textContent='✦ '+ev.titre; eventDesc.textContent=ev.desc; eventCards.innerHTML='';
   for(const ch of ev.choix){ const b=document.createElement('div'); b.className='card';
-    b.innerHTML='<div class="emo">'+(ch.emo||'▸')+'</div><div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>';
+    b.appendChild(divEmo(ch.ico));
+    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(t);
     b.onclick=()=>{ ch.effet(); eventDiv.classList.remove('visible'); apresEvenement(); }; eventCards.appendChild(b); }
   eventDiv.classList.add('visible');
 }
@@ -113,15 +124,19 @@ export function ouvrirScenePlanete(scene){
   tooltip.classList.remove('visible');
   planeteTitre.textContent=scene.titre; planeteCards.innerHTML='';
   for(const ch of scene.choix){ const b=document.createElement('div'); b.className='card';
-    b.innerHTML='<div class="emo">'+(ch.emo||'▸')+'</div><div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>';
+    b.appendChild(divEmo(ch.ico));
+    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(t);
     b.onclick=()=>{ ch.effet(); planeteDiv.classList.remove('visible'); state.scenePlanete=null; const s=scene.suite; if(s) s(); };
     planeteCards.appendChild(b); }
   planeteDiv.classList.add('visible');
 }
-export function ouvrirMeta(){ metaCristaux.textContent='💎 Cristaux : '+(state.meta.cristaux||0); metaCards.innerHTML='';
+export function ouvrirMeta(){ metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' Cristaux : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;
     const b=document.createElement('div'); b.className='card';
-    b.innerHTML='<div class="nom">'+m.nom+'</div><div class="desc">'+m.desc+'</div><div class="desc" style="color:#8fd0ff">'+'●'.repeat(lvl)+'○'.repeat(m.max-lvl)+'</div><div class="desc" style="color:#ffd23d">'+(atMax?'MAX':cout+' 💎')+'</div>';
+    const cout_div=document.createElement('div'); cout_div.className='desc'; cout_div.style.color='#ffd23d';
+    if(atMax) cout_div.textContent='MAX'; else { icone(cout_div,'gemme',12); cout_div.appendChild(document.createTextNode(' '+cout)); }
+    b.innerHTML='<div class="nom">'+m.nom+'</div><div class="desc">'+m.desc+'</div><div class="desc" style="color:#8fd0ff">'+'●'.repeat(lvl)+'○'.repeat(m.max-lvl)+'</div>';
+    b.appendChild(cout_div);
     if(peut){ b.onclick=()=>{ state.meta.cristaux-=cout; state.meta[m.id]=lvl+1; saveData(); ouvrirMeta(); }; } else b.style.opacity=atMax?'.6':'.4';
     metaCards.appendChild(b); }
   metaDiv.classList.add('visible');
@@ -251,10 +266,13 @@ function tooltipCarte(x,y){
   for(const lvl of state.carte) for(const nd of lvl){ const p=posNoeud(nd); const R=nd.type==='boss'?18:14; if(Math.hypot(x-p.x,y-p.y)<=R+10){ trouve=nd; break; } }
   if(!trouve){ tooltip.classList.remove('visible'); return; }
   const reach=atteign.includes(trouve), cur=trouve===state.noeudActuel;
-  let html='<div class="tt-name">'+(ICONE[trouve.type]||'')+' '+(NOM_NOEUD[trouve.type]||trouve.type)+'</div>';
-  html+='<div class="tt-spd">'+(DESC_NOEUD[trouve.type]||'')+'</div>';
+  tooltip.innerHTML='';
+  const nameDiv=document.createElement('div'); nameDiv.className='tt-name';
+  icone(nameDiv,ICONE[trouve.type],14); nameDiv.appendChild(document.createTextNode(' '+(NOM_NOEUD[trouve.type]||trouve.type)));
+  tooltip.appendChild(nameDiv);
+  let html='<div class="tt-spd">'+(DESC_NOEUD[trouve.type]||'')+'</div>';
   html+='<div class="tt-'+(cur?'grn':(reach?'dmg':'hp'))+'" style="color:'+(cur?'#8fa0c8':(reach?'#ffd23d':'#e5484d'))+'">'+(cur?'Position actuelle':(reach?'▸ Accessible':'Hors de portée'))+'</div>';
-  tooltip.innerHTML=html; tooltip.classList.add('visible');
+  tooltip.insertAdjacentHTML('beforeend',html); tooltip.classList.add('visible');
 }
 function tooltipBouton(a){
   let html='';
@@ -349,4 +367,4 @@ document.addEventListener('keydown', ev=>{
   else if(ev.key==='u'||ev.key==='U'){ if(state.phase==='joueur'&&!state.choixBuild&&ultimePret()) declencheUltime(); }
 });
 
-document.getElementById('son').addEventListener('click',()=>{ const on=toggleSound(); document.getElementById('son').textContent=on?'🔊':'🔇'; });
+document.getElementById('son').addEventListener('click',()=>{ const on=toggleSound(); const slot=document.querySelector('#son .ico-slot'); slot.innerHTML=''; icone(slot,on?'son_on':'son_off',16); });

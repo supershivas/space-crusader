@@ -104,6 +104,13 @@
   .card .desc{font-size:7px;color:#9fb0d8;line-height:1.6;}
   .card canvas{image-rendering:pixelated;border-radius:4px;}
 
+  /* icônes pixel-art (remplacent les emoji) */
+  .ico-slot{display:inline-flex;vertical-align:-4px;margin-right:5px;}
+  .ico-slot canvas,.pixel-ico{image-rendering:pixelated;vertical-align:middle;}
+  #son .ico-slot,#pauseBtn .ico-slot{margin-right:0;vertical-align:-2px;}
+  .card .emo canvas{image-rendering:pixelated;}
+  #achieve .ach-title{display:flex;align-items:center;justify-content:center;}
+
   /* Barre de choix en haut de l'écran (planètes sans combat) */
   #planete{position:absolute;top:0;left:0;right:0;z-index:14;display:none;flex-direction:column;align-items:center;gap:10px;
     padding:12px 10px 14px;background:linear-gradient(180deg,rgba(7,11,24,.94),rgba(7,11,24,.7));border-bottom:2px solid #24406e;}
@@ -128,52 +135,52 @@
 <div id="wrap">
   <div id="scene">
     <canvas id="jeu" width="490" height="900"></canvas>
-    <button id="son" class="coin" title="Son on/off">🔊</button>
-    <button id="pauseBtn" class="coin" title="Pause">⏸</button>
+    <button id="son" class="coin" title="Son on/off"><span class="ico-slot" data-ico="son_on"></span></button>
+    <button id="pauseBtn" class="coin" title="Pause"><span class="ico-slot" data-ico="pause"></span></button>
     <div id="tooltip"></div>
     <div id="log"></div>
     <div id="tutoHalo"></div>
     <div id="tutoBar"><p id="tutoTexte"></p><button id="tutoSkip">Passer le tutoriel</button></div>
     <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
-    <div id="pause"><h2>⏸ PAUSE</h2>
-      <button class="jouer" id="btnPauseReprendre" data-i18n="pause_continuer">▶ Continuer</button>
-      <button class="jouer" id="btnPauseRecommencer" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;" data-i18n="pause_recommencer">↻ Recommencer</button>
-      <button class="jouer" id="btnPauseOptions" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;" data-i18n="pause_options">⚙ Options</button>
-      <button class="jouer" id="btnPauseAccueil" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;" data-i18n="pause_accueil">🏠 Accueil</button>
+    <div id="pause"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>
+      <button class="jouer" id="btnPauseReprendre"><span class="ico-slot" data-ico="play"></span><span data-i18n="pause_continuer">Continuer</span></button>
+      <button class="jouer" id="btnPauseRecommencer" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="pause_recommencer">Recommencer</span></button>
+      <button class="jouer" id="btnPauseOptions" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
+      <button class="jouer" id="btnPauseAccueil" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
       <p data-i18n="pause_hint">P = pause · Échap = annuler l'action</p></div>
     <div id="toast"></div>
-    <div id="achieve"><div class="ach-title">🏆 SUCCÈS</div><div id="achieveTxt"></div></div>
-    <div id="upgrade" class="modal"><h2>⬆ AMÉLIORATION</h2><div class="hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div></div>
-    <div id="build" class="modal"><h2>🛠 CHOISIS TON VAISSEAU</h2><div class="hint">Il sortira du hangar au prochain tour · tape ailleurs pour annuler</div><div class="cards" id="buildCards"></div></div>
+    <div id="achieve"><div class="ach-title"><span class="ico-slot" data-ico="trophee"></span>SUCCÈS</div><div id="achieveTxt"></div></div>
+    <div id="upgrade" class="modal"><h2><span class="ico-slot" data-ico="fleche_haut"></span>AMÉLIORATION</h2><div class="hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div></div>
+    <div id="build" class="modal"><h2><span class="ico-slot" data-ico="cle"></span>CHOISIS TON VAISSEAU</h2><div class="hint">Il sortira du hangar au prochain tour · tape ailleurs pour annuler</div><div class="cards" id="buildCards"></div></div>
     <div id="event" class="modal"><h2 id="eventTitre">ÉVÉNEMENT</h2><div class="hint" id="eventDesc"></div><div class="cards" id="eventCards"></div></div>
-    <div id="carte" class="modal"><h2>🗺 CHOISIS TA DESTINATION</h2><div class="hint">Deux planètes en vue — trace ta route</div><div class="cards" id="carteChoix"></div></div>
+    <div id="carte" class="modal"><h2><span class="ico-slot" data-ico="carte"></span>CHOISIS TA DESTINATION</h2><div class="hint">Deux planètes en vue — trace ta route</div><div class="cards" id="carteChoix"></div></div>
     <div id="difficulte" class="modal"><h2 data-i18n="diff_titre">CHOISIS LA DIFFICULTÉ</h2>
       <div class="cards" id="difficulteCards"></div>
       <button class="jouer" id="btnDiffAnnuler" style="margin-top:14px;font-size:10px;padding:9px 16px;background:#243048;border-bottom-color:#141c2c;" data-i18n="diff_annuler">Retour</button></div>
-    <div id="params" class="modal"><h2 data-i18n="params_titre">⚙ PARAMÈTRES</h2>
+    <div id="params" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="params_titre">PARAMÈTRES</span></h2>
       <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:6px;">
-      <button class="jouer" id="btnParamsInfos" style="font-size:11px;padding:11px 20px;background:#3b5aa0;border-bottom-color:#25396b;" data-i18n="params_infos">ℹ Comment jouer</button>
-      <button class="jouer" id="btnParamsLangue" style="font-size:11px;padding:11px 20px;background:#5a6dd6;border-bottom-color:#3a4aa0;">🌐 Langue : Français</button>
+      <button class="jouer" id="btnParamsInfos" style="font-size:11px;padding:11px 20px;background:#3b5aa0;border-bottom-color:#25396b;"><span class="ico-slot" data-ico="info"></span><span data-i18n="params_infos">Comment jouer</span></button>
+      <button class="jouer" id="btnParamsLangue" style="font-size:11px;padding:11px 20px;background:#5a6dd6;border-bottom-color:#3a4aa0;"><span class="ico-slot" data-ico="globe"></span><span id="langueLabel">Langue : Français</span></button>
       <button class="jouer" id="btnParamsFermer" style="font-size:11px;padding:10px 18px;" data-i18n="params_fermer">Fermer</button>
       </div></div>
-    <div id="info" class="modal"><h2 data-i18n="info_titre">ℹ COMMENT JOUER</h2>
+    <div id="info" class="modal"><h2><span class="ico-slot" data-ico="info"></span><span data-i18n="info_titre">COMMENT JOUER</span></h2>
       <div class="hint" data-i18n-html="info_body" style="max-width:340px;text-align:left;line-height:1.9;"></div>
       <div class="hint" id="infoStats" style="margin-top:10px;color:#8fd0ff;"></div>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
       <button class="jouer" id="btnFermerInfo" style="font-size:12px;padding:11px 22px;" data-i18n="info_fermer">Fermer</button>
-      <button class="jouer" id="btnRelancerTuto" style="font-size:10px;padding:11px 16px;background:#5a6dd6;border-bottom-color:#3a4aa0;" data-i18n="info_revoir_tuto">🎓 Revoir le tutoriel</button>
+      <button class="jouer" id="btnRelancerTuto" style="font-size:10px;padding:11px 16px;background:#5a6dd6;border-bottom-color:#3a4aa0;"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="info_revoir_tuto">Revoir le tutoriel</span></button>
       </div></div>
     <div id="mission" class="modal"><h2 id="missionTitre">ZONE SÉCURISÉE</h2><div class="hint" id="missionStats"></div><button class="jouer" id="btnMission" style="margin-top:14px;font-size:12px;padding:11px 22px;" data-i18n="mission_continuer">Continuer ▶</button></div>
-    <div id="meta" class="modal"><h2>⚙ AMÉLIORATIONS PERMANENTES</h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div><button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:11px;padding:10px 18px;">Fermer</button></div>
+    <div id="meta" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span>AMÉLIORATIONS PERMANENTES</h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div><button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:11px;padding:10px 18px;">Fermer</button></div>
 
     <div id="accueil" class="ecran">
       <h1>DÉFENSE<br>DU CROISEUR</h1>
       <canvas id="illus" width="240" height="150" style="image-rendering:pixelated;margin:4px 0 10px;"></canvas>
-      <button class="jouer" id="btnReprendre" style="display:none;background:#2fa36a;border-bottom-color:#1c6b45;" data-i18n="home_reprendre">↻ REPRENDRE</button>
-      <button class="jouer" id="btnJouer" data-i18n="home_jouer">▶ JOUER</button>
+      <button class="jouer" id="btnReprendre" style="display:none;background:#2fa36a;border-bottom-color:#1c6b45;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="home_reprendre">REPRENDRE</span></button>
+      <button class="jouer" id="btnJouer"><span class="ico-slot" data-ico="play"></span><span data-i18n="home_jouer">JOUER</span></button>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-        <button class="jouer" id="btnInfo" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;" data-i18n="home_params">⚙ PARAMÈTRES</button>
-        <button class="jouer" id="btnMeta" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;" data-i18n="home_ameliorations">⚙ AMÉLIORATIONS</button>
+        <button class="jouer" id="btnInfo" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_params">PARAMÈTRES</span></button>
+        <button class="jouer" id="btnMeta" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
       </div>
     </div>
     <div id="fin" class="ecran cache">
@@ -184,8 +191,8 @@
       <table id="highscores"></table>
       <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:1.7;margin-top:4px;max-width:34ch"></div>
       <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:1.6"></p>
-      <button class="jouer" id="btnRejouer" data-i18n="fin_rejouer">↻ REJOUER</button>
-      <button class="jouer" id="btnMeta2" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;" data-i18n="home_ameliorations">⚙ AMÉLIORATIONS</button>
+      <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
+      <button class="jouer" id="btnMeta2" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
     </div>
   </div>
 </div>
