@@ -65,10 +65,14 @@ function garantirCibleAccessible(){
   if(state.vague!==derniereVague){ derniereVague=state.vague; alignementFait=false; }
   if(alignementFait) return;
   if(!state.ailes.length || !state.fighters.length) return;   // pas encore prêt : on retentera à la frame suivante
+  // ne s'aligne que sur une aile déjà entrée dans la grille (rangée >= 0) : les ailes hors grille
+  // (formation en V) sont invisibles et hors de portée, elles ne peuvent pas servir de cible garantie.
+  const aile=state.ailes.find(a=>a.r>=0);
+  if(!aile) return;   // aucune aile visible encore : on retentera à la frame suivante
   alignementFait=true;
   const dejaOk=state.fighters.some(f=>analyseTir(f).ailesOk.size>0);
   if(dejaOk) return;
-  const aile=state.ailes[0], cible=state.fighters[0];
+  const cible=state.fighters[0];
   aile.c=cible.c; const p=centreCase(aile.c,aile.r); aile.x=p.x;
 }
 
@@ -110,13 +114,28 @@ function positionner(){
   }
   halo.classList.add('visible');
 
-  // --- encart de texte : toujours ancré dans la bande HUD, au-dessus de la grille ---
-  const bx=ox+(state.LARGEUR/2)*sx, by=oy+Math.max(6,state.GY*0.28)*sy;
-  bar.style.left=bx+'px'; bar.style.top=by+'px'; bar.style.transform='translate(-50%,0)';
+  // --- encart de texte : placé au plus près de la cible réelle (au-dessus, sinon dessous/côté),
+  //     sans jamais chevaucher le bouton FIN DU TOUR ni déborder de l'écran. ---
+  bar.style.transform='none';   // taille intrinsèque (largeur fixée en CSS) mesurable avant positionnement
+  const bw=bar.offsetWidth, bh=bar.offsetHeight, marge=10, gap=14;
+  const demiCible= cible.rect ? Math.max(cible.rect.w*sx,cible.rect.h*sy)/2 : cible.r*Math.max(sx,sy);
+  const btn=state.BTN, brx=ox+btn.x*sx, bry=oy+btn.y*sy, brw=btn.w*sx, brh=btn.h*sy;
+  const chevaucheBouton=(x,y)=> x<brx+brw && x+bw>brx && y<bry+brh && y+bh>bry;
+  const horsScene=(x,y)=> x<marge || y<marge || x+bw>sb.width-marge || y+bh>sb.height-marge;
+  const candidats=[
+    {x:tx-bw/2, y:ty-demiCible-bh-gap},   // au-dessus
+    {x:tx-bw/2, y:ty+demiCible+gap},      // en dessous
+    {x:tx-demiCible-bw-gap, y:ty-bh/2},   // à gauche
+    {x:tx+demiCible+gap, y:ty-bh/2},      // à droite
+  ];
+  let choix=candidats.find(p=>!chevaucheBouton(p.x,p.y)&&!horsScene(p.x,p.y));
+  if(!choix) choix={x:sb.width/2-bw/2, y:oy+Math.max(6,state.GY*0.28*sy)};   // repli : bande HUD
+  choix.x=Math.max(marge,Math.min(choix.x,sb.width-bw-marge));
+  choix.y=Math.max(marge,Math.min(choix.y,sb.height-bh-marge));
+  bar.style.left=choix.x+'px'; bar.style.top=choix.y+'px';
 
   // --- ligne reliant l'encart à la cible réelle ---
-  const barRect=bar.getBoundingClientRect(), sceneRect=sb;
-  const lx0=barRect.left-sceneRect.left+barRect.width/2, ly0=barRect.top-sceneRect.top+barRect.height;
+  const lx0=choix.x+bw/2, ly0=choix.y+bh/2;
   const dx=tx-lx0, dy=ty-ly0, dist=Math.hypot(dx,dy), ang=Math.atan2(dy,dx);
   ligne.style.left=lx0+'px'; ligne.style.top=ly0+'px'; ligne.style.width=dist+'px';
   ligne.style.transform='rotate('+ang+'rad)';

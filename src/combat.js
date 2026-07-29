@@ -26,22 +26,24 @@ export function peutViserBoss(f){ return state.boss&&f.c>=state.boss.c-1&&f.c<=s
 export function peutActiverCapacite(f){ return !!CAPACITES[f.type] && !f.capUsed; }
 export function casesMouvementCapacite(f){ const out=[],p=porteeDep(f)+2; for(let dc=-p;dc<=p;dc++) for(let dr=-p;dr<=p;dr++){ if((dc===0&&dr===0)||Math.abs(dc)+Math.abs(dr)>p) continue;
   const c=f.c+dc,r=f.r+dr; if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) out.push({c,r}); } return out; }
+/* petite modale (toast) annonçant le coup spécial déclenché par le 2e appui sur un vaisseau */
+function annoncerCapacite(type){ const c=CAPACITES[type]; if(c) montrerToast(c.nom+' — '+c.desc,'gold'); }
 export function activerCapacite(f){
   if(!peutActiverCapacite(f)) return false;
-  if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); return true; }
-  if(f.type==='rapide'){ state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); return true; }
-  if(f.type==='bombardier'){ state.modeCapacite={ship:f,kind:'charge'}; sonSelect(); return true; }
+  if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); annoncerCapacite(f.type); return true; }
+  if(f.type==='rapide'){ state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); annoncerCapacite(f.type); return true; }
+  if(f.type==='bombardier'){ state.modeCapacite={ship:f,kind:'charge'}; sonSelect(); annoncerCapacite(f.type); return true; }
   if(f.type==='transporteur'){
     if(state.fighters.length>=state.MAX_VAISSEAUX) return false;
     const libre=caseLibreProche(f.c,f.r); if(!libre) return false;
     state.fighters.push(nouveauVaisseau(libre.c,libre.r,'navette',false));
-    f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛰 Mini-navette larguée !','log-grn'); return true;
+    f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛰 Mini-navette larguée !','log-grn'); annoncerCapacite(f.type); return true;
   }
   if(f.type==='medic'){
     const cible=[...state.fighters].filter(a=>a!==f&&a.hp<a.maxhp&&Math.abs(a.c-f.c)<=1&&Math.abs(a.r-f.r)<=1)
       .sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0];
     if(!cible) return false;
-    cible.hp=Math.min(cible.maxhp,cible.hp+1); f.capUsed=true; state.selection=null; sonRenfort(); logMsg('💚 Réparation !','log-grn'); return true;
+    cible.hp=Math.min(cible.maxhp,cible.hp+1); f.capUsed=true; state.selection=null; sonRenfort(); logMsg('💚 Réparation !','log-grn'); annoncerCapacite(f.type); return true;
   }
   return false;
 }
@@ -52,7 +54,7 @@ export function tirerCharge(f,cible){
   logMsg('💥 Tir chargé !','log-ylw');
   const c2 = cible.c+1<state.COLS ? cible.c+1 : cible.c-1;
   setTimeout(()=>{
-    const col=state.ailes.filter(a=>a.c===cible.c||a.c===c2); let kills=0;
+    const col=state.ailes.filter(a=>a.r>=0&&(a.c===cible.c||a.c===c2)); let kills=0;
     for(const a of col){ if(frapperAile(a,true)) kills++; }
     f.kills=(f.kills||0)+kills;
     state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
@@ -81,7 +83,7 @@ export function analyseTir(f){
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
-    for(let rr=start; rr>=-8; rr--){   // -8 : couvre aussi les ailes qui apparaissent hors grille (formation en V), sinon injouables
+    for(let rr=start; rr>=0; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
       const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }   // le mimic est ciblable comme un ennemi
@@ -195,12 +197,12 @@ export function tirer(f,aile){
   sonTir(); f.used=true; state.selection=null; state.tirsJoueurTotal++;
   const type=f.type, cible=aile;
   setTimeout(()=>{                          // l'explosion arrive APRÈS le laser
-    if(type==='rouge'){ const rad=1+((state.ups&&state.ups.rouge_range)||0); const zone=state.ailes.filter(a=>Math.abs(a.c-cible.c)<=rad&&Math.abs(a.r-cible.r)<=rad); let kills=0;
+    if(type==='rouge'){ const rad=1+((state.ups&&state.ups.rouge_range)||0); const zone=state.ailes.filter(a=>a.r>=0&&Math.abs(a.c-cible.c)<=rad&&Math.abs(a.r-cible.r)<=rad); let kills=0;
       for(const a of zone){ if(frapperAile(a,true)) kills++; }
       f.kills=(f.kills||0)+kills;
       state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
       if(kills>=3) logMsg(kills+' ENNEMIS ! 🔥','log-ylw'); }
-    else if(type==='bombardier'){ const col=state.ailes.filter(a=>a.c===cible.c); let kills=0;
+    else if(type==='bombardier'){ const col=state.ailes.filter(a=>a.c===cible.c&&a.r>=0); let kills=0;
       for(const a of col){ if(frapperAile(a,true)) kills++; }
       f.kills=(f.kills||0)+kills;
       state.secousse=Math.max(state.secousse,8); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
@@ -211,7 +213,9 @@ export function tirer(f,aile){
 }
 export function ultimePret(){ return state.ultimeJauge>=state.ultimeSeuil; }
 export function declencheUltime(){
-  for(const a of [...state.ailes]){ exploser(a.x,a.y,true); state.score++; state.killsThisWave++; } state.ailes=[];
+  // les ailes pas encore entrées dans la grille (rangée < 0) ne sont ni visibles ni détruites par l'ultime
+  for(const a of state.ailes.filter(a=>a.r>=0)){ exploser(a.x,a.y,true); state.score++; state.killsThisWave++; }
+  state.ailes=state.ailes.filter(a=>a.r<0);
   for(const o of [...state.asteroides]){ exploser(o.x,o.y,true); } state.asteroides=[];
   if(state.boss){ state.boss.hp-=4; if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } }
   state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2));

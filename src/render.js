@@ -262,7 +262,7 @@ export function dessiner(t){
     ctx.strokeStyle='#ff5a5a'; ctx.lineWidth=3; for(const a of an.ailesOk){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); }
     if(an.mimicsOk) for(const m of an.mimicsOk){ ctx.beginPath(); ctx.arc(m.x,m.y,state.CELL*0.42,0,7); ctx.stroke(); }
     if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('BROUILLÉ',state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
-  if(state.modeTourelle){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=3; for(const a of state.ailes){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); } if(state.boss){ ctx.strokeRect(state.GX+state.boss.c*state.CELL+4,state.GY+state.boss.r*state.CELL+4,3*state.CELL-8,2*state.CELL-8); } }
+  if(state.modeTourelle){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=3; for(const a of state.ailes){ if(a.r<0) continue; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); } if(state.boss){ ctx.strokeRect(state.GX+state.boss.c*state.CELL+4,state.GY+state.boss.r*state.CELL+4,3*state.CELL-8,2*state.CELL-8); } }
 
   // croiseur (endommagé visuel)
   const dmgRatio=1-Math.max(0,state.hpCruiser/state.HP_MAX);
@@ -292,8 +292,10 @@ export function dessiner(t){
   for(const b of state.bonus){ const img=b.type==='mimic'?getImgMimic():b.type==='pv'?imgBonusPV:b.type==='tir'?imgBonusTIR:imgBonusVAIS; ctx.globalAlpha=.9+.1*pulse; ctx.drawImage(img,Math.round(b.x-img.width/2),Math.round(b.y-img.height/2)); ctx.globalAlpha=1;
     if(b.type==='mimic'){ ctx.strokeStyle='rgba(255,60,80,'+(.35+.35*pulse)+')'; ctx.lineWidth=2; const s=state.CELL*0.42; ctx.strokeRect(Math.round(b.x-s),Math.round(b.y-s),Math.round(s*2),Math.round(s*2)); } }
 
-  // ailes + barres de vie
+  // ailes + barres de vie (les ailes pas encore entrées dans la grille — rangée < 0, ex : formation en V —
+  // restent invisibles et hors de portée tant qu'elles n'ont pas atteint la rangée 0)
   for(const a of state.ailes){
+    if(a.r<0) continue;
     if(a.r>=state.RANGS-2){ ctx.fillStyle='rgba(229,72,77,.22)'; ctx.fillRect(state.GX+a.c*state.CELL,state.GY+a.r*state.CELL,state.CELL,state.CELL); }
     ctx.drawImage(a.img,Math.round(a.x-a.img.width/2),Math.round(a.y-a.img.height/2));
     if(a.type==='porteur'){ ctx.strokeStyle='rgba(255,210,61,'+(.4+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.52,0,7); ctx.stroke(); }
