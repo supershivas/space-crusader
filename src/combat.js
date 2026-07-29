@@ -433,7 +433,10 @@ export function animer(dt){
   if(state.comboTimer>0){ state.comboTimer-=dt; if(state.comboTimer<=0) state.comboCount=0; }
   if(state.phase==='joueur'&&canPlayAmbiance()){ state.ambianceT+=dt; if(state.ambianceT>2.4){ state.ambianceT=Math.random()*0.6; sonRadar(); } }
   if(state.phase==='ennemi'){ state.lockTimer-=dt; if(state.lockTimer<=0){ if(state.hangar){ state.hangar.tours--; if(state.hangar.tours<=0){ deployerVaisseau(state.hangar.type); state.hangar=null; } } demarrerTourJoueur(); } }
-  if(state.enCombat && state.phase==='joueur' && !state.boss && state.ailes.length===0) gagnerCombat();
+  // on attend la fin de l'animation de destruction (explosions/particules encore actives, ou laser
+  // en cours) avant d'afficher l'écran de fin de combat, pour ne pas couper la dernière explosion.
+  if(state.enCombat && state.phase==='joueur' && !state.boss && state.ailes.length===0
+     && state.explosions.length===0 && state.particules.length===0 && state.lasers.length===0) gagnerCombat();
   for(const tn of state.trousNoirs) tn.ang+=dt*2.2;
   if(state.ondeChoc>0) state.ondeChoc=Math.max(0,state.ondeChoc-dt*1.5);
   for(const a of state.ACT) if(a.anim>0) a.anim=Math.max(0,a.anim-dt*3);

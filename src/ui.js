@@ -146,10 +146,18 @@ function capturerResultat(effet, descFallback){
   return nouveaux.length ? nouveaux.join(' · ') : descFallback;
 }
 /* modale affichée une seule fois après une mise à jour (version différente de la dernière
-   version vue sur cet appareil) : informe le joueur et affiche le numéro de version. */
+   version vue sur cet appareil) : informe le joueur et affiche le numéro de version.
+   Le bouton OK n'est activé qu'après un court délai : ça évite qu'un "clic fantôme" venant
+   du tap qui a lancé la partie (fréquent sur mobile, juste après un chargement/rechargement
+   de page) ne referme la modale instantanément sans que le joueur ait eu le temps de la lire. */
 export function ouvrirMaj(version){
   majVersion.textContent=version; majDiv.classList.add('visible');
-  document.getElementById('btnMajOk').addEventListener('click',()=>majDiv.classList.remove('visible'),{once:true});
+  const btn=document.getElementById('btnMajOk');
+  btn.disabled=true; btn.style.opacity='.5';
+  setTimeout(()=>{
+    btn.disabled=false; btn.style.opacity='';
+    btn.addEventListener('click',()=>majDiv.classList.remove('visible'),{once:true});
+  }, 600);
 }
 /* modale de résultat (bouton OK) : utilisée après le choix d'un événement aléatoire, pour que le
    joueur voie clairement ce qui s'est passé avant de revenir à la carte. */
