@@ -106,8 +106,11 @@ export function caseLargageAllie(){
 export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) return; const forme=Math.random()<0.5?'ligne':'V', taille=2+Math.floor(Math.random()*2), dep=Math.floor(Math.random()*state.COLS);
   if(forme==='ligne'){ for(let k=0;k<taille;k++){ const c=(dep+k)%state.COLS; if(!aileEn(c,0)&&!(state.boss&&bossEn(c,0))&&state.ailes.length<state.AILES_MAX) faireAile(c,0,typeAile()); } }
   else { const ce=dep; if(!aileEn(ce,0)&&state.ailes.length<state.AILES_MAX) faireAile(ce,0,typeAile());
+    // aux positions hors grille (rr<0) : jamais de type 'void' (vitesse 0) qui resterait bloqué à jamais
+    // hors de portée, invisible et immunisé contre l'ultime — il lui faut une vitesse pour rejoindre la grille.
+    const typeAileHorsGrille=()=>{ let t=typeAile(); return t==='void'?'normal':t; };
     for(let k=1;k<=taille;k++){ const cg=ce-k,cd=ce+k,rr=-k; if(state.ailes.length>=state.AILES_MAX) break;
-      if(cg>=0&&!aileEn(cg,rr)) faireAile(cg,rr,typeAile()); if(cd<state.COLS&&!aileEn(cd,rr)&&state.ailes.length<state.AILES_MAX) faireAile(cd,rr,typeAile()); } } }
+      if(cg>=0&&!aileEn(cg,rr)) faireAile(cg,rr,typeAileHorsGrille()); if(cd<state.COLS&&!aileEn(cd,rr)&&state.ailes.length<state.AILES_MAX) faireAile(cd,rr,typeAileHorsGrille()); } } }
 
 export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state.score++; state.killsThisWave++; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+1);
   if(a.type==='stronghold'){ // se scinde en 2 mini-navettes sur les cases adjacentes libres

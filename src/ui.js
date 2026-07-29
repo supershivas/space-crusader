@@ -31,6 +31,8 @@ const carteDiv=document.getElementById('carte'), carteChoixDiv=document.getEleme
 const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionStats=document.getElementById('missionStats');
 const metaDiv=document.getElementById('meta'), metaCristaux=document.getElementById('metaCristaux'), metaCards=document.getElementById('metaCards');
 const planeteDiv=document.getElementById('planete'), planeteTitre=document.getElementById('planeteTitre'), planeteCards=document.getElementById('planeteCards');
+const resultatDiv=document.getElementById('resultat'), resultatTexte=document.getElementById('resultatTexte');
+const majDiv=document.getElementById('maj'), majVersion=document.getElementById('majVersion');
 
 /* =====================================================================
    JOURNAL + ACHIEVEMENTS + HIGHSCORES
@@ -133,6 +135,32 @@ export function ouvrirEvenement(){ state.phase='evenement'; tooltip.classList.re
   eventDiv.classList.add('visible');
 }
 
+/* Exécute effet() et récupère le(s) message(s) de journal qu'il a produits pendant son exécution
+   (logMsg ajoute une entrée dans #log) : ça donne le résultat RÉEL de l'effet (utile pour les
+   effets à issue aléatoire) sans avoir à dupliquer cette logique dans chaque événement.
+   S'il n'a rien loggé (effet silencieux et déterministe), on retombe sur le texte du choix. */
+function capturerResultat(effet, descFallback){
+  const avant=logDiv.children.length;
+  effet();
+  const nouveaux=[...logDiv.children].slice(avant).map(d=>d.textContent);
+  return nouveaux.length ? nouveaux.join(' · ') : descFallback;
+}
+/* modale affichée une seule fois après une mise à jour (version différente de la dernière
+   version vue sur cet appareil) : informe le joueur et affiche le numéro de version. */
+export function ouvrirMaj(version){
+  majVersion.textContent=version; majDiv.classList.add('visible');
+  document.getElementById('btnMajOk').addEventListener('click',()=>majDiv.classList.remove('visible'),{once:true});
+}
+/* modale de résultat (bouton OK) : utilisée après le choix d'un événement aléatoire, pour que le
+   joueur voie clairement ce qui s'est passé avant de revenir à la carte. */
+export function ouvrirResultat(texte,suite){
+  resultatTexte.textContent=texte; resultatDiv.classList.add('visible');
+  const fermer=()=>{ resultatDiv.classList.remove('visible'); resultatDiv.removeEventListener('click',surFond); btnResultatOk.removeEventListener('click',fermer); if(suite) suite(); };
+  const surFond=(e)=>{ if(e.target===resultatDiv) fermer(); };
+  const btnResultatOk=document.getElementById('btnResultatOk');
+  btnResultatOk.addEventListener('click',fermer);
+}
+
 /* scène de planète sans combat : décor sur le canvas + choix en haut de l'écran (nom/desc déjà résolus par map.js) */
 export function ouvrirScenePlanete(scene){
   state.phase='planete'; state.scenePlanete={kind:scene.kind,titre:scene.titre}; state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
@@ -141,7 +169,16 @@ export function ouvrirScenePlanete(scene){
   for(const ch of scene.choix){ const b=document.createElement('div'); b.className='card';
     b.appendChild(divEmo(ch.ico));
     const d=document.createElement('div'); d.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(d);
-    b.onclick=()=>{ ch.effet(); planeteDiv.classList.remove('visible'); state.scenePlanete=null; const s=scene.suite; if(s) s(); };
+    b.onclick=()=>{
+      const suite=scene.suite;
+      if(scene.kind==='marche'){
+        const resultat=capturerResultat(ch.effet, ch.desc);
+        planeteDiv.classList.remove('visible'); state.scenePlanete=null;
+        ouvrirResultat(resultat, suite);
+      } else {
+        ch.effet(); planeteDiv.classList.remove('visible'); state.scenePlanete=null; if(suite) suite();
+      }
+    };
     planeteCards.appendChild(b); }
   planeteDiv.classList.add('visible');
 }

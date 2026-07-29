@@ -10,10 +10,11 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
-import { ouvrirMeta, togglePause, retourAccueil, montrerToast } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil, montrerToast, ouvrirMaj } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
+import { VERSION } from './version.js';
 
 /* ===== ÉTAT VIDE / NOUVELLE PARTIE / REPRISE ===== */
 function etatVide(){
@@ -180,6 +181,17 @@ function genererFavicon(){
 /* remplace les emplacements <span class="ico-slot" data-ico="..."> par leur icône pixel-art */
 function poserIcones(){ document.querySelectorAll('[data-ico]').forEach(el=>{ el.innerHTML=''; el.appendChild(iconCanvas(el.dataset.ico,16)); }); }
 
+/* Signale au joueur qu'une mise à jour a été appliquée depuis sa dernière visite sur cet appareil
+   (numéro de version différent de celui stocké) : modale d'info + numéro de version + bouton OK.
+   Ne s'affiche jamais lors de la toute première visite (rien à comparer). */
+const VERSION_KEY='dc_version';
+function verifierMiseAJour(){
+  let precedente=null;
+  try{ precedente=localStorage.getItem(VERSION_KEY); }catch(e){}
+  try{ localStorage.setItem(VERSION_KEY,VERSION); }catch(e){}
+  if(precedente && precedente!==VERSION) ouvrirMaj(VERSION);
+}
+
 loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
 genererFavicon();
 poserIcones();
@@ -187,6 +199,7 @@ appliquerLangue();
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Au démarrage, on va directement à l'accueil : le tutoriel guidé (voir tuto.js) suffit à
 // apprendre à jouer dès la première partie, plus besoin d'imposer l'écran d'aide en premier.
+verifierMiseAJour();
 requestAnimationFrame(boucle);
 
 /* PWA : enregistre le service worker (hors-ligne + installable). Sans effet si ouvert en file:// */

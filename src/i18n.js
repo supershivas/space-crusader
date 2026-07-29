@@ -284,6 +284,33 @@ const STRINGS = {
     log_hangar:'Hangar :',
     log_annule:'Annulé', log_bond:'💨 Bond !', log_tir_charge_annule:'Tir chargé annulé',
     tt_vaisseau_brouille_champ:'Vaisseau brouillé (champ magnétique)',
+
+    // ===== Résultats d'événements aléatoires (modale de résultat) =====
+    evt_butin_ultime:'Butin ! +50% ultime',
+    evt_embuscade:'Embuscade !',
+    evt_pari_gagne_ultime:'Gagné ! +50% ultime',
+    evt_perdu:'Perdu…',
+    evt_vaisseau_recupere:'Vaisseau récupéré !',
+    evt_collision:'Collision !',
+    evt_drones_attaquent:'Les drones attaquent !',
+    evt_vaisseau_recycle:'Vaisseau recyclé',
+    evt_pas_assez_vaisseaux:'Pas assez de vaisseaux',
+    evt_vaisseau_aspire:'Un vaisseau aspiré par la faille !',
+    evt_pas_assez_cristaux:'Pas assez de cristaux',
+    evt_mine_explose:'Une mine explose !',
+    evt_pari_gagne:'Pari gagné !',
+    evt_pari_perdu:'Pari perdu…',
+    evt_vaisseau_aguerri:'Vaisseau aguerri !',
+    evt_cuirasse_recupere:'Cuirassé récupéré !',
+    evt_piege:'C\'était un piège !',
+
+    // ===== Modale de mise à jour =====
+    maj_titre:'MISE À JOUR INSTALLÉE',
+    maj_texte:'Le jeu a été mis à jour vers la',
+    maj_ok:'OK',
+
+    // ===== Modale de résultat d'événement =====
+    resultat_titre:'RÉSULTAT',
   },
   en: {
     home_titre:'CRUISER<br>DEFENSE',
@@ -530,6 +557,30 @@ const STRINGS = {
     log_hangar:'Hangar:',
     log_annule:'Undone', log_bond:'💨 Dash!', log_tir_charge_annule:'Charged shot cancelled',
     tt_vaisseau_brouille_champ:'Ship jammed (magnetic field)',
+
+    evt_butin_ultime:'Loot! +50% ultimate',
+    evt_embuscade:'Ambush!',
+    evt_pari_gagne_ultime:'Won! +50% ultimate',
+    evt_perdu:'Lost…',
+    evt_vaisseau_recupere:'Ship salvaged!',
+    evt_collision:'Collision!',
+    evt_drones_attaquent:'The drones attack!',
+    evt_vaisseau_recycle:'Ship recycled',
+    evt_pas_assez_vaisseaux:'Not enough ships',
+    evt_vaisseau_aspire:'A ship was pulled into the rift!',
+    evt_pas_assez_cristaux:'Not enough crystals',
+    evt_mine_explose:'A mine explodes!',
+    evt_pari_gagne:'Bet won!',
+    evt_pari_perdu:'Bet lost…',
+    evt_vaisseau_aguerri:'Ship seasoned!',
+    evt_cuirasse_recupere:'Battleship salvaged!',
+    evt_piege:'It was a trap!',
+
+    maj_titre:'UPDATE INSTALLED',
+    maj_texte:'The game has been updated to',
+    maj_ok:'OK',
+
+    resultat_titre:'RESULT',
   },
 };
 
