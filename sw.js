@@ -1,8 +1,12 @@
 /* Service worker — Défense du Croiseur
-   Stratégie : "app shell" mise en cache à l'installation, puis
-   cache-first avec repli réseau. Le jeu devient jouable hors-ligne
-   et installable. Incrémente CACHE à chaque nouvelle version. */
-const CACHE = 'croiseur-v33';
+   Stratégie : "app shell" mise en cache à l'installation, puis réseau
+   d'abord avec repli sur le cache (network-first). Le jeu reste jouable
+   hors-ligne et installable, mais un joueur en ligne récupère toujours
+   la dernière version au prochain chargement — sans ça, un cache-first
+   pouvait servir indéfiniment une version périmée sur certains navigateurs
+   (Safari/Firefox mobile) même après un rechargement normal.
+   Incrémente CACHE à chaque nouvelle version. */
+const CACHE = 'croiseur-v34';
 const ASSETS = [
   './',
   './index.html',
@@ -42,14 +46,14 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then(hit => {
-      if (hit) return hit;
-      return fetch(e.request).then(resp => {
-        // met en cache au passage (utile pour la police Google si dispo)
-        const copy = resp.clone();
-        caches.open(CACHE).then(c => { try { c.put(e.request, copy); } catch (_) {} });
-        return resp;
-      }).catch(() => caches.match('./index.html')); // repli hors-ligne
-    })
+    fetch(e.request).then(resp => {
+      // réseau disponible : toujours la version la plus fraîche, et on la met en cache au passage
+      const copy = resp.clone();
+      caches.open(CACHE).then(c => { try { c.put(e.request, copy); } catch (_) {} });
+      return resp;
+    }).catch(() =>
+      // hors-ligne : on retombe sur le cache (app shell installé), sinon sur la page d'accueil
+      caches.match(e.request).then(hit => hit || caches.match('./index.html'))
+    )
   );
 });

@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase, loadData, sauvegardeExiste, chargerSauvegarde, effacerSauvegarde,
          chargerDifficultePreferee, definirDifficultePreferee, statsEquilibrage } from './state.js';
-import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS } from './config.js';
+import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS, CAPACITES } from './config.js';
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
@@ -29,7 +29,10 @@ function etatVide(){
 
 function nouvellePartie(){
   // pool de départ : le Vaisseau Rouge + 1 Standard + 1 vaisseau spécial tiré au hasard (parmi les vaisseaux débloqués)
-  const speciaux=SHIPS.filter(s=>s.id!=='normal'&&(!s.metaRequis||(state.meta[s.metaRequis]||0)>0));
+  // lors du tout premier combat (tutoriel), on restreint le tirage aux vaisseaux qui ont un coup spécial
+  // (CAPACITES) : le script du tutoriel a besoin qu'un des 3 vaisseaux de départ en ait toujours un.
+  let speciaux=SHIPS.filter(s=>s.id!=='normal'&&(!s.metaRequis||(state.meta[s.metaRequis]||0)>0));
+  if(!tutorielVu()){ const avecCapacite=speciaux.filter(s=>CAPACITES[s.id]); if(avecCapacite.length) speciaux=avecCapacite; }
   const special=speciaux[Math.floor(Math.random()*speciaux.length)].id;
   const [cN,cS,cR]=spread(3);
   state.fighters=[nouveauVaisseau(cN,state.RANGS-1,'normal',false), nouveauVaisseau(cS,state.RANGS-1,special,false), nouveauVaisseau(cR,state.RANGS-1,'rouge',false)];
@@ -51,6 +54,8 @@ function nouvellePartie(){
   state.prochainAsteroide=3+Math.floor(Math.random()*2); state.prochainBoss=18+Math.floor(Math.random()*6); state.banniereTimer=0;
   state.comboCount=0; state.comboTimer=0; state.bestCombo=0; state.undoStack=[]; state.paused=false;
   state.achievements.asteroid_dodge=(state.achievements.asteroid_dodge||0); state.achievements.boss_slayer=state.achievements.boss_slayer||false; state.achievements.no_turret=state.achievements.no_turret||false; state.achievements.perfect_wave=state.achievements.perfect_wave||false;
+  // tutoriel : jauge d'ultime déjà pleine, pour pouvoir démontrer l'ultime sans attendre plusieurs tours de kills
+  if(!tutorielVu()) state.ultimeJauge=state.ultimeSeuil;
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');
   document.getElementById('pause').classList.remove('visible'); document.getElementById('pauseBtn').style.display='block';
   document.getElementById('log').innerHTML=''; state.secteur=1; state.enCombat=false; genererCarte(); startMusic(); ouvrirCarte();
@@ -145,7 +150,10 @@ document.getElementById('btnCheckUpdate').addEventListener('click', async ()=>{
     if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }
     if('caches' in window){ const keys=await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k))); }
   }catch(e){}
-  setTimeout(()=>{ location.reload(); }, 300);
+  // recharge sur une URL jamais mise en cache (paramètre unique) : sur certains navigateurs
+  // (Safari/Firefox mobile), un simple location.reload() peut encore repartir d'une page
+  // gardée en mémoire/cache malgré le service worker désinscrit et les caches vidés juste avant.
+  setTimeout(()=>{ location.replace(location.pathname+'?maj='+Date.now()); }, 300);
 });
 document.getElementById('btnFermerInfo').addEventListener('click',()=>{ document.getElementById('info').classList.remove('visible'); });
 document.getElementById('btnRelancerTuto').addEventListener('click',()=>{

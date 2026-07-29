@@ -57,7 +57,7 @@ export const state = {
   langue:'fr',
 
   // compteurs de session (utilisés par le tutoriel pour détecter les actions du joueur)
-  tirsJoueurTotal:0, deplacementsJoueurTotal:0, toursJoueurTotal:0, capacitesJoueurTotal:0,
+  tirsJoueurTotal:0, deplacementsJoueurTotal:0, toursJoueurTotal:0, capacitesJoueurTotal:0, ultimesJoueurTotal:0,
 };
 
 export function centreCase(c,r){ return {x:state.GX+c*state.CELL+state.CELL/2, y:state.GY+r*state.CELL+state.CELL/2}; }

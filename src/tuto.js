@@ -1,6 +1,15 @@
 /* =====================================================================
-   TUTORIEL — guide en 4 étapes lors de la toute première partie
-   (sélection, tir, déplacement, fin de tour)
+   TUTORIEL — mission scriptée en 8 étapes lors de la toute première partie
+   (sélection, tir, vaisseau spécial + son coup spécial, vaisseau rouge,
+   action du croiseur, ultime, fin de tour)
+
+   Contrairement à une ancienne version qui pointait vers "n'importe quel
+   vaisseau sélectionné", chaque étape cible un vaisseau PRÉCIS, capturé une
+   fois au démarrage (le Standard, le vaisseau à coup spécial, le Rouge) —
+   ça évite qu'une étape se retrouve associée au mauvais vaisseau (ex : un
+   Standard sans coup spécial affiché à l'étape "coup spécial").
+   nouvellePartie() garantit qu'un des 3 vaisseaux de départ a bien un coup
+   spécial lors de ce tout premier combat, et pré-charge la jauge d'ultime.
 
    Script précis : l'encart de texte reste toujours ancré dans la bande
    HUD au-dessus de la grille (jamais sur la grille ni sur les boutons
@@ -8,23 +17,25 @@
    (vaisseau, ennemi, case ou bouton), où qu'elle soit sur l'écran.
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { analyseTir, casesMouvement, peutActiverCapacite } from './combat.js';
+import { analyseTir, peutActiverCapacite } from './combat.js';
 import { t } from './i18n.js';
 
 const TUTO_KEY='dc_tuto_vu';
 
 const ETAPES=[
-  { cle:'tuto_0', fait:()=>!!state.selection },
-  { cle:'tuto_1',
-    optionnel:()=>!state.fighters.some(f=>peutActiverCapacite(f)),
-    fait:(b)=>state.capacitesJoueurTotal>b.caps },
-  { cle:'tuto_2', fait:(b)=>state.tirsJoueurTotal>b.tirs },
-  { cle:'tuto_3', fait:(b)=>state.deplacementsJoueurTotal>b.deps },
-  { cle:'tuto_4', fait:(b)=>state.toursJoueurTotal>b.tours },
+  { cle:'tuto_0', fait:()=>state.selection===refNormal },
+  { cle:'tuto_1', fait:(b)=>state.tirsJoueurTotal>b.tirs },
+  { cle:'tuto_2', optionnel:()=>!refSpecial, fait:()=>state.selection===refSpecial },
+  { cle:'tuto_3', optionnel:()=>!refSpecial, fait:(b)=>state.capacitesJoueurTotal>b.caps },
+  { cle:'tuto_4', optionnel:()=>!refRouge, fait:()=>!!(refRouge&&refRouge.used) },
+  { cle:'tuto_5', fait:()=>state.actionFaite===true },
+  { cle:'tuto_6', fait:(b)=>state.ultimesJoueurTotal>b.ultimes },
+  { cle:'tuto_7', fait:(b)=>state.toursJoueurTotal>b.tours },
 ];
 
-let actif=false, etapeIdx=0, baseline={tirs:0,deps:0,tours:0,caps:0};
+let actif=false, etapeIdx=0, baseline={tirs:0,tours:0,caps:0,ultimes:0};
 let alignementFait=false, derniereVague=null;
+let refNormal=null, refSpecial=null, refRouge=null;
 let halo=null, bar=null, ligne=null, texte=null, skipBtn=null;
 
 function elements(){
@@ -37,9 +48,19 @@ function elements(){
 export function tutorielVu(){ try{ return localStorage.getItem(TUTO_KEY)==='1'; }catch(e){ return true; } }
 function marquerVu(){ try{ localStorage.setItem(TUTO_KEY,'1'); }catch(e){} }
 
+/* capture une fois pour toutes les 3 vaisseaux de départ, par référence : les étapes
+   ciblent toujours LE MÊME vaisseau précis du début à la fin, jamais "la sélection". */
+function capturerRoster(){
+  refNormal=state.fighters.find(f=>f.type==='normal')||null;
+  refRouge=state.fighters.find(f=>f.type==='rouge')||null;
+  refSpecial=state.fighters.find(f=>f!==refNormal&&f!==refRouge&&peutActiverCapacite(f))
+           ||state.fighters.find(f=>f!==refNormal&&f!==refRouge)||null;
+}
+
 export function demarrer(){
   elements();
   actif=true; etapeIdx=0; alignementFait=false; derniereVague=null;
+  capturerRoster();
   afficherEtape();
   // la barre n'apparaît qu'une fois le combat commencé (voir mettreAJour) :
   // pendant le choix de la planète de départ (phase 'carte'), on reste masqué.
@@ -55,13 +76,13 @@ function terminer(){
 }
 
 function afficherEtape(){
-  // saute automatiquement les étapes optionnelles hors de propos ce tour-ci
-  // (ex : aucun vaisseau n'a de coup spécial disponible)
+  // saute automatiquement une étape si sa cible n'existe pas ce combat-ci (garde-fou :
+  // en temps normal nouvellePartie() garantit toujours un vaisseau à coup spécial et un Rouge).
   while(ETAPES[etapeIdx] && ETAPES[etapeIdx].optionnel && ETAPES[etapeIdx].optionnel()) etapeIdx++;
   const e=ETAPES[etapeIdx];
   if(!e){ terminer(); return; }
   texte.textContent=t(e.cle);
-  baseline={tirs:state.tirsJoueurTotal, deps:state.deplacementsJoueurTotal, tours:state.toursJoueurTotal, caps:state.capacitesJoueurTotal};
+  baseline={tirs:state.tirsJoueurTotal, tours:state.toursJoueurTotal, caps:state.capacitesJoueurTotal, ultimes:state.ultimesJoueurTotal};
 }
 
 /* Garantit qu'au moins un vaisseau ait un ennemi réellement accessible.
@@ -84,11 +105,16 @@ function garantirCibleAccessible(){
 }
 
 function cibleEtape(idx){
-  if(idx===0){ const f=state.fighters.find(x=>!x.used); if(!f) return null; return {x:f.x,y:f.y,r:state.CELL*0.55}; }
-  if(idx===1){ const f=state.selection||state.fighters.find(x=>peutActiverCapacite(x)); if(!f) return null; return {x:f.x,y:f.y,r:state.CELL*0.55}; }
-  if(idx===2){ if(!state.selection) return null; const an=analyseTir(state.selection); const a=[...an.ailesOk][0]; return a?{x:a.x,y:a.y,r:state.CELL*0.5}:null; }
-  if(idx===3){ if(!state.selection) return null; const cells=casesMouvement(state.selection); if(!cells.length) return null; const c=centreCase(cells[0].c,cells[0].r); return {x:c.x,y:c.y,r:10}; }
-  if(idx===4){ return {rect:state.BTN}; }
+  if(idx===0) return refNormal&&!refNormal.used ? {x:refNormal.x,y:refNormal.y,r:state.CELL*0.55} : null;
+  if(idx===1){ const f=state.selection||refNormal; return f?{x:f.x,y:f.y,r:state.CELL*0.55}:null; }
+  if(idx===2) return refSpecial&&!refSpecial.used ? {x:refSpecial.x,y:refSpecial.y,r:state.CELL*0.55} : null;
+  if(idx===3) return refSpecial ? {x:refSpecial.x,y:refSpecial.y,r:state.CELL*0.55} : null;
+  if(idx===4) return refRouge&&!refRouge.used ? {x:refRouge.x,y:refRouge.y,r:state.CELL*0.55} : null;
+  // BOUCLIER (index 2) : seule action du croiseur qui s'applique en un seul tap, sans cible à
+  // choisir ensuite (contrairement à TOURELLE) — la plus simple à démontrer dans le tutoriel.
+  if(idx===5) return state.ACT&&state.ACT[2] ? {rect:state.ACT[2]} : null;
+  if(idx===6) return state.ULT ? {rect:state.ULT} : null;
+  if(idx===7) return {rect:state.BTN};
   return null;
 }
 

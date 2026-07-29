@@ -67,11 +67,14 @@ const STRINGS = {
     meta_titre:'AMÉLIORATIONS PERMANENTES',
 
     // ===== Tutoriel =====
-    tuto_0:"Touche un de tes vaisseaux, en bas de l'écran, pour le sélectionner.",
-    tuto_1:"Ce vaisseau a un coup spécial (pastille jaune) : touche-le une 2e fois pour l'activer.",
-    tuto_2:"Touche un ennemi accessible (viseur rouge) pour tirer dessus.",
-    tuto_3:"Touche un point bleu pour déplacer ton vaisseau.",
-    tuto_4:"Touche FIN DU TOUR pour terminer ton tour.",
+    tuto_0:"Touche le vaisseau blanc, en bas de l'écran, pour le sélectionner.",
+    tuto_1:"Touche un ennemi accessible (viseur rouge) pour tirer dessus.",
+    tuto_2:"Touche ce vaisseau (pastille jaune) pour le sélectionner : il a un coup spécial.",
+    tuto_3:"Touche-le une 2e fois pour activer son coup spécial.",
+    tuto_4:"Touche le Vaisseau Rouge, ton vaisseau le plus puissant (améliorable), puis tire ou déplace-le.",
+    tuto_5:"Touche une action du croiseur : VAISSEAU, TOURELLE ou BOUCLIER.",
+    tuto_6:"La jauge est prête : touche l'ultime pour une frappe orbitale !",
+    tuto_7:"Touche FIN DU TOUR pour terminer ton tour.",
     tuto_passer:'Passer le tutoriel',
 
     // ===== Améliorations (UPGRADES) =====
@@ -374,11 +377,14 @@ const STRINGS = {
     build_titre:'CHOOSE YOUR SHIP', build_hint:'It will leave the hangar next turn · tap elsewhere to cancel',
     meta_titre:'PERMANENT UPGRADES',
 
-    tuto_0:"Tap one of your ships, at the bottom of the screen, to select it.",
-    tuto_1:"This ship has a special move (yellow dot): tap it again to activate it.",
-    tuto_2:"Tap a reachable enemy (red reticle) to fire at it.",
-    tuto_3:"Tap a blue dot to move your ship.",
-    tuto_4:"Tap END TURN to finish your turn.",
+    tuto_0:"Tap the white ship, at the bottom of the screen, to select it.",
+    tuto_1:"Tap a reachable enemy (red reticle) to fire at it.",
+    tuto_2:"Tap this ship (yellow dot) to select it: it has a special move.",
+    tuto_3:"Tap it again to activate its special move.",
+    tuto_4:"Tap the Red Ship, your most powerful (upgradeable) ship, then fire or move it.",
+    tuto_5:"Tap a cruiser action: SHIP, TURRET or SHIELD.",
+    tuto_6:"The gauge is ready: tap the ultimate for an orbital strike!",
+    tuto_7:"Tap END TURN to finish your turn.",
     tuto_passer:'Skip the tutorial',
 
     up_portee_nom:'Extended Fire', up_portee_desc:'+1 column of range',

@@ -214,6 +214,7 @@ export function tirer(f,aile){
 }
 export function ultimePret(){ return state.ultimeJauge>=state.ultimeSeuil; }
 export function declencheUltime(){
+  state.ultimesJoueurTotal=(state.ultimesJoueurTotal||0)+1;
   // les ailes pas encore entrées dans la grille (rangée < 0) ne sont ni visibles ni détruites par l'ultime
   for(const a of state.ailes.filter(a=>a.r>=0)){ exploser(a.x,a.y,true); state.score++; state.killsThisWave++; }
   state.ailes=state.ailes.filter(a=>a.r<0);
