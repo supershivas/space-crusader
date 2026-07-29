@@ -6,7 +6,7 @@ import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CA
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
-         deployerVaisseau, ramasser, getImgAster, nouveauVaisseau, caseLibreProche } from './entities.js';
+         deployerVaisseau, ramasser, getImgAster, nouveauVaisseau, caseLibreProche, caseLargageAllie } from './entities.js';
 import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
 import { NFRAMES } from './sprites.js';
 import { logMsg, ouvrirBuild, finPartie, checkAchievements, montrerToast } from './ui.js';
@@ -55,7 +55,7 @@ export function tirerCharge(f,cible){
   }, 130);
 }
 
-export function cibleLaser(a){ if(a.type==='eclaireur'||a.type==='void'||a.r<0) return null;   // éclaireur & faille ne tirent pas
+export function cibleLaser(a){ if(a.type==='eclaireur'||a.type==='void'||a.type==='transporteur'||a.r<0) return null;   // éclaireur, faille & transporteur ne tirent pas
   if(a.r<state.RANG_TIR && a.type!=='chasseur' && a.type!=='mini_sniper') return null;   // chasseur & mini-sniper tirent dès le 1er tour
   if(a.type==='mini_sniper'){ // vise les 2 vaisseaux les plus proches du croiseur (rang le plus bas)
     const cibles=[...state.fighters].sort((x,y)=>(y.r-x.r)||(Math.hypot(x.x-a.x,x.y-a.y)-Math.hypot(y.x-a.x,y.y-a.y))).slice(0,2);
@@ -249,6 +249,15 @@ export function finDuTour(){
   if(state.boss){ degats+=tirsBoss(); }
   if(tirs.length||state.boss) sonTirEnnemi();
   if(degats>0){ degats=Math.floor(degats); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-degats)); state.damageThisWave+=degats; state.flashCroiseur=1; state.secousse=Math.max(state.secousse,7); sonAie(); logMsg('-'+degats+' PV','log-red'); }
+
+  // (1b) TRANSPORTEURS ennemis : télégraphient une case (visible au tour suivant) puis y larguent une mini-navette
+  for(const a of state.ailes){ if(a.type!=='transporteur'||a.r<state.RANG_TIR) continue;
+    if(a.largageCible){
+      const {c,r}=a.largageCible;
+      if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&state.ailes.length<state.AILES_MAX){ faireAile(c,r,'mini_navette'); logMsg('🛰 Largage ennemi !','log-red'); }
+      a.largageCible=null; a.largageCooldown=3;
+    } else if(a.largageCooldown>0){ a.largageCooldown--; }
+    else { const cible=caseLargageAllie(); if(cible){ a.largageCible=cible; logMsg('⚠ Une navette ennemie approche du camp allié !','log-red'); } } }
 
   // (2) AVANCE des ailes (vitesse par type) + collisions + éperonnage
   for(const a of [...state.ailes].sort((x,y)=>y.r-x.r)){ if(!state.ailes.includes(a)) continue;

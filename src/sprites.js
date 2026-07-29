@@ -78,6 +78,8 @@ export const VOID=["....k....",".k.kkk.k.","kkkUUUkkk","kkUUUUUkk","kkkUUUkkk","
 export const SABOTEUR=["....W....",".W.WCW.W.","WCWCWCWCW","WCWWWWWCW","WCWCWCWCW",".W.WCW.W.","..WCWCW..","..WCWCW..","..WCWCW..","...WCW...","...WCW...","...WCW...","....W....","....C...."];
 /* ennemi BRÛLEUR : tir incendiaire, brûle le croiseur (1 PV/tour) */
 export const BRULEUR=["....W....",".W.WEW.W.","WEWEWEWEW","WEWWWWWEW","WEWEWEWEW",".W.WEW.W.","..WEWEW..","..WEWEW..","..WEWEW..","...WEW...","...WEW...","...WEW...","....W....","....E...."];
+/* ennemi TRANSPORTEUR : largue une mini-navette ennemie dans le camp allié (cible visible 1 tour avant) */
+export const AILE_TRANSPORTEUR=["....W....",".W.WGW.W.","WGWGWGWGW","WGWWWWWGW","WGWGWGWGW",".W.WGW.W.","..WGWGW..","..WGWGW..","..WGWGW..","...WGW...","...WGW...","...WGW...","....W....","....G...."];
 /* élite TITAN : variante dorée de l'aile blindée, encore plus de PV */
 export const TITAN=[".ZZ...ZZ.","ZZZZ.ZZZZ","ZZsSSSsZZ","ZsSSeSSsZ","ZsSeMeSsZ","ZsSeMeSsZ","ZsSSeSSsZ","ZZsSSSsZZ",".ZZSSSZZ.","..ZSSSZ..","..ZSeSZ..","...ZeZ...","...ZeZ...","....e...."];
 

@@ -224,6 +224,14 @@ export function dessiner(t){
     if(state.boss){ dessinerMenaceBoss(pulse); }
     ctx.restore();
 
+    // largages télégraphiés des transporteurs ennemis : case cible visible 1 tour avant l'arrivée
+    for(const a of state.ailes){ if(a.type!=='transporteur'||!a.largageCible) continue;
+      const cc=centreCase(a.largageCible.c,a.largageCible.r), al=.5+.4*pulse;
+      ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(174,183,196,'+al+')'; ctx.lineWidth=2;
+      ctx.strokeRect(state.GX+a.largageCible.c*state.CELL+3,state.GY+a.largageCible.r*state.CELL+3,state.CELL-6,state.CELL-6);
+      ctx.restore();
+      dessinerIcone(imgAlerte,cc.x,cc.y-state.CELL*0.3,al); }
+
     // Prévisualisation mouvement (hover)
     if(state.hoverCell&&state.selection){
       const cc=centreCase(state.hoverCell.c,state.hoverCell.r);

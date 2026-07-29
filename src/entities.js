@@ -8,7 +8,7 @@ import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE,
          STRONGHOLD, MINI_NAVETTE, MINI_NAVETTE_ALLIEE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
-         SABOTEUR, BRULEUR, TITAN } from './sprites.js';
+         SABOTEUR, BRULEUR, TITAN, AILE_TRANSPORTEUR } from './sprites.js';
 import { sonRenfort } from './audio.js';
 import { logMsg } from './ui.js';
 
@@ -16,7 +16,7 @@ import { logMsg } from './ui.js';
 let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgVTransporteur,imgPorteur,imgBrouilleur,imgLourd;
 let imgDebris1,imgDebris2,imgStation,imgBarriere;
 let imgStronghold,imgMiniNavette,imgMiniNavetteAlliee,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
-let imgSaboteur,imgBruleur,imgTitan;
+let imgSaboteur,imgBruleur,imgTitan,imgAileTransporteur;
 export function cuireUnites(CELL){
   imgJoueur=cuireFit(JOUEUR,CELL); imgRouge=cuireFit(ROUGE,CELL); imgAile=cuireFit(AILE,CELL); imgAster=cuireFit(ASTER,CELL);
   imgChasseur=cuireFit(CHASSEUR,CELL); imgBomber=cuireFit(BOMBARDIER,CELL); imgEclaireur=cuireFit(ECLAIREUR,CELL);
@@ -25,9 +25,9 @@ export function cuireUnites(CELL){
   imgDebris1=cuireFit(DEBRIS_1,CELL); imgDebris2=cuireFit(DEBRIS_2,CELL); imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
   imgStronghold=cuireFit(STRONGHOLD,CELL); imgMiniNavette=cuireFit(MINI_NAVETTE,CELL); imgMiniNavetteAlliee=cuireFit(MINI_NAVETTE_ALLIEE,CELL); imgRegen=cuireFit(REGENERATEUR,CELL); imgMiniSniper=cuireFit(MINI_SNIPER,CELL);
   imgDiagD=cuireFit(DIAGONAL_D,CELL); imgDiagG=cuireFit(DIAGONAL_G,CELL); imgMimic=cuireFit(MIMIC,CELL); imgVoid=cuireFit(VOID,CELL);
-  imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL);
+  imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL); imgAileTransporteur=cuireFit(AILE_TRANSPORTEUR,CELL);
 }
-function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:imgAile; }
+function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:type==='transporteur'?imgAileTransporteur:imgAile; }
 export function getImgMimic(){ return imgMimic; }
 export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : null; }
 export function getImgAster(){ return imgAster; }
@@ -80,6 +80,7 @@ export function typeAile(){
   if(state.vague>=3 && Math.random()<0.10) return 'lourd';   // aile blindée à partir de la vague 3
   if(state.vague>=2 && Math.random()<0.06) return 'saboteur'; // décharge électrique : gèle un allié 1 tour
   if(state.vague>=2 && Math.random()<0.06) return 'bruleur';  // tir incendiaire : brûle le croiseur (1 PV/tour)
+  if(state.vague>=4 && Math.random()<0.04) return 'transporteur'; // largue une mini-navette dans le camp allié
   const r=Math.random(); return r<0.55?'normal':r<0.72?'chasseur':r<0.87?'eclaireur':'bombardier'; }
 export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal';
   const img=imgAilePourType(type);
@@ -88,7 +89,14 @@ export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal
   const a={c,r,x:p.x,y:p.y-state.CELL,img,type,vitesse,hp,maxhp:hp};
   if(type==='regenerateur') a.regenTimer=3;
   if(type==='diagonal_d') a.dc=1; if(type==='diagonal_g') a.dc=-1;
+  if(type==='transporteur') a.largageCooldown=1;
   state.ailes.push(a); }
+/* case libre proche des vaisseaux alliés (bas de grille) — cible de largage du Transporteur ennemi */
+export function caseLargageAllie(){
+  const options=[]; const rMin=Math.max(0,state.RANGS-3);
+  for(let r=rMin;r<state.RANGS;r++) for(let c=0;c<state.COLS;c++){ if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) options.push({c,r}); }
+  return options.length?options[Math.floor(Math.random()*options.length)]:null;
+}
 export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) return; const forme=Math.random()<0.5?'ligne':'V', taille=2+Math.floor(Math.random()*2), dep=Math.floor(Math.random()*state.COLS);
   if(forme==='ligne'){ for(let k=0;k<taille;k++){ const c=(dep+k)%state.COLS; if(!aileEn(c,0)&&!(state.boss&&bossEn(c,0))&&state.ailes.length<state.AILES_MAX) faireAile(c,0,typeAile()); } }
   else { const ce=dep; if(!aileEn(ce,0)&&state.ailes.length<state.AILES_MAX) faireAile(ce,0,typeAile());
