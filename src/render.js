@@ -3,7 +3,7 @@
    de la carte de secteur et de l'illustration d'accueil
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES } from './config.js';
+import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES, SKINS_CROISEUR } from './config.js';
 import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom, iconImage } from './sprites.js';
@@ -19,8 +19,10 @@ const wrap=document.getElementById('wrap'), scene=document.getElementById('scene
 const imgAlerte=iconImage('alerte',3), imgGel=iconImage('gel',3), imgEclairIco=iconImage('eclair',3), imgFeuIco=iconImage('feu',3);
 function dessinerIcone(img,cx,cy,alpha=1){ ctx.globalAlpha=alpha; ctx.drawImage(img,Math.round(cx-img.width/2),Math.round(cy-img.height/2)); ctx.globalAlpha=1; }
 
-let imgCroiseur, imgBossMap;
+let imgCroiseur, imgBossMap, croiseurSC;
 let nebuleuses, planete;
+/* ré-applique la teinte cosmétique du croiseur en cours (après un changement de skin dans le menu méta) */
+export function rafraichirSkinCroiseur(){ if(croiseurSC) imgCroiseur=cuire(CROISEUR,croiseurSC,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); }
 const etoiles=[];
 
 /* =====================================================================
@@ -51,7 +53,7 @@ function dessinerAstrePixel(px,py,R,a){
 export function configurer(){
   state.COLS=COLS_N; state.RANGS=RANGS_N; state.CELL=CELL_N; state.PORTEE_DEP=DEP_N;
   const MARGE=14; state.LARGEUR=state.COLS*state.CELL+2*MARGE; state.GX=MARGE; state.GY=86; state.GRID_BAS=state.GY+state.RANGS*state.CELL;
-  const sc=Math.ceil(state.LARGEUR/CROISEUR[0].length); imgCroiseur=cuire(CROISEUR,sc); const BANDE=CROISEUR.length*sc;
+  const sc=Math.ceil(state.LARGEUR/CROISEUR[0].length); croiseurSC=sc; imgCroiseur=cuire(CROISEUR,sc,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); const BANDE=CROISEUR.length*sc;
   imgBossMap={}; for(const kk in BOSS_GRIDS){ const g=BOSS_GRIDS[kk]; imgBossMap[kk]=cuire(g,Math.max(4,Math.round(3*state.CELL/g[0].length))); }
   cuireUnites(state.CELL);
   const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6;

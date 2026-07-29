@@ -43,7 +43,7 @@ export const state = {
 
   // persistant (localStorage)
   achievements:{}, highscores:[],
-  meta:{cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0},
+  meta:{cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0},
 
   damageThisWave:0,
   hoverCell:null, hoverTime:0,
@@ -118,7 +118,7 @@ export function sauvegarderPartie(serialiserCarte){
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify({
     v:1, secteur:state.secteur, vague:state.vague, score:state.score, hpCruiser:state.hpCruiser, HP_MAX:state.HP_MAX, ups:state.ups, ultimeJauge:state.ultimeJauge, tourCompteur:state.tourCompteur, prochainAsteroide:state.prochainAsteroide,
     enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave,
-    hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte,
+    hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte, rerollsRestants:state.rerollsRestants,
     boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil, enFeu:state.enFeu||0,
     fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,maxhp:f.maxhp,used:f.used,capUsed:f.capUsed||false,kills:f.kills||0,gele:f.gele||0})),
     ailes: state.ailes.map(a=>({c:a.c,r:a.r,type:a.type,hp:a.hp,maxhp:a.maxhp,vitesse:a.vitesse})),

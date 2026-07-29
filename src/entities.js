@@ -3,8 +3,8 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { DIFFICULTES, OBSTACLES } from './config.js';
-import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR,
+import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX } from './config.js';
+import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE,
          STRONGHOLD, MINI_NAVETTE, MINI_NAVETTE_ALLIEE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
@@ -13,25 +13,31 @@ import { sonRenfort } from './audio.js';
 import { logMsg } from './ui.js';
 
 /* images des unités, recuites à la taille de case courante (voir cuireUnites) */
-let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgVTransporteur,imgPorteur,imgBrouilleur,imgLourd;
+let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgVTransporteur,imgVMedic,imgPorteur,imgBrouilleur,imgLourd;
 let imgDebris1,imgDebris2,imgStation,imgBarriere;
 let imgStronghold,imgMiniNavette,imgMiniNavetteAlliee,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
 let imgSaboteur,imgBruleur,imgTitan,imgAileTransporteur;
+let dernierCELL;
+/* recuit tous les sprites à la taille de case courante ; les vaisseaux alliés reçoivent la teinte cosmétique choisie (méta 'cosmetiques') */
 export function cuireUnites(CELL){
-  imgJoueur=cuireFit(JOUEUR,CELL); imgRouge=cuireFit(ROUGE,CELL); imgAile=cuireFit(AILE,CELL); imgAster=cuireFit(ASTER,CELL);
+  dernierCELL=CELL;
+  const skin=(SKINS_VAISSEAUX[(state.meta&&state.meta.skinVaisseaux)||0]||SKINS_VAISSEAUX[0]).over;
+  imgJoueur=cuireFit(JOUEUR,CELL,skin); imgRouge=cuireFit(ROUGE,CELL); imgAile=cuireFit(AILE,CELL); imgAster=cuireFit(ASTER,CELL);
   imgChasseur=cuireFit(CHASSEUR,CELL); imgBomber=cuireFit(BOMBARDIER,CELL); imgEclaireur=cuireFit(ECLAIREUR,CELL);
-  imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL); imgVSniper=cuireFit(JOUEUR_SNIPER,CELL); imgVTransporteur=cuireFit(JOUEUR_TRANSPORTEUR,CELL);
+  imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL,skin); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL,skin); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL,skin); imgVSniper=cuireFit(JOUEUR_SNIPER,CELL,skin); imgVTransporteur=cuireFit(JOUEUR_TRANSPORTEUR,CELL,skin); imgVMedic=cuireFit(JOUEUR_MEDIC,CELL,skin);
   imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL); imgLourd=cuireFit(AILE_LOURD,CELL);
   imgDebris1=cuireFit(DEBRIS_1,CELL); imgDebris2=cuireFit(DEBRIS_2,CELL); imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
   imgStronghold=cuireFit(STRONGHOLD,CELL); imgMiniNavette=cuireFit(MINI_NAVETTE,CELL); imgMiniNavetteAlliee=cuireFit(MINI_NAVETTE_ALLIEE,CELL); imgRegen=cuireFit(REGENERATEUR,CELL); imgMiniSniper=cuireFit(MINI_SNIPER,CELL);
   imgDiagD=cuireFit(DIAGONAL_D,CELL); imgDiagG=cuireFit(DIAGONAL_G,CELL); imgMimic=cuireFit(MIMIC,CELL); imgVoid=cuireFit(VOID,CELL);
   imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL); imgAileTransporteur=cuireFit(AILE_TRANSPORTEUR,CELL);
 }
+/* ré-applique la teinte cosmétique en cours (après un changement de skin dans le menu méta) */
+export function rafraichirSkinVaisseaux(){ if(dernierCELL){ cuireUnites(dernierCELL); for(const f of state.fighters) f.img=imgVaisseau(f.type); } }
 function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:type==='transporteur'?imgAileTransporteur:imgAile; }
 export function getImgMimic(){ return imgMimic; }
 export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : null; }
 export function getImgAster(){ return imgAster; }
-export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
+export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='medic'?imgVMedic : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   const hp = type==='rouge'?(2+((state.ups&&state.ups.rouge_pv)||0)) : type==='bouclier'?3 : 1;
   return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0}; }

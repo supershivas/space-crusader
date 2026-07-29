@@ -21,6 +21,8 @@ export const JOUEUR_BOUCLIER=["BBAAAAAAABB","BB..sss..BB","BB.sSSSs.BB","BBbSSAS
 export const JOUEUR_SNIPER=["BB...V...BB","BB...V...BB","BB..sVs..BB","BBbSSVSSbBB","BB.sSSSs.BB","BB..sss..BB","BB.......BB","Bb.......bB","bB.......Bb"];
 /* allié TRANSPORTEUR : large soute (baie de largage), largue des mini-navettes près du croiseur */
 export const JOUEUR_TRANSPORTEUR=["BB.......BB","BB.ggggg.BB","BG.sSSSs.GB","BGbSSOSSbGB","BG.sSSSs.GB","BB.ggggg.BB","BB.......BB","Bb.......bB","bB.......Bb"];
+/* allié MÉDIC : croix verte, soigne un allié adjacent au lieu de combattre */
+export const JOUEUR_MEDIC=["BB.......BB","BB..VVV..BB","BB.sVSVs.BB","BBbSSVSSbBB","BB.sVSVs.BB","BB..VVV..BB","BB.......BB","Bb.......bB","bB.......Bb"];
 /* mini-navette alliée, larguée par le Transporteur (case libre proche du croiseur, diagonales incluses) */
 export const MINI_NAVETTE_ALLIEE=["..B..",".BBB.","BBCBB",".BBB.","..B.."];
 
@@ -107,11 +109,11 @@ export const BOSS_ECLIPSE=[".....kuk.....",".....kuk.....","...kkuuukk...","..ku
 export const BOSS_GRIDS={canon:BOSS_CANON,sniper:BOSS_SNIPER,rayon:BOSS_RAYON,nuee:BOSS_NUEE,blinde:BOSS_BLINDE,
  feu:BOSS_FEU,electrique:BOSS_ELECTRIQUE,nid:BOSS_NID,miroir:BOSS_MIROIR,forge:BOSS_FORGE,eclipse:BOSS_ECLIPSE};
 
-export function cuire(grille,echelle){ const w=grille[0].length,h=grille.length,off=document.createElement('canvas'); off.width=w*echelle; off.height=h*echelle;
-  const c=off.getContext('2d'); for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const col=PAL[grille[y][x]]; if(!col) continue; c.fillStyle=col; c.fillRect(x*echelle,y*echelle,echelle,echelle); } return off; }
+export function cuire(grille,echelle,override){ const w=grille[0].length,h=grille.length,off=document.createElement('canvas'); off.width=w*echelle; off.height=h*echelle;
+  const c=off.getContext('2d'); for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const ch=grille[y][x]; const col=(override&&override[ch])||PAL[ch]; if(!col) continue; c.fillStyle=col; c.fillRect(x*echelle,y*echelle,echelle,echelle); } return off; }
 
-/* recuit un sprite pour qu'il tienne DANS la case (selon la taille de case courante) */
-export function cuireFit(g,CELL){ const md=Math.max(g[0].length,g.length); return cuire(g,Math.max(1,Math.floor(CELL*0.92/md))); }
+/* recuit un sprite pour qu'il tienne DANS la case (selon la taille de case courante) ; `override` = palette cosmétique optionnelle (voir SKINS_*) */
+export function cuireFit(g,CELL,override){ const md=Math.max(g[0].length,g.length); return cuire(g,Math.max(1,Math.floor(CELL*0.92/md)),override); }
 
 /* bonus & icônes */
 export const BONUS_PV=[".R.R.","RRRRR","RRRRR",".RRR.","..R.."];

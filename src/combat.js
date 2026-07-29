@@ -37,6 +37,12 @@ export function activerCapacite(f){
     state.fighters.push(nouveauVaisseau(libre.c,libre.r,'navette',false));
     f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛰 Mini-navette larguée !','log-grn'); return true;
   }
+  if(f.type==='medic'){
+    const cible=[...state.fighters].filter(a=>a!==f&&a.hp<a.maxhp&&Math.abs(a.c-f.c)<=1&&Math.abs(a.r-f.r)<=1)
+      .sort((a,b)=>(a.hp/a.maxhp)-(b.hp/b.maxhp))[0];
+    if(!cible) return false;
+    cible.hp=Math.min(cible.maxhp,cible.hp+1); f.capUsed=true; state.selection=null; sonRenfort(); logMsg('💚 Réparation !','log-grn'); return true;
+  }
   return false;
 }
 export function tirerCharge(f,cible){

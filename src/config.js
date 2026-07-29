@@ -1,7 +1,7 @@
 /* =====================================================================
    CONFIG — constantes de jeu (grille, dégâts, catalogues d'objets)
    ===================================================================== */
-export const COLS_N=7,  RANGS_N=9,  CELL_N=66, DEP_N=1;
+export const COLS_N=8,  RANGS_N=10, CELL_N=66, DEP_N=1;
 export const COLS_G=21, RANGS_G=18, CELL_G=46, DEP_G=2;
 
 export const DEG_LASER=8, DEG_EPERON=16, DEG_ASTEROIDE=20;
@@ -31,8 +31,23 @@ export const SHIPS=[
  {id:'bouclier',  ico:'bouclier',  nom:'Cuirassé',    desc:'3 PV · 2 tours'},
  {id:'sniper',    ico:'cible',     nom:'Tireur',      desc:'Tir à ±2 colonnes · 2 tours'},
  {id:'transporteur',ico:'satellite',nom:'Transporteur',desc:'Largue des mini-navettes · 2 tours'},
+ {id:'medic',      ico:'coeur',     nom:'Médic',       desc:'Soigne un allié adjacent · 2 tours', metaRequis:'vaisseauMedic'},
 ];
 export const SHIP_ROUGE={id:'rouge', nom:'Vaisseau Rouge', desc:'Tir de zone · 2 PV · prend 2 tours'};
+
+/* palettes cosmétiques (débloquées via la méta 'cosmetiques') : recolorent l'accent du croiseur / des vaisseaux alliés */
+export const SKINS_CROISEUR=[
+ {id:'defaut',   nom:'Défaut',   over:{}},
+ {id:'ecarlate', nom:'Écarlate', over:{C:'#ff5a5a'}},
+ {id:'emeraude', nom:'Émeraude', over:{C:'#5fce6a'}},
+ {id:'or',       nom:'Or',       over:{C:'#ffd23d'}},
+];
+export const SKINS_VAISSEAUX=[
+ {id:'defaut',   nom:'Défaut',   over:{}},
+ {id:'ecarlate', nom:'Écarlate', over:{O:'#ff5a5a',S:'#c98a8a',s:'#e6c3c3'}},
+ {id:'emeraude', nom:'Émeraude', over:{O:'#5fce6a',S:'#8ac99a',s:'#c3e6cf'}},
+ {id:'or',       nom:'Or',       over:{O:'#ffd23d',S:'#c9b98a',s:'#e6dcc3'}},
+];
 
 /* ===== MÉTA-PROGRESSION (déblocages permanents) ===== */
 export const META=[
@@ -40,6 +55,10 @@ export const META=[
  {id:'deptAmelio',   nom:'Prototype',     desc:'+1 amélioration au départ',     max:3, cout:l=>6+l*4},
  {id:'ultimeRapide', nom:'Réacteur dopé', desc:'Ultime déjà chargé au départ',  max:3, cout:l=>5+l*3},
  {id:'vaisseauBonus',nom:'Escadrille',    desc:'+1 vaisseau au départ',         max:3, cout:l=>5+l*3},
+ // variété (n'augmentent pas la puissance en combat)
+ {id:'reroll',       nom:'Reroll',        desc:'+1 reroll gratuit sur les propositions', max:2, cout:l=>4+l*3},
+ {id:'vaisseauMedic',nom:'Ingénierie',    desc:'Débloque le Médic au hangar (soigne, ne combat pas)', max:1, cout:l=>8},
+ {id:'cosmetiques',  nom:'Atelier peinture',desc:'Débloque des teintes pour le croiseur et les vaisseaux', max:1, cout:l=>6},
 ];
 
 /* ===== DIFFICULTÉ (menu d'accueil) =====
@@ -75,4 +94,5 @@ export const CAPACITES = {
   bouclier:   { nom:'Provocation', desc:'Les ailes adjacentes le ciblent au tour suivant' },
   bombardier: { nom:'Tir chargé',  desc:'Vise une cible : détruit 2 colonnes au lieu d\'une' },
   transporteur:{ nom:'Largage',    desc:'Lance une mini-navette sur une case libre adjacente (diagonales incluses)' },
+  medic:      { nom:'Réparation', desc:'Soigne 1 PV à un allié adjacent (diagonales incluses)' },
 };

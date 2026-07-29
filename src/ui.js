@@ -3,9 +3,10 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
-         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet } from './entities.js';
+         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux } from './entities.js';
+import { rafraichirSkinCroiseur } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
@@ -57,6 +58,7 @@ export function checkAchievements(){
   }
 }
 export function showAchievement(title,desc){
+  tooltip.classList.remove('visible');
   achieveTxt.innerHTML='<div class="ach-title">'+title+'</div><div>'+desc+'</div>';
   achieveDiv.classList.add('visible'); sonAchievement();
   setTimeout(()=>achieveDiv.classList.remove('visible'), 3000);
@@ -74,10 +76,8 @@ export function addHighscore(){
 /* =====================================================================
    AMÉLIORATIONS / CONSTRUCTION / ÉVÉNEMENTS / MÉTA (fenêtres modales)
    ===================================================================== */
-export function ouvrirAmelioration(){
-  const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
-  if(dispo.length===0){ const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); return; }
-  state.phase='amelioration';
+const btnReroll=document.getElementById('btnReroll'), rerollLabel=document.getElementById('rerollLabel');
+function rendreChoixAmelioration(dispo){
   const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3);
   upgradeCards.innerHTML='';
   for(const u of choix){ const niv=state.ups[u.id]?' · Niv.'+(state.ups[u.id]+1):'';
@@ -85,8 +85,21 @@ export function ouvrirAmelioration(){
     b.appendChild(divEmo(u.ico));
     const t=document.createElement('div'); t.innerHTML='<div class="nom">'+u.nom+niv+'</div><div class="desc">'+u.desc+'</div>'; b.appendChild(t);
     b.onclick=()=>appliquerAmelioration(u.id); upgradeCards.appendChild(b); }
+  btnReroll.style.display=(state.rerollsRestants>0)?'':'none';
+  rerollLabel.textContent='Reroll ('+(state.rerollsRestants||0)+')';
+}
+export function ouvrirAmelioration(){
+  const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
+  if(dispo.length===0){ const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); return; }
+  state.phase='amelioration'; tooltip.classList.remove('visible');
+  rendreChoixAmelioration(dispo);
   upgradeDiv.classList.add('visible');
 }
+btnReroll.addEventListener('click',()=>{
+  if(!(state.rerollsRestants>0)) return;
+  const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
+  state.rerollsRestants--; sonSelect(); rendreChoixAmelioration(dispo);
+});
 function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); logMsg('⬆ Amélioration acquise','log-grn'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
 
 function apercuVaisseau(type){
@@ -97,8 +110,9 @@ function apercuVaisseau(type){
   c.drawImage(src,(box-w)/2,(box-h)/2,w,h);
   return cv;
 }
-export function ouvrirBuild(){ state.choixBuild=true; buildCards.innerHTML='';
-  const liste=[...SHIPS]; if(!state.fighters.some(f=>f.type==='rouge')) liste.push(SHIP_ROUGE);   // reconstruire le rouge s'il est détruit
+export function ouvrirBuild(){ state.choixBuild=true; tooltip.classList.remove('visible'); buildCards.innerHTML='';
+  const liste=SHIPS.filter(s=>!s.metaRequis||(state.meta[s.metaRequis]||0)>0);
+  if(!state.fighters.some(f=>f.type==='rouge')) liste.push(SHIP_ROUGE);   // reconstruire le rouge s'il est détruit
   for(const s of liste){ const b=document.createElement('div'); b.className='card';
     b.appendChild(apercuVaisseau(s.id));
     const t=document.createElement('div'); t.innerHTML='<div class="nom">'+s.nom+'</div><div class="desc">'+s.desc+'</div>'; b.appendChild(t);
@@ -108,7 +122,7 @@ export function ouvrirBuild(){ state.choixBuild=true; buildCards.innerHTML='';
 function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg('Hangar : '+type,'log-grn'); }
 buildDiv.addEventListener('click',e=>{ if(e.target===buildDiv){ state.choixBuild=false; buildDiv.classList.remove('visible'); } });
 
-export function ouvrirEvenement(){ state.phase='evenement';
+export function ouvrirEvenement(){ state.phase='evenement'; tooltip.classList.remove('visible');
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
   eventTitre.textContent='✦ '+ev.titre; eventDesc.textContent=ev.desc; eventCards.innerHTML='';
   for(const ch of ev.choix){ const b=document.createElement('div'); b.className='card';
@@ -130,7 +144,7 @@ export function ouvrirScenePlanete(scene){
     planeteCards.appendChild(b); }
   planeteDiv.classList.add('visible');
 }
-export function ouvrirMeta(){ metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' Cristaux : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
+export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' Cristaux : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;
     const b=document.createElement('div'); b.className='card';
     const cout_div=document.createElement('div'); cout_div.className='desc'; cout_div.style.color='#ffd23d';
@@ -139,10 +153,37 @@ export function ouvrirMeta(){ metaCristaux.innerHTML=''; icone(metaCristaux,'gem
     b.appendChild(cout_div);
     if(peut){ b.onclick=()=>{ state.meta.cristaux-=cout; state.meta[m.id]=lvl+1; saveData(); ouvrirMeta(); }; } else b.style.opacity=atMax?'.6':'.4';
     metaCards.appendChild(b); }
+
+  const cosmBloc=document.getElementById('cosmetiquesBloc'), skinCards=document.getElementById('skinCards');
+  if((state.meta.cosmetiques||0)>0){
+    cosmBloc.style.display=''; skinCards.innerHTML='';
+    const carteSkin=(titre,liste,cle,appliquer)=>{
+      const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.gap='6px'; wrap.style.alignItems='center';
+      const t=document.createElement('div'); t.className='desc'; t.textContent=titre; wrap.appendChild(t);
+      const row=document.createElement('div'); row.style.display='flex'; row.style.gap='6px';
+      liste.forEach((s,i)=>{ const sw=document.createElement('div'); sw.title=s.nom;
+        sw.style.width='24px'; sw.style.height='24px'; sw.style.borderRadius='5px'; sw.style.cursor='pointer';
+        sw.style.background=s.over.C||s.over.O||'#4a5a86'; sw.style.border=(state.meta[cle]||0)===i?'2px solid #ffd23d':'2px solid #24406e';
+        sw.onclick=()=>{ state.meta[cle]=i; saveData(); appliquer(); ouvrirMeta(); };
+        row.appendChild(sw); });
+      wrap.appendChild(row); skinCards.appendChild(wrap);
+    };
+    carteSkin('Croiseur',SKINS_CROISEUR,'skinCroiseur',rafraichirSkinCroiseur);
+    carteSkin('Vaisseaux',SKINS_VAISSEAUX,'skinVaisseaux',rafraichirSkinVaisseaux);
+  } else cosmBloc.style.display='none';
+
   metaDiv.classList.add('visible');
 }
+document.getElementById('btnResetProgression').addEventListener('click',()=>{
+  if(!confirm('Effacer toute la progression (améliorations permanentes, cristaux, succès, meilleurs scores) ? Cette action est irréversible.')) return;
+  try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); }catch(e){}
+  state.meta={cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0};
+  state.achievements={}; state.highscores=[];
+  rafraichirSkinCroiseur(); rafraichirSkinVaisseaux();
+  logMsg('Progression effacée','log-red'); ouvrirMeta();
+});
 
-export function ouvrirMission(type,reussi){ state.phase='mission';
+export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');
   missionTitre.textContent = type==='boss'?'FORTERESSE DÉTRUITE !':(type==='elite'?'ÉLITES ANÉANTIS !':'ZONE SÉCURISÉE');
   const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+state.objectifVague.texte) : '';
   missionStats.innerHTML = (obj?obj+'<br>':'')+'Secteur '+state.secteur+' · Score '+state.score+'<br>Croiseur '+state.hpCruiser+'/'+state.HP_MAX+' PV';
@@ -355,7 +396,7 @@ export function undo(){
   state.tourCompteur=s.tourCompteur; state.prochainAsteroide=s.prochainAsteroide; state.prochainBoss=s.prochainBoss;
   state.selection=null; state.modeTourelle=false; sonUndo(); logMsg('↺ Annulé','log-ylw');
 }
-export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.toggle('visible',state.paused); if(state.paused){ stopMusic(); sonPause(); } else { startMusic(); } }
+export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.toggle('visible',state.paused); tooltip.classList.remove('visible'); if(state.paused){ stopMusic(); sonPause(); } else { startMusic(); } }
 
 document.addEventListener('keydown', ev=>{
   if(ev.key==='Escape'){ undo(); ev.preventDefault(); }

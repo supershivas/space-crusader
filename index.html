@@ -150,7 +150,8 @@
       <p data-i18n="pause_hint">P = pause · Échap = annuler l'action</p></div>
     <div id="toast"></div>
     <div id="achieve"><div class="ach-title"><span class="ico-slot" data-ico="trophee"></span>SUCCÈS</div><div id="achieveTxt"></div></div>
-    <div id="upgrade" class="modal"><h2><span class="ico-slot" data-ico="fleche_haut"></span>AMÉLIORATION</h2><div class="hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div></div>
+    <div id="upgrade" class="modal"><h2><span class="ico-slot" data-ico="fleche_haut"></span>AMÉLIORATION</h2><div class="hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div>
+      <button class="jouer" id="btnReroll" style="display:none;margin-top:12px;font-size:10px;padding:9px 16px;background:#243048;border-bottom-color:#141c2c;"><span class="ico-slot" data-ico="de"></span><span id="rerollLabel">Reroll</span></button></div>
     <div id="build" class="modal"><h2><span class="ico-slot" data-ico="cle"></span>CHOISIS TON VAISSEAU</h2><div class="hint">Il sortira du hangar au prochain tour · tape ailleurs pour annuler</div><div class="cards" id="buildCards"></div></div>
     <div id="event" class="modal"><h2 id="eventTitre">ÉVÉNEMENT</h2><div class="hint" id="eventDesc"></div><div class="cards" id="eventCards"></div></div>
     <div id="carte" class="modal"><h2><span class="ico-slot" data-ico="carte"></span>CHOISIS TA DESTINATION</h2><div class="hint">Deux planètes en vue — trace ta route</div><div class="cards" id="carteChoix"></div></div>
@@ -171,7 +172,11 @@
       <button class="jouer" id="btnRelancerTuto" style="font-size:10px;padding:11px 16px;background:#5a6dd6;border-bottom-color:#3a4aa0;"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="info_revoir_tuto">Revoir le tutoriel</span></button>
       </div></div>
     <div id="mission" class="modal"><h2 id="missionTitre">ZONE SÉCURISÉE</h2><div class="hint" id="missionStats"></div><button class="jouer" id="btnMission" style="margin-top:14px;font-size:12px;padding:11px 22px;" data-i18n="mission_continuer">Continuer ▶</button></div>
-    <div id="meta" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span>AMÉLIORATIONS PERMANENTES</h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div><button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:11px;padding:10px 18px;">Fermer</button></div>
+    <div id="meta" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span>AMÉLIORATIONS PERMANENTES</h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div>
+      <div id="cosmetiquesBloc" style="display:none;margin-top:16px;"><div class="hint" style="margin-bottom:8px;">Cosmétiques</div><div class="cards" id="skinCards"></div></div>
+      <button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:11px;padding:10px 18px;">Fermer</button>
+      <button class="jouer" id="btnResetProgression" style="margin-top:10px;font-size:9px;padding:8px 14px;background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;">Effacer toute la progression</button>
+    </div>
 
     <div id="accueil" class="ecran">
       <h1>DÉFENSE<br>DU CROISEUR</h1>
