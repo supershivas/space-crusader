@@ -303,6 +303,12 @@ const STRINGS = {
     evt_vaisseau_aguerri:'Vaisseau aguerri !',
     evt_cuirasse_recupere:'Cuirassé récupéré !',
     evt_piege:'C\'était un piège !',
+    evt_repare:'Réparé',
+    evt_recalibre:'Recalibré',
+    evt_renfort:'Renfort',
+    evt_renfort_tireur:'Renfort : tireur',
+    evt_renfort_cuirasse:'Renfort : cuirassé',
+    evt_ultime_recharge:'Ultime rechargé',
 
     // ===== Modale de mise à jour =====
     maj_titre:'MISE À JOUR INSTALLÉE',
@@ -575,6 +581,12 @@ const STRINGS = {
     evt_vaisseau_aguerri:'Ship seasoned!',
     evt_cuirasse_recupere:'Battleship salvaged!',
     evt_piege:'It was a trap!',
+    evt_repare:'Repaired',
+    evt_recalibre:'Recalibrated',
+    evt_renfort:'Reinforcement',
+    evt_renfort_tireur:'Reinforcement: sniper',
+    evt_renfort_cuirasse:'Reinforcement: battleship',
+    evt_ultime_recharge:'Ultimate recharged',
 
     maj_titre:'UPDATE INSTALLED',
     maj_texte:'The game has been updated to',

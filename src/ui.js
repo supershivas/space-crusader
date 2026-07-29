@@ -179,13 +179,9 @@ export function ouvrirScenePlanete(scene){
     const d=document.createElement('div'); d.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(d);
     b.onclick=()=>{
       const suite=scene.suite;
-      if(scene.kind==='marche'){
-        const resultat=capturerResultat(ch.effet, ch.desc);
-        planeteDiv.classList.remove('visible'); state.scenePlanete=null;
-        ouvrirResultat(resultat, suite);
-      } else {
-        ch.effet(); planeteDiv.classList.remove('visible'); state.scenePlanete=null; if(suite) suite();
-      }
+      const resultat=capturerResultat(ch.effet, ch.desc);
+      planeteDiv.classList.remove('visible'); state.scenePlanete=null;
+      ouvrirResultat(resultat, suite);
     };
     planeteCards.appendChild(b); }
   planeteDiv.classList.add('visible');

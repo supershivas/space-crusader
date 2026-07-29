@@ -71,21 +71,21 @@ export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const typ
 function construireScene(type){
   const suite=ouvrirCarte;
   if(type==='rest'){ return {kind:'station',titre:t('scene_rest_titre'),suite,choix:[
-    {ico:'cle',nom:t('rest_reparation_nom'),desc:t('rest_reparation_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.30)); state.flashRecharge=1; sonRenfort(); logMsg('Réparé','log-grn'); }},
-    {ico:'eclair',nom:t('rest_recalibrage_nom'),desc:t('rest_recalibrage_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Recalibré','log-grn'); }},
+    {ico:'cle',nom:t('rest_reparation_nom'),desc:t('rest_reparation_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.30)); state.flashRecharge=1; sonRenfort(); logMsg(t('evt_repare'),'log-grn'); }},
+    {ico:'eclair',nom:t('rest_recalibrage_nom'),desc:t('rest_recalibrage_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg(t('evt_recalibre'),'log-grn'); }},
   ]}; }
   if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
     const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({ico:u.ico,nom:t('up_'+u.id+'_nom'),desc:t('up_'+u.id+'_desc'),effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+t('up_'+u.id+'_nom'),'log-grn'); }}));
     if(!choix.length) choix.push({ico:'gemme',nom:t('tresor_butin_nom'),desc:t('tresor_butin_desc'),effet:()=>{ state.score+=8; }});
     return {kind:'tresor',titre:t('scene_tresor_titre'),suite,choix}; }
   if(type==='hangar'){ return {kind:'hangar',titre:t('scene_hangar_titre'),suite,choix:[
-    {ico:'vaisseau',nom:t('hangar_standard_nom'),desc:t('hangar_standard_desc'),effet:()=>{ deployerVaisseau('normal'); logMsg('Renfort','log-grn'); }},
-    {ico:'cible',nom:t('hangar_tireur_nom'),desc:t('hangar_tireur_desc'),effet:()=>{ deployerVaisseau('sniper'); logMsg('Renfort : tireur','log-grn'); }},
-    {ico:'bouclier',nom:t('hangar_cuirasse_nom'),desc:t('hangar_cuirasse_desc'),effet:()=>{ deployerVaisseau('bouclier'); logMsg('Renfort : cuirassé','log-grn'); }},
+    {ico:'vaisseau',nom:t('hangar_standard_nom'),desc:t('hangar_standard_desc'),effet:()=>{ deployerVaisseau('normal'); logMsg(t('evt_renfort'),'log-grn'); }},
+    {ico:'cible',nom:t('hangar_tireur_nom'),desc:t('hangar_tireur_desc'),effet:()=>{ deployerVaisseau('sniper'); logMsg(t('evt_renfort_tireur'),'log-grn'); }},
+    {ico:'bouclier',nom:t('hangar_cuirasse_nom'),desc:t('hangar_cuirasse_desc'),effet:()=>{ deployerVaisseau('bouclier'); logMsg(t('evt_renfort_cuirasse'),'log-grn'); }},
   ]}; }
   if(type==='forge'){ return {kind:'forge',titre:t('scene_forge_titre'),suite,choix:[
     {ico:'fleche_haut',nom:t('forge_ameliorer_nom'),desc:t('forge_ameliorer_desc'),effet:()=>{ ameliorationAleatoire(); }},
-    {ico:'eclair',nom:t('forge_surcharger_nom'),desc:t('forge_surcharger_desc'),effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg('Ultime rechargé','log-ylw'); }},
+    {ico:'eclair',nom:t('forge_surcharger_nom'),desc:t('forge_surcharger_desc'),effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg(t('evt_ultime_recharge'),'log-ylw'); }},
   ]}; }
   // event : événement aléatoire présenté comme une scène
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
