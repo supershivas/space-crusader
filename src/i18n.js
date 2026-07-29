@@ -32,6 +32,8 @@ const STRINGS = {
     // Paramètres (menu)
     params_titre:'PARAMÈTRES',
     params_infos:'Comment jouer',
+    params_checkupdate:'Vérifier les mises à jour',
+    params_checkupdate_recherche:'Recherche de mise à jour…',
     params_fermer:'Fermer',
     // Infos (aide)
     info_titre:'COMMENT JOUER',
@@ -296,6 +298,8 @@ const STRINGS = {
     diff_annuler:'Back',
     params_titre:'SETTINGS',
     params_infos:'How to play',
+    params_checkupdate:'Check for updates',
+    params_checkupdate_recherche:'Checking for updates…',
     params_fermer:'Close',
     info_titre:'HOW TO PLAY',
     info_body:'<b style="color:#ffd23d">Goal</b> — protect your cruiser (HP bar at the bottom) wave after wave to the end of the sector.<br><br>'

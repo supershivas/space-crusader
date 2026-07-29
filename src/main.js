@@ -10,7 +10,7 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
-import { ouvrirMeta, togglePause, retourAccueil } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil, montrerToast } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
@@ -136,6 +136,16 @@ document.getElementById('btnInfo').addEventListener('click',ouvrirParams);
 document.getElementById('btnParamsInfos').addEventListener('click',ouvrirInfos);
 document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); });
 document.getElementById('btnParamsFermer').addEventListener('click',()=>{ document.getElementById('params').classList.remove('visible'); });
+/* Force un rechargement complet (déchargement des caches connus + reload) pour récupérer
+   la dernière version du jeu sans que le joueur ait à vider manuellement le cache du navigateur. */
+document.getElementById('btnCheckUpdate').addEventListener('click', async ()=>{
+  montrerToast(t('params_checkupdate_recherche'),'ok');
+  try{
+    if('serviceWorker' in navigator){ const regs=await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r=>r.unregister())); }
+    if('caches' in window){ const keys=await caches.keys(); await Promise.all(keys.map(k=>caches.delete(k))); }
+  }catch(e){}
+  setTimeout(()=>{ location.reload(); }, 300);
+});
 document.getElementById('btnFermerInfo').addEventListener('click',()=>{ document.getElementById('info').classList.remove('visible'); });
 document.getElementById('btnRelancerTuto').addEventListener('click',()=>{
   document.getElementById('info').classList.remove('visible'); document.getElementById('params').classList.remove('visible');
