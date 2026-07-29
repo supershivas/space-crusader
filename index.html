@@ -124,11 +124,14 @@
   #tutoHalo.visible{opacity:1;animation:tutoPulse 1s ease-in-out infinite;}
   #tutoHalo.rect{border-radius:10px;}
   @keyframes tutoPulse{0%,100%{box-shadow:0 0 8px rgba(255,210,61,.6);}50%{box-shadow:0 0 20px rgba(255,210,61,1);}}
-  #tutoBar{position:absolute;left:8px;right:8px;bottom:8px;z-index:13;background:rgba(13,21,48,.95);
-    border:2px solid #ffd23d;border-radius:8px;padding:10px 12px;display:none;flex-direction:column;gap:8px;align-items:center;text-align:center;}
+  #tutoBar{position:absolute;z-index:13;background:rgba(13,21,48,.95);width:min(280px,84%);
+    border:2px solid #ffd23d;border-radius:8px;padding:8px 12px;display:none;flex-direction:column;gap:6px;align-items:center;text-align:center;pointer-events:none;}
   #tutoBar.visible{display:flex;}
-  #tutoBar p{font-family:var(--pixel);font-size:8px;color:#e8eefc;line-height:1.7;margin:0;}
-  #tutoSkip{font-family:var(--pixel);font-size:7px;color:#9fb0d8;background:none;border:none;text-decoration:underline;cursor:pointer;padding:4px;}
+  #tutoBar p{font-family:var(--pixel);font-size:8px;color:#e8eefc;line-height:1.6;margin:0;}
+  #tutoSkip{font-family:var(--pixel);font-size:7px;color:#9fb0d8;background:none;border:none;text-decoration:underline;cursor:pointer;padding:4px;pointer-events:auto;}
+  #tutoLine{position:absolute;z-index:12;height:2px;background:rgba(255,210,61,.85);box-shadow:0 0 6px rgba(255,210,61,.6);
+    transform-origin:0 50%;pointer-events:none;opacity:0;transition:opacity .2s;}
+  #tutoLine.visible{opacity:1;}
 </style>
 </head>
 <body>
@@ -140,6 +143,7 @@
     <div id="tooltip"></div>
     <div id="log"></div>
     <div id="tutoHalo"></div>
+    <div id="tutoLine"></div>
     <div id="tutoBar"><p id="tutoTexte"></p><button id="tutoSkip">Passer le tutoriel</button></div>
     <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
     <div id="pause"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>

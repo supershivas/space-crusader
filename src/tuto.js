@@ -1,6 +1,11 @@
 /* =====================================================================
    TUTORIEL — guide en 4 étapes lors de la toute première partie
    (sélection, tir, déplacement, fin de tour)
+
+   Script précis : l'encart de texte reste toujours ancré dans la bande
+   HUD au-dessus de la grille (jamais sur la grille ni sur les boutons
+   d'action / FIN DU TOUR), et une ligne le relie à la cible réelle
+   (vaisseau, ennemi, case ou bouton), où qu'elle soit sur l'écran.
    ===================================================================== */
 import { state, centreCase } from './state.js';
 import { analyseTir, casesMouvement } from './combat.js';
@@ -14,12 +19,13 @@ const ETAPES=[
   { texte:"Touche FIN DU TOUR pour terminer ton tour.",                          fait:(b)=>state.toursJoueurTotal>b.tours },
 ];
 
-let actif=false, etapeIdx=0, baseline={tirs:0,deps:0,tours:0}, alignementFait=false;
-let halo=null, bar=null, texte=null, skipBtn=null;
+let actif=false, etapeIdx=0, baseline={tirs:0,deps:0,tours:0};
+let alignementFait=false, derniereVague=null;
+let halo=null, bar=null, ligne=null, texte=null, skipBtn=null;
 
 function elements(){
   if(halo) return;
-  halo=document.getElementById('tutoHalo'); bar=document.getElementById('tutoBar');
+  halo=document.getElementById('tutoHalo'); bar=document.getElementById('tutoBar'); ligne=document.getElementById('tutoLine');
   texte=document.getElementById('tutoTexte'); skipBtn=document.getElementById('tutoSkip');
   if(skipBtn) skipBtn.addEventListener('click',()=>terminer());
 }
@@ -29,11 +35,11 @@ function marquerVu(){ try{ localStorage.setItem(TUTO_KEY,'1'); }catch(e){} }
 
 export function demarrer(){
   elements();
-  actif=true; etapeIdx=0; alignementFait=false;
+  actif=true; etapeIdx=0; alignementFait=false; derniereVague=null;
   afficherEtape();
   // la barre n'apparaît qu'une fois le combat commencé (voir mettreAJour) :
   // pendant le choix de la planète de départ (phase 'carte'), on reste masqué.
-  bar.classList.remove('visible'); if(halo) halo.classList.remove('visible');
+  bar.classList.remove('visible'); if(halo) halo.classList.remove('visible'); if(ligne) ligne.classList.remove('visible');
 }
 export function relancer(){ demarrer(); }
 
@@ -41,6 +47,7 @@ function terminer(){
   actif=false; marquerVu();
   if(bar) bar.classList.remove('visible');
   if(halo) halo.classList.remove('visible');
+  if(ligne) ligne.classList.remove('visible');
 }
 
 function afficherEtape(){
@@ -50,12 +57,15 @@ function afficherEtape(){
   baseline={tirs:state.tirsJoueurTotal, deps:state.deplacementsJoueurTotal, tours:state.toursJoueurTotal};
 }
 
-/* Garantit qu'au moins un vaisseau ait un ennemi réellement accessible dès
-   le premier combat du tutoriel, sans dépendre de l'aléatoire du spawn. */
+/* Garantit qu'au moins un vaisseau ait un ennemi réellement accessible.
+   Se réarme à chaque nouvelle vague (le combat précédent ne garantit rien
+   pour le suivant : sans ça, une vague plus tardive du tutoriel pouvait
+   se retrouver sans aucune cible à portée). */
 function garantirCibleAccessible(){
+  if(state.vague!==derniereVague){ derniereVague=state.vague; alignementFait=false; }
   if(alignementFait) return;
+  if(!state.ailes.length || !state.fighters.length) return;   // pas encore prêt : on retentera à la frame suivante
   alignementFait=true;
-  if(!state.ailes.length || !state.fighters.length) return;
   const dejaOk=state.fighters.some(f=>analyseTir(f).ailesOk.size>0);
   if(dejaOk) return;
   const aile=state.ailes[0], cible=state.fighters[0];
@@ -70,35 +80,54 @@ function cibleEtape(idx){
   return null;
 }
 
-function positionnerHalo(){
+/* Place le halo sur la cible réelle, l'encart de texte dans la bande HUD (toujours
+   au-dessus de la grille, jamais sur la grille ni sur les boutons), et trace une
+   ligne entre les deux — quelle que soit la position de la cible sur l'écran. */
+function positionner(){
   const e=ETAPES[etapeIdx];
-  if(!e){ halo.classList.remove('visible'); return; }
+  if(!e){ halo.classList.remove('visible'); ligne.classList.remove('visible'); return; }
   const cible=cibleEtape(etapeIdx);
-  if(!cible || !state.LARGEUR){ halo.classList.remove('visible'); return; }
+  if(!cible || !state.LARGEUR){ halo.classList.remove('visible'); ligne.classList.remove('visible'); return; }
   const canvas=document.getElementById('jeu'), cb=canvas.getBoundingClientRect();
   const sb=document.getElementById('scene').getBoundingClientRect();
   const sx=cb.width/state.LARGEUR, sy=cb.height/state.HAUTEUR;
+  const ox=cb.left-sb.left, oy=cb.top-sb.top;
+
+  // --- halo sur la cible ---
+  let tx,ty;
   if(cible.rect){
     const R=cible.rect;
+    tx=ox+R.x*sx+(R.w*sx)/2; ty=oy+R.y*sy+(R.h*sy)/2;
     halo.classList.add('rect');
-    halo.style.left=(cb.left-sb.left+R.x*sx+(R.w*sx)/2)+'px';
-    halo.style.top=(cb.top-sb.top+R.y*sy+(R.h*sy)/2)+'px';
+    halo.style.left=tx+'px'; halo.style.top=ty+'px';
     halo.style.width=(R.w*sx+16)+'px'; halo.style.height=(R.h*sy+16)+'px';
   } else {
+    tx=ox+cible.x*sx; ty=oy+cible.y*sy;
     halo.classList.remove('rect');
-    halo.style.left=(cb.left-sb.left+cible.x*sx)+'px';
-    halo.style.top=(cb.top-sb.top+cible.y*sy)+'px';
+    halo.style.left=tx+'px'; halo.style.top=ty+'px';
     const d=(cible.r*2*Math.max(sx,sy))+10;
     halo.style.width=d+'px'; halo.style.height=d+'px';
   }
   halo.classList.add('visible');
+
+  // --- encart de texte : toujours ancré dans la bande HUD, au-dessus de la grille ---
+  const bx=ox+(state.LARGEUR/2)*sx, by=oy+Math.max(6,state.GY*0.28)*sy;
+  bar.style.left=bx+'px'; bar.style.top=by+'px'; bar.style.transform='translate(-50%,0)';
+
+  // --- ligne reliant l'encart à la cible réelle ---
+  const barRect=bar.getBoundingClientRect(), sceneRect=sb;
+  const lx0=barRect.left-sceneRect.left+barRect.width/2, ly0=barRect.top-sceneRect.top+barRect.height;
+  const dx=tx-lx0, dy=ty-ly0, dist=Math.hypot(dx,dy), ang=Math.atan2(dy,dx);
+  ligne.style.left=lx0+'px'; ligne.style.top=ly0+'px'; ligne.style.width=dist+'px';
+  ligne.style.transform='rotate('+ang+'rad)';
+  ligne.classList.add('visible');
 }
 
 export function mettreAJour(){
   if(!actif) return;
   // Le tutoriel ne s'affiche et n'avance QUE pendant le combat.
   // Sur la carte (choix de planète) ou une scène de planète, on masque tout.
-  if(state.phase!=='joueur'){ bar.classList.remove('visible'); halo.classList.remove('visible'); return; }
+  if(state.phase!=='joueur'){ bar.classList.remove('visible'); halo.classList.remove('visible'); ligne.classList.remove('visible'); return; }
   bar.classList.add('visible');
   if(state.enCombat) garantirCibleAccessible();
   const e=ETAPES[etapeIdx];
@@ -107,5 +136,5 @@ export function mettreAJour(){
     if(etapeIdx>=ETAPES.length){ terminer(); return; }
     afficherEtape();
   }
-  positionnerHalo();
+  positionner();
 }

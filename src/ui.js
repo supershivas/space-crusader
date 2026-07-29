@@ -333,16 +333,27 @@ function coord(cx,cy){ const b=canvas.getBoundingClientRect(); return {x:(cx-b.l
 function caseDe(x,y){ if(x<state.GX||x>=state.GX+state.COLS*state.CELL||y<state.GY||y>=state.GY+state.RANGS*state.CELL) return null; return {c:Math.floor((x-state.GX)/state.CELL), r:Math.floor((y-state.GY)/state.CELL)}; }
 function dansRect(x,y,R){ return x>=R.x&&x<=R.x+R.w&&y>=R.y&&y<=R.y+R.h; }
 
+/* positionne l'infobulle près du curseur/doigt SANS jamais déborder de l'écran
+   (bascule à gauche/au-dessus quand elle déborderait à droite/en bas — utile
+   sur mobile où le doigt touche souvent près d'un bord). */
+function positionnerTooltip(clientX,clientY){
+  const rect=scene.getBoundingClientRect();
+  const tw=tooltip.offsetWidth, th=tooltip.offsetHeight;
+  let left=clientX-rect.left+14, top=clientY-rect.top+14;
+  if(left+tw>rect.width) left=clientX-rect.left-tw-14;
+  if(top+th>rect.height) top=clientY-rect.top-th-14;
+  left=Math.max(4,Math.min(left,rect.width-tw-4)); top=Math.max(4,Math.min(top,rect.height-th-4));
+  tooltip.style.left=left+'px'; tooltip.style.top=top+'px';
+}
 canvas.addEventListener('pointermove', ev=>{
   if(state.paused) return;
-  const rect=scene.getBoundingClientRect();
-  tooltip.style.left=(ev.clientX-rect.left+14)+'px'; tooltip.style.top=(ev.clientY-rect.top+14)+'px';
   const {x,y}=coord(ev.clientX,ev.clientY);
-  if(state.phase==='carte'){ tooltipCarte(x,y); state.hoverCell=null; return; }
+  if(state.phase==='carte'){ tooltipCarte(x,y); state.hoverCell=null; positionnerTooltip(ev.clientX,ev.clientY); return; }
   if(state.phase!=='joueur'){ tooltip.classList.remove('visible'); state.hoverCell=null; return; }
   const btn=state.ACT.find(a=>dansRect(x,y,a));
-  if(btn && state.phase==='joueur'){ tooltipBouton(btn); state.hoverCell=null; return; }
+  if(btn && state.phase==='joueur'){ tooltipBouton(btn); state.hoverCell=null; positionnerTooltip(ev.clientX,ev.clientY); return; }
   updateTooltip(x,y);
+  positionnerTooltip(ev.clientX,ev.clientY);
   const cell=caseDe(x,y); state.hoverCell=cell; state.hoverTime=performance.now();
 });
 
