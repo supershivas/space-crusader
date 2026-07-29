@@ -11,6 +11,7 @@ import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, s
 import { NFRAMES } from './sprites.js';
 import { logMsg, ouvrirBuild, finPartie, checkAchievements, montrerToast } from './ui.js';
 import { gagnerCombat, serialiserCarte } from './map.js';
+import { t } from './i18n.js';
 
 /* dégâts d'un tir laser ennemi (aile ou boss) : augmente avec le secteur */
 export function degLaserActuel(){ return DEG_LASER + Math.floor(state.secteur/2); }
@@ -27,7 +28,7 @@ export function peutActiverCapacite(f){ return !!CAPACITES[f.type] && !f.capUsed
 export function casesMouvementCapacite(f){ const out=[],p=porteeDep(f)+2; for(let dc=-p;dc<=p;dc++) for(let dr=-p;dr<=p;dr++){ if((dc===0&&dr===0)||Math.abs(dc)+Math.abs(dr)>p) continue;
   const c=f.c+dc,r=f.r+dr; if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) out.push({c,r}); } return out; }
 /* petite modale (toast) annonçant le coup spécial déclenché par le 2e appui sur un vaisseau */
-function annoncerCapacite(type){ const c=CAPACITES[type]; if(c) montrerToast(c.nom+' — '+c.desc,'gold'); }
+function annoncerCapacite(type){ if(CAPACITES[type]) montrerToast(t('cap_'+type+'_nom')+' — '+t('cap_'+type+'_desc'),'gold'); state.capacitesJoueurTotal=(state.capacitesJoueurTotal||0)+1; }
 export function activerCapacite(f){
   if(!peutActiverCapacite(f)) return false;
   if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); annoncerCapacite(f.type); return true; }
@@ -187,7 +188,7 @@ export function toucherBoss(deg,px,py){ if(!state.boss) return;
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
     state.secousse=18; state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null;
-    logMsg('BOSS DÉTRUIT !','log-ylw'); montrerToast('🏆 Forteresse détruite !','gold'); sonVoix('BOSS');
+    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast('🏆 '+t('toast_forteresse_detruite'),'gold'); sonVoix('BOSS');
     checkAchievements();
   } }
 
@@ -220,7 +221,7 @@ export function declencheUltime(){
   if(state.boss){ state.boss.hp-=4; if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } }
   state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2));
   state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0; state.ultimeSeuil+=ULTIME_INCREMENT;
-  sonBoom(); sonVague(); logMsg('⚡ FRAPPE ORBITALE !','log-ylw'); montrerToast('⚡ Frappe orbitale !','gold'); checkAchievements();
+  sonBoom(); sonVague(); logMsg('⚡ '+t('toast_frappe_orbitale').toUpperCase(),'log-ylw'); montrerToast('⚡ '+t('toast_frappe_orbitale'),'gold'); checkAchievements();
 }
 export function frapperAile(a,grand){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
   a.hp=(a.hp||1)-1;

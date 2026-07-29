@@ -1,13 +1,14 @@
 /* =====================================================================
    INTERNATIONALISATION (i18n)
-   Fondations pour le multilingue. FR est complet ; EN couvre pour l'instant
-   les menus (accueil, paramètres, infos, pause, difficulté). Le reste du jeu
-   (infobulles, journal de combat) reste en français — traduction à venir.
+   FR et EN sont tous deux complets : menus, catalogues (améliorations,
+   vaisseaux, méta, capacités, obstacles, carte, boss, succès), tutoriel,
+   missions, journal de combat et toasts.
 
    Utilisation :
    - texte statique : <span data-i18n="cle"></span>       → textContent = t(cle)
    - texte riche    : <div  data-i18n-html="cle"></div>   → innerHTML  = t(cle)
    - dans le code   : t('cle')
+   - objets bilingues ad hoc (ex. événements de la carte) : L({fr:'...',en:'...'})
    ===================================================================== */
 import { state } from './state.js';
 
@@ -17,6 +18,7 @@ export const NOM_LANGUE = { fr:'Français', en:'English' };
 const STRINGS = {
   fr: {
     // Accueil
+    home_titre:'DÉFENSE<br>DU CROISEUR',
     home_reprendre:'REPRENDRE',
     home_jouer:'JOUER',
     home_params:'PARAMÈTRES',
@@ -50,8 +52,239 @@ const STRINGS = {
     // Divers
     mission_continuer:'Continuer ▶',
     fin_rejouer:'REJOUER',
+    up_titre:'AMÉLIORATION', up_hint:'Choisis une amélioration pour toute la partie',
+    build_titre:'CHOISIS TON VAISSEAU', build_hint:'Il sortira du hangar au prochain tour · tape ailleurs pour annuler',
+    meta_titre:'AMÉLIORATIONS PERMANENTES',
+
+    // ===== Tutoriel =====
+    tuto_0:"Touche un de tes vaisseaux, en bas de l'écran, pour le sélectionner.",
+    tuto_1:"Ce vaisseau a un coup spécial (pastille jaune) : touche-le une 2e fois pour l'activer.",
+    tuto_2:"Touche un ennemi accessible (viseur rouge) pour tirer dessus.",
+    tuto_3:"Touche un point bleu pour déplacer ton vaisseau.",
+    tuto_4:"Touche FIN DU TOUR pour terminer ton tour.",
+    tuto_passer:'Passer le tutoriel',
+
+    // ===== Améliorations (UPGRADES) =====
+    up_portee_nom:'Tir élargi', up_portee_desc:'+1 colonne de portée',
+    up_deplacement_nom:'Propulseurs', up_deplacement_desc:'+1 case de déplacement',
+    up_bouclier_nom:'Bouclier renforcé', up_bouclier_desc:'Recharge +25%',
+    up_tourelleDouble_nom:'Double tourelle', up_tourelleDouble_desc:'+1 tir de tourelle / tour',
+    up_bonusPlus_nom:'Aimant à bonus', up_bonusPlus_desc:'Bonus plus fréquents',
+    up_regen_nom:'Auto-réparation', up_regen_desc:'+2% PV / tour',
+    up_rouge_pv_nom:'Blindage rouge', up_rouge_pv_desc:'Vaisseau Rouge : +1 PV',
+    up_rouge_range_nom:'Onde de choc', up_rouge_range_desc:'Vaisseau Rouge : zone de tir ±2',
+    up_rouge_back_nom:'Rétro-tir', up_rouge_back_desc:'Vaisseau Rouge : tire aussi vers l\'arrière',
+
+    // ===== Vaisseaux (SHIPS) =====
+    ship_normal_nom:'Standard', ship_normal_desc:'Prêt en 1 tour',
+    ship_rapide_nom:'Intercepteur', ship_rapide_desc:'+1 déplacement · 2 tours',
+    ship_bombardier_nom:'Bombardier', ship_bombardier_desc:'Détruit la colonne · 2 tours',
+    ship_bouclier_nom:'Cuirassé', ship_bouclier_desc:'3 PV · 2 tours',
+    ship_sniper_nom:'Tireur', ship_sniper_desc:'Tir à ±2 colonnes · 2 tours',
+    ship_transporteur_nom:'Transporteur', ship_transporteur_desc:'Largue des mini-navettes · 2 tours',
+    ship_medic_nom:'Médic', ship_medic_desc:'Soigne un allié adjacent · 2 tours',
+    ship_rouge_nom:'Vaisseau Rouge', ship_rouge_desc:'Tir de zone · 2 PV · prend 2 tours',
+
+    // ===== Méta-progression (META) =====
+    meta_pvBonus_nom:'Blindage', meta_pvBonus_desc:'+10 PV de départ',
+    meta_deptAmelio_nom:'Prototype', meta_deptAmelio_desc:'+1 amélioration au départ',
+    meta_ultimeRapide_nom:'Réacteur dopé', meta_ultimeRapide_desc:'Ultime déjà chargé au départ',
+    meta_vaisseauBonus_nom:'Escadrille', meta_vaisseauBonus_desc:'+1 vaisseau au départ',
+    meta_reroll_nom:'Reroll', meta_reroll_desc:'+1 reroll gratuit sur les propositions',
+    meta_vaisseauMedic_nom:'Ingénierie', meta_vaisseauMedic_desc:'Débloque le Médic au hangar (soigne, ne combat pas)',
+    meta_cosmetiques_nom:'Atelier peinture', meta_cosmetiques_desc:'Débloque des teintes pour le croiseur et les vaisseaux',
+    meta_cristaux:'Cristaux',
+    meta_max:'MAX',
+    meta_cosmetiques_titre:'Cosmétiques',
+    meta_reset:'Effacer toute la progression',
+    meta_reset_confirm:'Effacer toute la progression (améliorations permanentes, cristaux, succès, meilleurs scores) ? Cette action est irréversible.',
+    meta_reset_fait:'Progression effacée',
+
+    // ===== Capacités actives (2e appui) =====
+    cap_rapide_nom:'Bond', cap_rapide_desc:'Bond de 2 cases en plus, sans perdre le tir',
+    cap_bouclier_nom:'Provocation', cap_bouclier_desc:'Les ailes adjacentes le ciblent au tour suivant',
+    cap_bombardier_nom:'Tir chargé', cap_bombardier_desc:'Vise une cible : détruit 2 colonnes au lieu d\'une',
+    cap_transporteur_nom:'Largage', cap_transporteur_desc:'Lance une mini-navette sur une case libre adjacente (diagonales incluses)',
+    cap_medic_nom:'Réparation', cap_medic_desc:'Soigne 1 PV à un allié adjacent (diagonales incluses)',
+
+    // ===== Obstacles =====
+    obs_debris_nom:'Débris', obs_debris_desc:'Bloque tirs et déplacements. Destructible (1 PV).',
+    obs_station_nom:'Épave de station', obs_station_desc:'Bloque. Largue un bonus si détruite (2 PV).',
+    obs_barriere_nom:'Barrière', obs_barriere_desc:'Indestructible. Bloque tout.',
+    obs_mines_nom:'Champ de mines', obs_mines_desc:'Explose en zone (dégâts 2) si détruit.',
+    obs_gaz_nom:'Gaz toxique', obs_gaz_desc:'Traversable. 1 dégât/tour aux unités dedans.',
+    obs_gravite_nom:'Champ de gravité', obs_gravite_desc:'Traversable. Ralentit les ennemis (vitesse 1).',
+
+    // ===== Carte de secteur : types de nœuds =====
+    node_combat_nom:'Combat', node_combat_desc:'Vague standard',
+    node_elite_nom:'Élite', node_elite_desc:'Plus dur · plus de butin',
+    node_event_nom:'Signal', node_event_desc:'Événement à choix',
+    node_rest_nom:'Relais', node_rest_desc:'Station de réparation',
+    node_tresor_nom:'Trésor', node_tresor_desc:'Chambre forte : amélioration',
+    node_hangar_nom:'Hangar', node_hangar_desc:'Renfort : +1 vaisseau au choix',
+    node_forge_nom:'Atelier', node_forge_desc:'Atelier : amélioration ou ultime',
+    node_boss_nom:'BOSS', node_boss_desc:"Un boss t'attend !",
+    carte_titre:'CHOISIS TA DESTINATION',
+    carte_hint:'Deux planètes en vue — trace ta route',
+    carte_secteur:'SECTEUR',
+    carte_choisis_route:'CHOISIS TA ROUTE',
+    carte_position_actuelle:'Position actuelle',
+    carte_accessible:'▸ Accessible',
+    carte_hors_portee:'Hors de portée',
+
+    // ===== Scènes de planète (sans combat) =====
+    scene_rest_titre:'STATION DE RÉPARATION',
+    scene_tresor_titre:'CHAMBRE FORTE',
+    scene_hangar_titre:'HANGAR ORBITAL',
+    scene_forge_titre:'ATELIER',
+    scene_planete_hint:'Choisis en haut de l\'écran',
+    rest_reparation_nom:'Réparation', rest_reparation_desc:'+30% PV',
+    rest_recalibrage_nom:'Recalibrage', rest_recalibrage_desc:'+15% PV · +50% ultime',
+    tresor_butin_nom:'Butin', tresor_butin_desc:'+8 score',
+    hangar_standard_nom:'Standard', hangar_standard_desc:'+1 vaisseau',
+    hangar_tireur_nom:'Tireur', hangar_tireur_desc:'+1 tireur (±2)',
+    hangar_cuirasse_nom:'Cuirassé', hangar_cuirasse_desc:'+1 cuirassé (3 PV)',
+    forge_ameliorer_nom:'Améliorer', forge_ameliorer_desc:'+1 amélioration',
+    forge_surcharger_nom:'Surcharger', forge_surcharger_desc:'Ultime +50%',
+
+    // ===== Bannière d'étape (nouveau combat) =====
+    etape_combat_titre:'COMBAT',
+    etape_elite_titre:'ÉLITE',
+    etape_boss_titre:'BOSS',
+
+    // ===== Objectifs de vague =====
+    obj_sansdegat:'Aucun dégât au croiseur',
+    obj_protege:'Ne perds aucun vaisseau',
+    obj_kills:'Détruis {n} ennemis',
+    obj_survie:'Survis à la vague',
+    obj_boss:'Détruis le boss',
+
+    // ===== Boss =====
+    boss_canon_nom:'Canonnier', boss_canon_desc:'3 colonnes',
+    boss_sniper_nom:'Sniper', boss_sniper_desc:'vise 3 vaisseaux',
+    boss_rayon_nom:'Rayon', boss_rayon_desc:'charge puis balaye',
+    boss_nuee_nom:'Nuée', boss_nuee_desc:'lâche des ailes',
+    boss_blinde_nom:'Blindé', boss_blinde_desc:'gros tir central',
+    boss_feu_nom:'Brasier', boss_feu_desc:'embrase le croiseur',
+    boss_electrique_nom:'Foudre', boss_electrique_desc:'gèle tes vaisseaux',
+    boss_nid_nom:'Mère-Nid', boss_nid_desc:'fait naître des navettes',
+    boss_miroir_nom:'Miroir', boss_miroir_desc:'renvoie les dégâts',
+    boss_forge_nom:'Forgeron', boss_forge_desc:'se répare sans cesse',
+    boss_eclipse_nom:'Éclipse', boss_eclipse_desc:'ouvre des failles',
+    boss_label:'BOSS',
+
+    // ===== Mission (fin de vague) =====
+    mission_boss_titre:'FORTERESSE DÉTRUITE !',
+    mission_elite_titre:'ÉLITES ANÉANTIS !',
+    mission_normal_titre:'ZONE SÉCURISÉE',
+    mission_secteur:'Secteur',
+    mission_score:'Score',
+    mission_croiseur:'Croiseur',
+    mission_pv:'PV',
+
+    // ===== Tooltips (survol) =====
+    tt_pv:'PV',
+    tt_deplacement:'Déplacement',
+    tt_case:'case',
+    tt_cases:'cases',
+    tt_grade:'Grade',
+    tt_grade_recrue:'Recrue',
+    tt_grade_as:'As',
+    tt_bouclier_actif:'Renforcé (1 tir absorbé)',
+    tt_boss:'BOSS',
+    tt_vaisseau_generer_nom:'Générer un vaisseau',
+    tt_vaisseau_max:'Maximum atteint ({n} vaisseaux). Perds-en un pour pouvoir en reconstruire.',
+    tt_vaisseau_prep:'Un vaisseau est déjà en préparation (⏳).',
+    tt_vaisseau_hangar:'Sort du hangar au tour suivant · {a}/{b}',
+    tt_tourelle_nom:'Tourelle du croiseur',
+    tt_tourelle_desc:"Détruit une aile n'importe où sur la carte",
+    tt_bouclier_nom:'Recharger le bouclier',
+    tt_bouclier_gain:'+{n} PV au croiseur',
+    tt_bouclier_restant:'{n} utilisation restante ce combat',
+    tt_bouclier_restants:'{n} utilisations restantes ce combat',
+    tt_bouclier_epuise:'Épuisé pour ce combat',
+    tt_tir_bloque:'Tir bloqué / hors d’atteinte',
+    tt_vaisseau_brouille:'Vaisseau brouillé',
+    tt_tir_bloque_court:'Tir bloqué',
+
+    // ===== Achievements =====
+    ach_first_blood_nom:'Premier Sang', ach_first_blood_desc:'Détruire 1 ennemi',
+    ach_combo_3_nom:'Enchaînement', ach_combo_3_desc:'3 kills en 1 tour',
+    ach_combo_5_nom:'Massacre', ach_combo_5_desc:'5 kills en 1 tour',
+    ach_survivor_5_nom:'Survivant', ach_survivor_5_desc:'Atteindre la vague 5',
+    ach_survivor_10_nom:'Vétéran', ach_survivor_10_desc:'Atteindre la vague 10',
+    ach_boss_slayer_nom:'Chasseur de Boss', ach_boss_slayer_desc:'Détruire un boss',
+    ach_no_turret_nom:'Sans Tourelle', ach_no_turret_desc:'Tuer un boss sans tourelle',
+    ach_perfect_wave_nom:'Vague Parfaite', ach_perfect_wave_desc:'Vague sans dégât',
+    ach_asteroid_dodge_nom:'Esquive', ach_asteroid_dodge_desc:'Survivre à 5 astéroïdes',
+    succes_titre:'SUCCÈS',
+    succes_meilleurs_scores:'MEILLEURS SCORES',
+
+    // ===== Écran de fin =====
+    fin_titre:'CROISEUR HORS-SERVICE',
+    fin_sous_titre:'Il a besoin de réparations !',
+    fin_score:'Score',
+    fin_secteur_atteint:'Secteur atteint',
+    fin_boss_vaincus:'Boss vaincus',
+    fin_meilleur_combo:'Meilleur combo',
+    fin_succes_debloques:'succès débloqués',
+    fin_cristaux_gagnes:'cristaux gagnés',
+    fin_vague:'Vague',
+
+    // ===== Journal / toasts communs =====
+    log_amelioration_acquise:'Amélioration acquise',
+    log_forteresse:'FORTERESSE !',
+    toast_forteresse_approche:'Forteresse en approche !',
+    toast_frappe_orbitale:'Frappe orbitale !',
+    toast_forteresse_detruite:'Forteresse détruite !',
+    toast_secteur:'Secteur {n}',
+    hangar_prep:'Hangar :',
+
+    // ===== Infobulles unités (ailes ennemies) =====
+    ail_normal_nom:'Aile', ail_normal_desc:'Avance et tire droit devant.',
+    ail_chasseur_nom:'Chasseur', ail_chasseur_desc:'Rapide (2 cases/tour), tire dès le 1er rang.',
+    ail_bombardier_nom:'Bombardier', ail_bombardier_desc:'Vise le croiseur, dégâts x2. Avance 1 tour sur 2.',
+    ail_eclaireur_nom:'Éclaireur', ail_eclaireur_desc:'Rapide, ne tire pas : fonce pour éperonner.',
+    ail_porteur_nom:'Porteur (élite)', ail_porteur_desc:'Renforce d\'un bouclier les ailes voisines.',
+    ail_brouilleur_nom:'Brouilleur (élite)', ail_brouilleur_desc:'Protège de tes tirs les ailes voisines.',
+    ail_lourd_nom:'Aile lourde', ail_lourd_desc:'Blindée : encaisse 3 tirs. Avance lentement.',
+    ail_stronghold_nom:'Forteresse', ail_stronghold_desc:'3 PV. Se scinde en 2 navettes à sa destruction.',
+    ail_mini_navette_nom:'Navette', ail_mini_navette_desc:'Débris de forteresse. Fragile.',
+    ail_regenerateur_nom:'Régénérateur', ail_regenerateur_desc:'Se soigne d\'1 PV tous les 3 tours.',
+    ail_mini_sniper_nom:'Traqueur', ail_mini_sniper_desc:'Vise tes 2 vaisseaux les plus proches du croiseur.',
+    ail_diagonal_d_nom:'Intercepteur oblique', ail_diagonal_d_desc:'Avance en diagonale, rebondit sur les bords.',
+    ail_diagonal_g_nom:'Intercepteur oblique', ail_diagonal_g_desc:'Avance en diagonale, rebondit sur les bords.',
+    ail_void_nom:'Faille', ail_void_desc:'Attire tes vaisseaux (sauf cuirassés). Avance lentement (1 case/2 tours).',
+
+    tt_role_normal:'Tir en colonne ±1.',
+    tt_role_rouge:'Tir de zone (3×3) · 2 PV · +1 déplacement.',
+    tt_role_rapide:'+1 déplacement.',
+    tt_role_bombardier:'Tir qui détruit toute une colonne.',
+    tt_role_bouclier:'Encaisse 3 PV.',
+    tt_role_sniper:'Tir à longue portée (±2 colonnes).',
+
+    tt_degats:'Dégâts', tt_avance:'Avance', tt_par_tour:'/tour', tt_aucun_eperonnage:'aucun (éperonnage)',
+    tt_protege:'Protégé — vise le brouilleur',
+    tt_grade_bleu:'Bleu', tt_grade_confirme:'Confirmé', tt_grade_veteran:'Vétéran',
+    tt_kills_fmt:'{n} kill(s)',
+
+    bonus_pv_nom:'Soin', bonus_tir_nom:'Tir gratuit', bonus_vaisseau_nom:'Renfort',
+    bonus_mimic_nom:'⚠ Leurre', bonus_mimic_desc:'Imite un renfort mais ne bouge pas : c\'est un piège. Tire dessus ou évite-le.',
+    tt_disparait:'Disparaît dans {n} tour(s)',
+
+    ast_gros_nom:'Gros astéroïde', ast_essaim_nom:'Essaim', ast_diagonal_nom:'Astéroïde oblique', ast_default_nom:'Astéroïde',
+    ast_desc:'Destructible — tire dessus pour le pulvériser.', ast_desc_trainee:' Laisse une traînée de débris.',
+
+    tt_trounoir_nom:'Trou noir', tt_trounoir_desc:'Aspire tout autour (1 case)', tt_trounoir_tours:'Encore {n} tour(s)',
+    tt_champ_nom:'Champ magnétique', tt_champ_desc:'Brouille tes tirs dans cette colonne',
+
+    skin_croiseur:'Croiseur', skin_vaisseaux:'Vaisseaux',
+    log_hangar:'Hangar :',
+    log_annule:'Annulé', log_bond:'💨 Bond !', log_tir_charge_annule:'Tir chargé annulé',
+    tt_vaisseau_brouille_champ:'Vaisseau brouillé (champ magnétique)',
   },
   en: {
+    home_titre:'CRUISER<br>DEFENSE',
     home_reprendre:'RESUME',
     home_jouer:'PLAY',
     home_params:'SETTINGS',
@@ -80,12 +313,234 @@ const STRINGS = {
     pause_hint:'P = pause · Esc = undo action',
     mission_continuer:'Continue ▶',
     fin_rejouer:'PLAY AGAIN',
+    up_titre:'UPGRADE', up_hint:'Choose an upgrade for the whole run',
+    build_titre:'CHOOSE YOUR SHIP', build_hint:'It will leave the hangar next turn · tap elsewhere to cancel',
+    meta_titre:'PERMANENT UPGRADES',
+
+    tuto_0:"Tap one of your ships, at the bottom of the screen, to select it.",
+    tuto_1:"This ship has a special move (yellow dot): tap it again to activate it.",
+    tuto_2:"Tap a reachable enemy (red reticle) to fire at it.",
+    tuto_3:"Tap a blue dot to move your ship.",
+    tuto_4:"Tap END TURN to finish your turn.",
+    tuto_passer:'Skip the tutorial',
+
+    up_portee_nom:'Extended Fire', up_portee_desc:'+1 column of range',
+    up_deplacement_nom:'Thrusters', up_deplacement_desc:'+1 move distance',
+    up_bouclier_nom:'Reinforced Shield', up_bouclier_desc:'Recharge +25%',
+    up_tourelleDouble_nom:'Double Turret', up_tourelleDouble_desc:'+1 turret shot / turn',
+    up_bonusPlus_nom:'Bonus Magnet', up_bonusPlus_desc:'Bonuses drop more often',
+    up_regen_nom:'Auto-repair', up_regen_desc:'+2% HP / turn',
+    up_rouge_pv_nom:'Red Armor', up_rouge_pv_desc:'Red Ship: +1 HP',
+    up_rouge_range_nom:'Shockwave', up_rouge_range_desc:'Red Ship: ±2 blast radius',
+    up_rouge_back_nom:'Rear Fire', up_rouge_back_desc:'Red Ship: also fires backward',
+
+    ship_normal_nom:'Standard', ship_normal_desc:'Ready in 1 turn',
+    ship_rapide_nom:'Interceptor', ship_rapide_desc:'+1 move · 2 turns',
+    ship_bombardier_nom:'Bomber', ship_bombardier_desc:'Destroys the column · 2 turns',
+    ship_bouclier_nom:'Battleship', ship_bouclier_desc:'3 HP · 2 turns',
+    ship_sniper_nom:'Sniper', ship_sniper_desc:'Fires at ±2 columns · 2 turns',
+    ship_transporteur_nom:'Carrier', ship_transporteur_desc:'Launches mini-shuttles · 2 turns',
+    ship_medic_nom:'Medic', ship_medic_desc:'Heals an adjacent ally · 2 turns',
+    ship_rouge_nom:'Red Ship', ship_rouge_desc:'Area fire · 2 HP · takes 2 turns',
+
+    meta_pvBonus_nom:'Armor', meta_pvBonus_desc:'+10 starting HP',
+    meta_deptAmelio_nom:'Prototype', meta_deptAmelio_desc:'+1 starting upgrade',
+    meta_ultimeRapide_nom:'Overcharged Reactor', meta_ultimeRapide_desc:'Ultimate already charged at start',
+    meta_vaisseauBonus_nom:'Squadron', meta_vaisseauBonus_desc:'+1 starting ship',
+    meta_reroll_nom:'Reroll', meta_reroll_desc:'+1 free reroll on offered choices',
+    meta_vaisseauMedic_nom:'Engineering', meta_vaisseauMedic_desc:'Unlocks the Medic at the hangar (heals, does not fight)',
+    meta_cosmetiques_nom:'Paint Shop', meta_cosmetiques_desc:'Unlocks color skins for the cruiser and ships',
+    meta_cristaux:'Crystals',
+    meta_max:'MAX',
+    meta_cosmetiques_titre:'Cosmetics',
+    meta_reset:'Erase all progress',
+    meta_reset_confirm:'Erase all progress (permanent upgrades, crystals, achievements, high scores)? This cannot be undone.',
+    meta_reset_fait:'Progress erased',
+
+    cap_rapide_nom:'Dash', cap_rapide_desc:'2 extra move cells, without losing the shot',
+    cap_bouclier_nom:'Taunt', cap_bouclier_desc:'Adjacent enemies target it next turn',
+    cap_bombardier_nom:'Charged Shot', cap_bombardier_desc:'Aim at a target: destroys 2 columns instead of 1',
+    cap_transporteur_nom:'Airdrop', cap_transporteur_desc:'Launches a mini-shuttle onto a free adjacent cell (diagonals included)',
+    cap_medic_nom:'Repair', cap_medic_desc:'Heals 1 HP to an adjacent ally (diagonals included)',
+
+    obs_debris_nom:'Debris', obs_debris_desc:'Blocks fire and movement. Destructible (1 HP).',
+    obs_station_nom:'Station Wreck', obs_station_desc:'Blocks. Drops a bonus when destroyed (2 HP).',
+    obs_barriere_nom:'Barrier', obs_barriere_desc:'Indestructible. Blocks everything.',
+    obs_mines_nom:'Minefield', obs_mines_desc:'Explodes in an area (2 damage) when destroyed.',
+    obs_gaz_nom:'Toxic Gas', obs_gaz_desc:'Passable. 1 damage/turn to units inside.',
+    obs_gravite_nom:'Gravity Field', obs_gravite_desc:'Passable. Slows enemies down (speed 1).',
+
+    node_combat_nom:'Combat', node_combat_desc:'Standard wave',
+    node_elite_nom:'Elite', node_elite_desc:'Harder · more loot',
+    node_event_nom:'Signal', node_event_desc:'Event with choices',
+    node_rest_nom:'Relay', node_rest_desc:'Repair station',
+    node_tresor_nom:'Treasure', node_tresor_desc:'Vault: upgrade',
+    node_hangar_nom:'Hangar', node_hangar_desc:'Reinforcement: +1 ship of your choice',
+    node_forge_nom:'Workshop', node_forge_desc:'Workshop: upgrade or ultimate',
+    node_boss_nom:'BOSS', node_boss_desc:'A boss awaits!',
+    carte_titre:'CHOOSE YOUR DESTINATION',
+    carte_hint:'Two planets in sight — plot your route',
+    carte_secteur:'SECTOR',
+    carte_choisis_route:'CHOOSE YOUR ROUTE',
+    carte_position_actuelle:'Current position',
+    carte_accessible:'▸ Reachable',
+    carte_hors_portee:'Out of reach',
+
+    scene_rest_titre:'REPAIR STATION',
+    scene_tresor_titre:'VAULT',
+    scene_hangar_titre:'ORBITAL HANGAR',
+    scene_forge_titre:'WORKSHOP',
+    scene_planete_hint:'Choose at the top of the screen',
+    rest_reparation_nom:'Repair', rest_reparation_desc:'+30% HP',
+    rest_recalibrage_nom:'Recalibration', rest_recalibrage_desc:'+15% HP · +50% ultimate',
+    tresor_butin_nom:'Loot', tresor_butin_desc:'+8 score',
+    hangar_standard_nom:'Standard', hangar_standard_desc:'+1 ship',
+    hangar_tireur_nom:'Sniper', hangar_tireur_desc:'+1 sniper (±2)',
+    hangar_cuirasse_nom:'Battleship', hangar_cuirasse_desc:'+1 battleship (3 HP)',
+    forge_ameliorer_nom:'Upgrade', forge_ameliorer_desc:'+1 upgrade',
+    forge_surcharger_nom:'Overcharge', forge_surcharger_desc:'Ultimate +50%',
+
+    etape_combat_titre:'COMBAT',
+    etape_elite_titre:'ELITE',
+    etape_boss_titre:'BOSS',
+
+    obj_sansdegat:'No damage to the cruiser',
+    obj_protege:"Don't lose any ship",
+    obj_kills:'Destroy {n} enemies',
+    obj_survie:'Survive the wave',
+    obj_boss:'Destroy the boss',
+
+    boss_canon_nom:'Gunner', boss_canon_desc:'3 columns',
+    boss_sniper_nom:'Sniper', boss_sniper_desc:'targets 3 ships',
+    boss_rayon_nom:'Beam', boss_rayon_desc:'charges then sweeps',
+    boss_nuee_nom:'Swarm', boss_nuee_desc:'releases fighters',
+    boss_blinde_nom:'Armored', boss_blinde_desc:'heavy central shot',
+    boss_feu_nom:'Blaze', boss_feu_desc:'sets the cruiser on fire',
+    boss_electrique_nom:'Storm', boss_electrique_desc:'freezes your ships',
+    boss_nid_nom:'Broodmother', boss_nid_desc:'spawns mini-shuttles',
+    boss_miroir_nom:'Mirror', boss_miroir_desc:'reflects damage',
+    boss_forge_nom:'Blacksmith', boss_forge_desc:'keeps repairing itself',
+    boss_eclipse_nom:'Eclipse', boss_eclipse_desc:'opens rifts',
+    boss_label:'BOSS',
+
+    mission_boss_titre:'FORTRESS DESTROYED!',
+    mission_elite_titre:'ELITES WIPED OUT!',
+    mission_normal_titre:'ZONE SECURED',
+    mission_secteur:'Sector',
+    mission_score:'Score',
+    mission_croiseur:'Cruiser',
+    mission_pv:'HP',
+
+    tt_pv:'HP',
+    tt_deplacement:'Move',
+    tt_case:'cell',
+    tt_cases:'cells',
+    tt_grade:'Rank',
+    tt_grade_recrue:'Rookie',
+    tt_grade_as:'Ace',
+    tt_bouclier_actif:'Reinforced (absorbs 1 shot)',
+    tt_boss:'BOSS',
+    tt_vaisseau_generer_nom:'Build a ship',
+    tt_vaisseau_max:'Maximum reached ({n} ships). Lose one to be able to rebuild.',
+    tt_vaisseau_prep:'A ship is already being prepared (⏳).',
+    tt_vaisseau_hangar:'Leaves the hangar next turn · {a}/{b}',
+    tt_tourelle_nom:'Cruiser turret',
+    tt_tourelle_desc:'Destroys a fighter anywhere on the map',
+    tt_bouclier_nom:'Recharge the shield',
+    tt_bouclier_gain:'+{n} HP to the cruiser',
+    tt_bouclier_restant:'{n} use left this battle',
+    tt_bouclier_restants:'{n} uses left this battle',
+    tt_bouclier_epuise:'Exhausted for this battle',
+    tt_tir_bloque:'Shot blocked / out of reach',
+    tt_vaisseau_brouille:'Ship jammed',
+    tt_tir_bloque_court:'Shot blocked',
+
+    ach_first_blood_nom:'First Blood', ach_first_blood_desc:'Destroy 1 enemy',
+    ach_combo_3_nom:'Combo', ach_combo_3_desc:'3 kills in 1 turn',
+    ach_combo_5_nom:'Massacre', ach_combo_5_desc:'5 kills in 1 turn',
+    ach_survivor_5_nom:'Survivor', ach_survivor_5_desc:'Reach wave 5',
+    ach_survivor_10_nom:'Veteran', ach_survivor_10_desc:'Reach wave 10',
+    ach_boss_slayer_nom:'Boss Slayer', ach_boss_slayer_desc:'Destroy a boss',
+    ach_no_turret_nom:'No Turret', ach_no_turret_desc:'Kill a boss without the turret',
+    ach_perfect_wave_nom:'Perfect Wave', ach_perfect_wave_desc:'Wave with no damage taken',
+    ach_asteroid_dodge_nom:'Dodge', ach_asteroid_dodge_desc:'Survive 5 asteroids',
+    succes_titre:'ACHIEVEMENTS',
+    succes_meilleurs_scores:'HIGH SCORES',
+
+    fin_titre:'CRUISER OUT OF SERVICE',
+    fin_sous_titre:'It needs repairs!',
+    fin_score:'Score',
+    fin_secteur_atteint:'Sector reached',
+    fin_boss_vaincus:'Bosses defeated',
+    fin_meilleur_combo:'Best combo',
+    fin_succes_debloques:'achievements unlocked',
+    fin_cristaux_gagnes:'crystals earned',
+    fin_vague:'Wave',
+
+    log_amelioration_acquise:'Upgrade acquired',
+    log_forteresse:'FORTRESS!',
+    toast_forteresse_approche:'Fortress approaching!',
+    toast_frappe_orbitale:'Orbital strike!',
+    toast_forteresse_detruite:'Fortress destroyed!',
+    toast_secteur:'Sector {n}',
+    hangar_prep:'Hangar:',
+
+    ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',
+    ail_chasseur_nom:'Interceptor', ail_chasseur_desc:'Fast (2 cells/turn), fires from the 1st row.',
+    ail_bombardier_nom:'Bomber', ail_bombardier_desc:'Targets the cruiser, x2 damage. Advances every other turn.',
+    ail_eclaireur_nom:'Scout', ail_eclaireur_desc:'Fast, does not fire: rushes in to ram.',
+    ail_porteur_nom:'Carrier (elite)', ail_porteur_desc:'Shields neighboring fighters.',
+    ail_brouilleur_nom:'Jammer (elite)', ail_brouilleur_desc:'Protects neighboring fighters from your fire.',
+    ail_lourd_nom:'Heavy Fighter', ail_lourd_desc:'Armored: absorbs 3 shots. Advances slowly.',
+    ail_stronghold_nom:'Fortress', ail_stronghold_desc:'3 HP. Splits into 2 shuttles when destroyed.',
+    ail_mini_navette_nom:'Shuttle', ail_mini_navette_desc:'Fortress debris. Fragile.',
+    ail_regenerateur_nom:'Regenerator', ail_regenerateur_desc:'Heals 1 HP every 3 turns.',
+    ail_mini_sniper_nom:'Tracker', ail_mini_sniper_desc:'Targets your 2 ships closest to the cruiser.',
+    ail_diagonal_d_nom:'Diagonal Interceptor', ail_diagonal_d_desc:'Moves diagonally, bounces off the edges.',
+    ail_diagonal_g_nom:'Diagonal Interceptor', ail_diagonal_g_desc:'Moves diagonally, bounces off the edges.',
+    ail_void_nom:'Rift', ail_void_desc:'Pulls in your ships (except battleships). Advances slowly (1 cell/2 turns).',
+
+    tt_role_normal:'Fires in a ±1 column.',
+    tt_role_rouge:'Area fire (3×3) · 2 HP · +1 move.',
+    tt_role_rapide:'+1 move.',
+    tt_role_bombardier:'Shot that destroys an entire column.',
+    tt_role_bouclier:'Absorbs 3 HP.',
+    tt_role_sniper:'Long-range fire (±2 columns).',
+
+    tt_degats:'Damage', tt_avance:'Speed', tt_par_tour:'/turn', tt_aucun_eperonnage:'none (ramming)',
+    tt_protege:'Protected — target the jammer',
+    tt_grade_bleu:'Rookie', tt_grade_confirme:'Skilled', tt_grade_veteran:'Veteran',
+    tt_kills_fmt:'{n} kill(s)',
+
+    bonus_pv_nom:'Heal', bonus_tir_nom:'Free shot', bonus_vaisseau_nom:'Reinforcement',
+    bonus_mimic_nom:'⚠ Decoy', bonus_mimic_desc:'Mimics a reinforcement but does not move: it\'s a trap. Shoot it or avoid it.',
+    tt_disparait:'Disappears in {n} turn(s)',
+
+    ast_gros_nom:'Big Asteroid', ast_essaim_nom:'Swarm', ast_diagonal_nom:'Diagonal Asteroid', ast_default_nom:'Asteroid',
+    ast_desc:'Destructible — shoot it to break it apart.', ast_desc_trainee:' Leaves a trail of debris.',
+
+    tt_trounoir_nom:'Black Hole', tt_trounoir_desc:'Pulls in everything nearby (1 cell)', tt_trounoir_tours:'{n} turn(s) left',
+    tt_champ_nom:'Magnetic Field', tt_champ_desc:'Jams your fire in this column',
+
+    skin_croiseur:'Cruiser', skin_vaisseaux:'Ships',
+    log_hangar:'Hangar:',
+    log_annule:'Undone', log_bond:'💨 Dash!', log_tir_charge_annule:'Charged shot cancelled',
+    tt_vaisseau_brouille_champ:'Ship jammed (magnetic field)',
   },
 };
 
-export function t(cle){
+export function t(cle, vars){
   const l = state.langue || 'fr';
-  return (STRINGS[l] && STRINGS[l][cle]) || STRINGS.fr[cle] || cle;
+  let s = (STRINGS[l] && STRINGS[l][cle]) || STRINGS.fr[cle] || cle;
+  if(vars) for(const k in vars) s = s.replace('{'+k+'}', vars[k]);
+  return s;
+}
+
+/* résout un objet bilingue ad hoc { fr:'...', en:'...' } selon la langue courante (ex. événements de la carte) */
+export function L(obj){
+  if(obj==null) return '';
+  const l = state.langue || 'fr';
+  return obj[l]!==undefined ? obj[l] : obj.fr;
 }
 
 const LANGUE_KEY = 'dc_langue';

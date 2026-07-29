@@ -8,18 +8,22 @@
    (vaisseau, ennemi, case ou bouton), où qu'elle soit sur l'écran.
    ===================================================================== */
 import { state, centreCase } from './state.js';
-import { analyseTir, casesMouvement } from './combat.js';
+import { analyseTir, casesMouvement, peutActiverCapacite } from './combat.js';
+import { t } from './i18n.js';
 
 const TUTO_KEY='dc_tuto_vu';
 
 const ETAPES=[
-  { texte:"Touche un de tes vaisseaux, en bas de l'écran, pour le sélectionner.", fait:()=>!!state.selection },
-  { texte:"Touche un ennemi accessible (viseur rouge) pour tirer dessus.",        fait:(b)=>state.tirsJoueurTotal>b.tirs },
-  { texte:"Touche un point bleu pour déplacer ton vaisseau.",                     fait:(b)=>state.deplacementsJoueurTotal>b.deps },
-  { texte:"Touche FIN DU TOUR pour terminer ton tour.",                          fait:(b)=>state.toursJoueurTotal>b.tours },
+  { cle:'tuto_0', fait:()=>!!state.selection },
+  { cle:'tuto_1',
+    optionnel:()=>!state.fighters.some(f=>peutActiverCapacite(f)),
+    fait:(b)=>state.capacitesJoueurTotal>b.caps },
+  { cle:'tuto_2', fait:(b)=>state.tirsJoueurTotal>b.tirs },
+  { cle:'tuto_3', fait:(b)=>state.deplacementsJoueurTotal>b.deps },
+  { cle:'tuto_4', fait:(b)=>state.toursJoueurTotal>b.tours },
 ];
 
-let actif=false, etapeIdx=0, baseline={tirs:0,deps:0,tours:0};
+let actif=false, etapeIdx=0, baseline={tirs:0,deps:0,tours:0,caps:0};
 let alignementFait=false, derniereVague=null;
 let halo=null, bar=null, ligne=null, texte=null, skipBtn=null;
 
@@ -51,10 +55,13 @@ function terminer(){
 }
 
 function afficherEtape(){
+  // saute automatiquement les étapes optionnelles hors de propos ce tour-ci
+  // (ex : aucun vaisseau n'a de coup spécial disponible)
+  while(ETAPES[etapeIdx] && ETAPES[etapeIdx].optionnel && ETAPES[etapeIdx].optionnel()) etapeIdx++;
   const e=ETAPES[etapeIdx];
   if(!e){ terminer(); return; }
-  texte.textContent=e.texte;
-  baseline={tirs:state.tirsJoueurTotal, deps:state.deplacementsJoueurTotal, tours:state.toursJoueurTotal};
+  texte.textContent=t(e.cle);
+  baseline={tirs:state.tirsJoueurTotal, deps:state.deplacementsJoueurTotal, tours:state.toursJoueurTotal, caps:state.capacitesJoueurTotal};
 }
 
 /* Garantit qu'au moins un vaisseau ait un ennemi réellement accessible.
@@ -78,9 +85,10 @@ function garantirCibleAccessible(){
 
 function cibleEtape(idx){
   if(idx===0){ const f=state.fighters.find(x=>!x.used); if(!f) return null; return {x:f.x,y:f.y,r:state.CELL*0.55}; }
-  if(idx===1){ if(!state.selection) return null; const an=analyseTir(state.selection); const a=[...an.ailesOk][0]; return a?{x:a.x,y:a.y,r:state.CELL*0.5}:null; }
-  if(idx===2){ if(!state.selection) return null; const cells=casesMouvement(state.selection); if(!cells.length) return null; const c=centreCase(cells[0].c,cells[0].r); return {x:c.x,y:c.y,r:10}; }
-  if(idx===3){ return {rect:state.BTN}; }
+  if(idx===1){ const f=state.selection||state.fighters.find(x=>peutActiverCapacite(x)); if(!f) return null; return {x:f.x,y:f.y,r:state.CELL*0.55}; }
+  if(idx===2){ if(!state.selection) return null; const an=analyseTir(state.selection); const a=[...an.ailesOk][0]; return a?{x:a.x,y:a.y,r:state.CELL*0.5}:null; }
+  if(idx===3){ if(!state.selection) return null; const cells=casesMouvement(state.selection); if(!cells.length) return null; const c=centreCase(cells[0].c,cells[0].r); return {x:c.x,y:c.y,r:10}; }
+  if(idx===4){ return {rect:state.BTN}; }
   return null;
 }
 
@@ -149,7 +157,8 @@ export function mettreAJour(){
   if(state.phase!=='joueur'){ bar.classList.remove('visible'); halo.classList.remove('visible'); ligne.classList.remove('visible'); return; }
   bar.classList.add('visible');
   if(state.enCombat) garantirCibleAccessible();
-  const e=ETAPES[etapeIdx];
+  let e=ETAPES[etapeIdx];
+  if(e && e.optionnel && e.optionnel()){ etapeIdx++; afficherEtape(); e=ETAPES[etapeIdx]; if(!e) return; }
   if(e && e.fait(baseline)){
     etapeIdx++;
     if(etapeIdx>=ETAPES.length){ terminer(); return; }

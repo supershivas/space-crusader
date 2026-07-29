@@ -9,7 +9,8 @@ import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
          NFRAMES, framesBoom, iconImage } from './sprites.js';
 import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
-import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD } from './map.js';
+import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD, texteObjectif } from './map.js';
+import { t } from './i18n.js';
 
 const canvas=document.getElementById('jeu'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
@@ -322,10 +323,8 @@ export function dessiner(t){
     ctx.drawImage(im,Math.round(state.boss.x-im.width/2),Math.round(state.boss.y-im.height/2));
     ctx.strokeStyle=tint; ctx.lineWidth=2; ctx.strokeRect(state.GX+state.boss.c*state.CELL+3,state.GY+state.boss.r*state.CELL+3,3*state.CELL-6,2*state.CELL-6);
     const bw=3*state.CELL-14, bx=state.GX+state.boss.c*state.CELL+7, by=state.GY+state.boss.r*state.CELL-8; ctx.fillStyle='#3a1520'; ctx.fillRect(bx,by,bw,6); ctx.fillStyle=tint; ctx.fillRect(bx,by,bw*Math.max(0,state.boss.hp/state.boss.maxhp),6);
-    const noms={canon:'CANONNIER',sniper:'SNIPER',rayon:'RAYON',nuee:'NUÉE',blinde:'BLINDÉ',
-      feu:'BRASIER',electrique:'FOUDRE',nid:'MÈRE-NID',miroir:'MIROIR',forge:'FORGERON',eclipse:'ÉCLIPSE'};
     ctx.fillStyle=tint; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
-    const txtBoss='BOSS '+noms[state.boss.type]; ctx.fillText(txtBoss,state.boss.x,by-4);
+    const txtBoss=t('boss_label')+' '+t('boss_'+state.boss.type+'_nom').toUpperCase(); ctx.fillText(txtBoss,state.boss.x,by-4);
     if(state.boss.type==='rayon'&&state.boss.charge) dessinerIcone(imgEclairIco,state.boss.x+ctx.measureText(txtBoss).width/2+8,by-6,1);
     ctx.textAlign='left'; }
 
@@ -388,7 +387,7 @@ export function dessiner(t){
   ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('VAGUE '+state.vague,14,hudBase-32);
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
   ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,hudBase-32); ctx.textAlign='left';
-  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+state.objectifVague.texte,state.LARGEUR/2,15); ctx.textAlign='left'; }
+  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),state.LARGEUR/2,15); ctx.textAlign='left'; }
   { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil;
     arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,7); ctx.fillStyle='#141d34'; ctx.fill();
     ctx.fillStyle=pret?('rgba(255,210,61,'+(0.6+0.4*pulse)+')'):'#7a3fd6'; ctx.fillRect(state.ULT.x+2,state.ULT.y+2,(state.ULT.w-4)*pr,state.ULT.h-4);
@@ -417,9 +416,19 @@ export function dessiner(t){
   ctx.fillStyle=actif?'#07240f':'#4b5f66'; ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('FIN DU TOUR ▶',state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
 
 
-  // bannière de vague
-  if(state.banniereTimer>0){ const al=Math.min(1,state.banniereTimer/0.6); ctx.globalAlpha=al; ctx.fillStyle='rgba(7,11,24,.55)'; ctx.fillRect(0,state.HAUTEUR*0.34,state.LARGEUR,64);
-    ctx.fillStyle='#ffd23d'; ctx.font='15px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(state.banniereTxt,state.LARGEUR/2,state.HAUTEUR*0.34+40); ctx.textAlign='left'; ctx.globalAlpha=1; }
+  // bannière d'étape (combat / élite / boss) : titre + mission, avec une brève animation d'entrée/sortie
+  if(state.banniereTimer>0){
+    const age=(state.banniereTimerMax||2.6)-state.banniereTimer;
+    const al=Math.min(1,age/0.25,state.banniereTimer/0.5), echelle=0.85+0.15*Math.min(1,age/0.25);
+    const by=state.HAUTEUR*0.32, bh=state.banniereObjectif?78:54;
+    ctx.save(); ctx.globalAlpha=al;
+    ctx.translate(state.LARGEUR/2,by+bh/2); ctx.scale(echelle,echelle); ctx.translate(-state.LARGEUR/2,-(by+bh/2));
+    ctx.fillStyle='rgba(7,11,24,.62)'; ctx.fillRect(0,by,state.LARGEUR,bh);
+    ctx.strokeStyle='rgba(255,210,61,.7)'; ctx.lineWidth=2; ctx.strokeRect(1,by+1,state.LARGEUR-2,bh-2);
+    ctx.fillStyle='#ffd23d'; ctx.font='15px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(state.banniereTxt,state.LARGEUR/2,by+34);
+    if(state.banniereObjectif){ ctx.fillStyle='#7fd0b0'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText('» '+state.banniereObjectif,state.LARGEUR/2,by+58); }
+    ctx.textAlign='left'; ctx.restore();
+  }
 
   // Transition phase
   if(state.phase==='ennemi'&&state.lockTimer>0.7){ ctx.fillStyle='rgba(229,72,77,'+(.2*(state.lockTimer-0.7)/0.2)+')'; ctx.fillRect(0,0,state.LARGEUR,state.HAUTEUR); }

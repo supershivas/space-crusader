@@ -175,8 +175,8 @@ genererFavicon();
 poserIcones();
 appliquerLangue();
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
-// Premier lancement : afficher l'écran d'aide (INFOS) une seule fois
-try{ if(!localStorage.getItem('dc_firstLaunch')){ document.getElementById('info').classList.add('visible'); localStorage.setItem('dc_firstLaunch','1'); } }catch(e){}
+// Au démarrage, on va directement à l'accueil : le tutoriel guidé (voir tuto.js) suffit à
+// apprendre à jouer dès la première partie, plus besoin d'imposer l'écran d'aide en premier.
 requestAnimationFrame(boucle);
 
 /* PWA : enregistre le service worker (hors-ligne + installable). Sans effet si ouvert en file:// */

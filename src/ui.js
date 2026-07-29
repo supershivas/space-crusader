@@ -11,8 +11,9 @@ import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRen
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
-import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE } from './map.js';
+import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
 import { iconCanvas } from './sprites.js';
+import { t, L } from './i18n.js';
 
 /* icône pixel-art (clé de ICONS) suivie d'un libellé texte, pour un conteneur DOM */
 function icone(container,ico,px=18){ if(!ico) return; const cv=iconCanvas(ico,px); cv.className='pixel-ico'; container.appendChild(cv); }
@@ -53,7 +54,7 @@ export function montrerToast(txt,type=''){
 export function checkAchievements(){
   for(const [id,def] of Object.entries(ACHIEVEMENTS_DEF)){
     if(!state.achievements[id] && def.check()){
-      state.achievements[id]=true; saveData(); showAchievement(def.name, def.desc);
+      state.achievements[id]=true; saveData(); showAchievement(t('ach_'+id+'_nom'), t('ach_'+id+'_desc'));
     }
   }
 }
@@ -69,7 +70,7 @@ export function addHighscore(){
   const tbl=document.getElementById('highscores');
   tbl.innerHTML='';
   const trHead=document.createElement('tr'); const tdHead=document.createElement('td'); tdHead.colSpan=3; tdHead.style.color='#ffd23d'; tdHead.style.display='flex'; tdHead.style.alignItems='center'; tdHead.style.justifyContent='center';
-  icone(tdHead,'trophee',14); tdHead.appendChild(document.createTextNode(' MEILLEURS SCORES')); trHead.appendChild(tdHead); tbl.appendChild(trHead);
+  icone(tdHead,'trophee',14); tdHead.appendChild(document.createTextNode(' '+t('succes_meilleurs_scores'))); trHead.appendChild(tdHead); tbl.appendChild(trHead);
   tbl.insertAdjacentHTML('beforeend',state.highscores.map((h,i)=>'<tr class="'+(h.score===state.score?'hs-new':'')+'"><td>#'+(i+1)+'</td><td>'+h.score+'</td><td>V'+h.vague+'</td></tr>').join(''));
 }
 
@@ -83,7 +84,7 @@ function rendreChoixAmelioration(dispo){
   for(const u of choix){ const niv=state.ups[u.id]?' · Niv.'+(state.ups[u.id]+1):'';
     const b=document.createElement('div'); b.className='card';
     b.appendChild(divEmo(u.ico));
-    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+u.nom+niv+'</div><div class="desc">'+u.desc+'</div>'; b.appendChild(t);
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+t('up_'+u.id+'_nom')+niv+'</div><div class="desc">'+t('up_'+u.id+'_desc')+'</div>'; b.appendChild(d);
     b.onclick=()=>appliquerAmelioration(u.id); upgradeCards.appendChild(b); }
   btnReroll.style.display=(state.rerollsRestants>0)?'':'none';
   rerollLabel.textContent='Reroll ('+(state.rerollsRestants||0)+')';
@@ -100,7 +101,7 @@ btnReroll.addEventListener('click',()=>{
   const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
   state.rerollsRestants--; sonSelect(); rendreChoixAmelioration(dispo);
 });
-function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); logMsg('⬆ Amélioration acquise','log-grn'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
+function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); logMsg('⬆ '+t('log_amelioration_acquise'),'log-grn'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
 
 function apercuVaisseau(type){
   const src=imgVaisseau(type), box=52;
@@ -115,41 +116,41 @@ export function ouvrirBuild(){ state.choixBuild=true; tooltip.classList.remove('
   if(!state.fighters.some(f=>f.type==='rouge')) liste.push(SHIP_ROUGE);   // reconstruire le rouge s'il est détruit
   for(const s of liste){ const b=document.createElement('div'); b.className='card';
     b.appendChild(apercuVaisseau(s.id));
-    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+s.nom+'</div><div class="desc">'+s.desc+'</div>'; b.appendChild(t);
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+t('ship_'+s.id+'_nom')+'</div><div class="desc">'+t('ship_'+s.id+'_desc')+'</div>'; b.appendChild(d);
     b.onclick=()=>choisirBuild(s.id); buildCards.appendChild(b); }
   buildDiv.classList.add('visible');
 }
-function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg('Hangar : '+type,'log-grn'); }
+function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
 buildDiv.addEventListener('click',e=>{ if(e.target===buildDiv){ state.choixBuild=false; buildDiv.classList.remove('visible'); } });
 
 export function ouvrirEvenement(){ state.phase='evenement'; tooltip.classList.remove('visible');
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
-  eventTitre.textContent='✦ '+ev.titre; eventDesc.textContent=ev.desc; eventCards.innerHTML='';
+  eventTitre.textContent='✦ '+L(ev.titre); eventDesc.textContent=L(ev.desc); eventCards.innerHTML='';
   for(const ch of ev.choix){ const b=document.createElement('div'); b.className='card';
     b.appendChild(divEmo(ch.ico));
-    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(t);
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+L(ch.nom)+'</div><div class="desc">'+L(ch.desc)+'</div>'; b.appendChild(d);
     b.onclick=()=>{ ch.effet(); eventDiv.classList.remove('visible'); apresEvenement(); }; eventCards.appendChild(b); }
   eventDiv.classList.add('visible');
 }
 
-/* scène de planète sans combat : décor sur le canvas + choix en haut de l'écran */
+/* scène de planète sans combat : décor sur le canvas + choix en haut de l'écran (nom/desc déjà résolus par map.js) */
 export function ouvrirScenePlanete(scene){
   state.phase='planete'; state.scenePlanete={kind:scene.kind,titre:scene.titre}; state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
   tooltip.classList.remove('visible');
   planeteTitre.textContent=scene.titre; planeteCards.innerHTML='';
   for(const ch of scene.choix){ const b=document.createElement('div'); b.className='card';
     b.appendChild(divEmo(ch.ico));
-    const t=document.createElement('div'); t.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(t);
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(d);
     b.onclick=()=>{ ch.effet(); planeteDiv.classList.remove('visible'); state.scenePlanete=null; const s=scene.suite; if(s) s(); };
     planeteCards.appendChild(b); }
   planeteDiv.classList.add('visible');
 }
-export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' Cristaux : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
+export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' '+t('meta_cristaux')+' : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;
     const b=document.createElement('div'); b.className='card';
     const cout_div=document.createElement('div'); cout_div.className='desc'; cout_div.style.color='#ffd23d';
-    if(atMax) cout_div.textContent='MAX'; else { icone(cout_div,'gemme',12); cout_div.appendChild(document.createTextNode(' '+cout)); }
-    b.innerHTML='<div class="nom">'+m.nom+'</div><div class="desc">'+m.desc+'</div><div class="desc" style="color:#8fd0ff">'+'●'.repeat(lvl)+'○'.repeat(m.max-lvl)+'</div>';
+    if(atMax) cout_div.textContent=t('meta_max'); else { icone(cout_div,'gemme',12); cout_div.appendChild(document.createTextNode(' '+cout)); }
+    b.innerHTML='<div class="nom">'+t('meta_'+m.id+'_nom')+'</div><div class="desc">'+t('meta_'+m.id+'_desc')+'</div><div class="desc" style="color:#8fd0ff">'+'●'.repeat(lvl)+'○'.repeat(m.max-lvl)+'</div>';
     b.appendChild(cout_div);
     if(peut){ b.onclick=()=>{ state.meta.cristaux-=cout; state.meta[m.id]=lvl+1; saveData(); ouvrirMeta(); }; } else b.style.opacity=atMax?'.6':'.4';
     metaCards.appendChild(b); }
@@ -159,7 +160,7 @@ export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.
     cosmBloc.style.display=''; skinCards.innerHTML='';
     const carteSkin=(titre,liste,cle,appliquer)=>{
       const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.gap='6px'; wrap.style.alignItems='center';
-      const t=document.createElement('div'); t.className='desc'; t.textContent=titre; wrap.appendChild(t);
+      const d=document.createElement('div'); d.className='desc'; d.textContent=titre; wrap.appendChild(d);
       const row=document.createElement('div'); row.style.display='flex'; row.style.gap='6px';
       liste.forEach((s,i)=>{ const sw=document.createElement('div'); sw.title=s.nom;
         sw.style.width='24px'; sw.style.height='24px'; sw.style.borderRadius='5px'; sw.style.cursor='pointer';
@@ -168,42 +169,42 @@ export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.
         row.appendChild(sw); });
       wrap.appendChild(row); skinCards.appendChild(wrap);
     };
-    carteSkin('Croiseur',SKINS_CROISEUR,'skinCroiseur',rafraichirSkinCroiseur);
-    carteSkin('Vaisseaux',SKINS_VAISSEAUX,'skinVaisseaux',rafraichirSkinVaisseaux);
+    carteSkin(t('skin_croiseur'),SKINS_CROISEUR,'skinCroiseur',rafraichirSkinCroiseur);
+    carteSkin(t('skin_vaisseaux'),SKINS_VAISSEAUX,'skinVaisseaux',rafraichirSkinVaisseaux);
   } else cosmBloc.style.display='none';
 
   metaDiv.classList.add('visible');
 }
 document.getElementById('btnResetProgression').addEventListener('click',()=>{
-  if(!confirm('Effacer toute la progression (améliorations permanentes, cristaux, succès, meilleurs scores) ? Cette action est irréversible.')) return;
+  if(!confirm(t('meta_reset_confirm'))) return;
   try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); }catch(e){}
   state.meta={cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0};
   state.achievements={}; state.highscores=[];
   rafraichirSkinCroiseur(); rafraichirSkinVaisseaux();
-  logMsg('Progression effacée','log-red'); ouvrirMeta();
+  logMsg(t('meta_reset_fait'),'log-red'); ouvrirMeta();
 });
 
 export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');
-  missionTitre.textContent = type==='boss'?'FORTERESSE DÉTRUITE !':(type==='elite'?'ÉLITES ANÉANTIS !':'ZONE SÉCURISÉE');
-  const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+state.objectifVague.texte) : '';
-  missionStats.innerHTML = (obj?obj+'<br>':'')+'Secteur '+state.secteur+' · Score '+state.score+'<br>Croiseur '+state.hpCruiser+'/'+state.HP_MAX+' PV';
+  missionTitre.textContent = type==='boss'?t('mission_boss_titre'):(type==='elite'?t('mission_elite_titre'):t('mission_normal_titre'));
+  const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+texteObjectif(state.objectifVague)) : '';
+  missionStats.innerHTML = (obj?obj+'<br>':'')+t('mission_secteur')+' '+state.secteur+' · '+t('mission_score')+' '+state.score+'<br>'+t('mission_croiseur')+' '+state.hpCruiser+'/'+state.HP_MAX+' '+t('mission_pv');
   missionDiv.classList.add('visible'); }
 
 export function finPartie(){
   state.phase='fin'; stopMusic(); effacerSauvegarde();
   enregistrerStat(state.secteur,state.vague,state.score);
   const gagne=Math.floor(state.score/8)+state.vague; state.meta.cristaux=(state.meta.cristaux||0)+gagne; saveData();
-  document.getElementById('cristauxGagnes').textContent='💎 +'+gagne+' cristaux (total : '+state.meta.cristaux+')';
+  document.getElementById('cristauxGagnes').textContent='💎 +'+gagne+' '+t('fin_cristaux_gagnes')+' (total : '+state.meta.cristaux+')';
   addHighscore();
-  document.getElementById('scoreFin').textContent='Score : '+state.score+'   ·   Vague '+state.vague;
+  document.getElementById('scoreFin').textContent=t('fin_score')+' : '+state.score+'   ·   '+t('fin_vague')+' '+state.vague;
   document.getElementById('pauseBtn').style.display='none';
   // Bilan de la partie
   const fs=document.getElementById('finStats');
-  if(fs) fs.innerHTML='📍 Secteur atteint : '+state.secteur+'&nbsp;·&nbsp;🏆 Boss vaincus : '+(state.bossVaincus||0)+'<br>⚡ Meilleur combo : '+(state.bestCombo||0)+'&nbsp;·&nbsp;🎖 '+Object.keys(state.achievements).filter(k=>state.achievements[k]===true).length+' succès débloqués';
+  if(fs) fs.innerHTML='📍 '+t('fin_secteur_atteint')+' : '+state.secteur+'&nbsp;·&nbsp;🏆 '+t('fin_boss_vaincus')+' : '+(state.bossVaincus||0)+'<br>⚡ '+t('fin_meilleur_combo')+' : '+(state.bestCombo||0)+'&nbsp;·&nbsp;🎖 '+Object.keys(state.achievements).filter(k=>state.achievements[k]===true).length+' '+t('fin_succes_debloques');
   // Succès débloqués (liste)
   const succ=document.getElementById('finSucces');
   if(succ){
-    const noms=Object.entries(ACHIEVEMENTS_DEF).filter(([id])=>state.achievements[id]).map(([,def])=>def.name);
+    const noms=Object.keys(ACHIEVEMENTS_DEF).filter(id=>state.achievements[id]).map(id=>t('ach_'+id+'_nom'));
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
   document.getElementById('fin').classList.remove('cache');
@@ -229,72 +230,50 @@ function updateTooltip(x,y){
   let html='';
   const a=aileEn(c,r); const f=fighterEn(c,r); const b=bonusEn(c,r); const ast=asterEn(c,r);
   if(a){
-    const info={
-      normal:{nom:'Aile',role:'Avance et tire droit devant.'},
-      chasseur:{nom:'Chasseur',role:'Rapide (2 cases/tour), tire dès le 1er rang.'},
-      bombardier:{nom:'Bombardier',role:'Vise le croiseur, dégâts x2. Avance 1 tour sur 2.'},
-      eclaireur:{nom:'Éclaireur',role:'Rapide, ne tire pas : fonce pour éperonner.'},
-      porteur:{nom:'Porteur (élite)',role:'Renforce d\'un bouclier les ailes voisines.'},
-      brouilleur:{nom:'Brouilleur (élite)',role:'Protège de tes tirs les ailes voisines.'},
-      lourd:{nom:'Aile lourde',role:'Blindée : encaisse 3 tirs. Avance lentement.'},
-      stronghold:{nom:'Forteresse',role:'3 PV. Se scinde en 2 navettes à sa destruction.'},
-      mini_navette:{nom:'Navette',role:'Débris de forteresse. Fragile.'},
-      regenerateur:{nom:'Régénérateur',role:'Se soigne d\'1 PV tous les 3 tours.'},
-      mini_sniper:{nom:'Traqueur',role:'Vise tes 2 vaisseaux les plus proches du croiseur.'},
-      diagonal_d:{nom:'Intercepteur oblique',role:'Avance en diagonale, rebondit sur les bords.'},
-      diagonal_g:{nom:'Intercepteur oblique',role:'Avance en diagonale, rebondit sur les bords.'},
-      void:{nom:'Faille',role:'Attire tes vaisseaux (sauf cuirassés). Avance lentement (1 case/2 tours).'},
-    }[a.type]||{nom:'Aile',role:''};
+    const info={nom:t('ail_'+a.type+'_nom')||t('ail_normal_nom'), role:t('ail_'+a.type+'_desc')||''};
     const deg=a.type==='eclaireur'?0:(a.type==='bombardier'?degLaserActuel()*2:degLaserActuel());
     html='<div class="tt-name">'+info.nom+'</div>';
     html+='<div class="tt-spd" style="color:#cbd6f0">'+info.role+'</div>';
-    html+='<div class="tt-hp">PV: '+a.hp+'/'+a.maxhp+'</div>';
-    html+='<div class="tt-dmg">Dégâts: '+(deg>0?deg:'aucun (éperonnage)')+'</div>';
-    html+='<div class="tt-spd">Avance: '+a.vitesse+' case'+(a.vitesse>1?'s':'')+'/tour</div>';
-    if(a.bouclier) html+='<div class="tt-spd" style="color:#ffd23d">🛡 Renforcé (1 tir absorbé)</div>';
-    if(estProtege(a)) html+='<div class="tt-spd" style="color:#b06bff">Protégé — vise le brouilleur</div>';
+    html+='<div class="tt-hp">'+t('tt_pv')+': '+a.hp+'/'+a.maxhp+'</div>';
+    html+='<div class="tt-dmg">'+t('tt_degats')+': '+(deg>0?deg:t('tt_aucun_eperonnage'))+'</div>';
+    html+='<div class="tt-spd">'+t('tt_avance')+': '+a.vitesse+' '+(a.vitesse>1?t('tt_cases'):t('tt_case'))+t('tt_par_tour')+'</div>';
+    if(a.bouclier) html+='<div class="tt-spd" style="color:#ffd23d">🛡 '+t('tt_bouclier_actif')+'</div>';
+    if(estProtege(a)) html+='<div class="tt-spd" style="color:#b06bff">'+t('tt_protege')+'</div>';
   } else if(f){
-    const info={
-      normal:{nom:'Vaisseau standard',role:'Tir en colonne ±1.'},
-      rouge:{nom:'Vaisseau Rouge',role:'Tir de zone (3×3) · 2 PV · +1 déplacement.'},
-      rapide:{nom:'Intercepteur',role:'+1 déplacement.'},
-      bombardier:{nom:'Bombardier',role:'Tir qui détruit toute une colonne.'},
-      bouclier:{nom:'Cuirassé',role:'Encaisse 3 PV.'},
-      sniper:{nom:'Tireur',role:'Tir à longue portée (±2 colonnes).'},
-    }[f.type]||{nom:'Vaisseau',role:''};
+    const nomKey=['normal','rouge','rapide','bombardier','bouclier','sniper'].includes(f.type)?'ship_'+f.type+'_nom':'ship_normal_nom';
+    const info={nom:t(nomKey), role:t('tt_role_'+f.type)||''};
     html='<div class="tt-name">'+info.nom+'</div>';
     html+='<div class="tt-spd" style="color:#cbd6f0">'+info.role+'</div>';
-    html+='<div class="tt-hp">PV: '+f.hp+'</div>';
-    html+='<div class="tt-spd">Déplacement: '+porteeDep(f)+' case'+(porteeDep(f)>1?'s':'')+'</div>';
-    { const k=f.kills||0, grade=k>=15?'★ As':k>=10?'••• Vétéran':k>=5?'•• Confirmé':k>=1?'• Recrue':'Bleu'; html+='<div class="tt-spd" style="color:#ffe14d">Grade : '+grade+' ('+k+' kill'+(k>1?'s':'')+')</div>'; }
+    html+='<div class="tt-hp">'+t('tt_pv')+': '+f.hp+'</div>';
+    html+='<div class="tt-spd">'+t('tt_deplacement')+': '+porteeDep(f)+' '+(porteeDep(f)>1?t('tt_cases'):t('tt_case'))+'</div>';
+    { const k=f.kills||0, grade=k>=15?'★ '+t('tt_grade_as'):k>=10?'••• '+t('tt_grade_veteran'):k>=5?'•• '+t('tt_grade_confirme'):k>=1?'• '+t('tt_grade_recrue'):t('tt_grade_bleu'); html+='<div class="tt-spd" style="color:#ffe14d">'+t('tt_grade')+' : '+grade+' ('+t('tt_kills_fmt',{n:k})+')</div>'; }
     const cap=CAPACITES[f.type];
-    if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+cap.nom+' — '+(f.capUsed?'déjà utilisée':cap.desc+' (2e appui)')+'</div>';
+    if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+t('cap_'+f.type+'_nom')+' — '+(f.capUsed?'déjà utilisée':t('cap_'+f.type+'_desc')+' (2e appui)')+'</div>';
   } else if(b){
     if(b.type==='mimic'){
-      html='<div class="tt-name" style="color:#ff8f92">⚠ Leurre</div>';
-      html+='<div class="tt-spd" style="color:#cbd6f0">Imite un renfort mais ne bouge pas : c\'est un piège. Tire dessus ou évite-le.</div>';
+      html='<div class="tt-name" style="color:#ff8f92">'+t('bonus_mimic_nom')+'</div>';
+      html+='<div class="tt-spd" style="color:#cbd6f0">'+t('bonus_mimic_desc')+'</div>';
     } else {
-      const names={'pv':'Soin','tir':'Tir gratuit','vaisseau':'Renfort'};
-      html='<div class="tt-name">Bonus: '+(names[b.type]||'Renfort')+'</div>';
-      html+='<div class="tt-spd">Disparaît dans '+b.ttl+' tour'+(b.ttl>1?'s':'')+'</div>';
+      const names={'pv':t('bonus_pv_nom'),'tir':t('bonus_tir_nom'),'vaisseau':t('bonus_vaisseau_nom')};
+      html='<div class="tt-name">'+(names[b.type]||t('bonus_vaisseau_nom'))+'</div>';
+      html+='<div class="tt-spd">'+t('tt_disparait',{n:b.ttl})+'</div>';
     }
   } else if(ast){
-    const an={gros:'Gros astéroïde',essaim:'Essaim',diagonal:'Astéroïde oblique'}[ast.type]||'Astéroïde';
+    const an=t('ast_'+ast.type+'_nom')||t('ast_default_nom');
     html='<div class="tt-name">'+an+'</div>';
-    html+='<div class="tt-spd" style="color:#cbd6f0">Destructible — tire dessus pour le pulvériser.'+(ast.type==='gros'?' Laisse une traînée de débris.':'')+'</div>';
-    if(ast.maxhp>1) html+='<div class="tt-hp">PV: '+ast.hp+'/'+ast.maxhp+'</div>';
-    html+='<div class="tt-dmg">Dégâts: '+DEG_ASTEROIDE+'</div>';
-  } else if(obstacleEn(c,r)){ const ob=obstacleEn(c,r), def=OBSTACLES[ob.type];
-    html='<div class="tt-name">'+def.nom+'</div><div class="tt-spd" style="color:#cbd6f0">'+def.desc+'</div>';
-    if(def.destructible) html+='<div class="tt-hp">PV: '+ob.hp+'/'+(ob.maxhp||def.hp)+'</div>';
+    html+='<div class="tt-spd" style="color:#cbd6f0">'+t('ast_desc')+(ast.type==='gros'?t('ast_desc_trainee'):'')+'</div>';
+    if(ast.maxhp>1) html+='<div class="tt-hp">'+t('tt_pv')+': '+ast.hp+'/'+ast.maxhp+'</div>';
+    html+='<div class="tt-dmg">'+t('tt_degats')+': '+DEG_ASTEROIDE+'</div>';
+  } else if(obstacleEn(c,r)){ const ob=obstacleEn(c,r);
+    html='<div class="tt-name">'+t('obs_'+ob.type+'_nom')+'</div><div class="tt-spd" style="color:#cbd6f0">'+t('obs_'+ob.type+'_desc')+'</div>';
+    const def=OBSTACLES[ob.type]; if(def.destructible) html+='<div class="tt-hp">'+t('tt_pv')+': '+ob.hp+'/'+(ob.maxhp||def.hp)+'</div>';
   } else if(trouNoirEn(c,r)){ const tn=trouNoirEn(c,r);
-    html='<div class="tt-name">Trou noir</div><div class="tt-dmg">Aspire tout autour (1 case)</div><div class="tt-spd">Encore '+tn.turns+' tour(s)</div>';
+    html='<div class="tt-name">'+t('tt_trounoir_nom')+'</div><div class="tt-dmg">'+t('tt_trounoir_desc')+'</div><div class="tt-spd">'+t('tt_trounoir_tours',{n:tn.turns})+'</div>';
   } else if(champEn(c)){
-    html='<div class="tt-name">Champ magnétique</div><div class="tt-dmg">Brouille tes tirs dans cette colonne</div>';
+    html='<div class="tt-name">'+t('tt_champ_nom')+'</div><div class="tt-dmg">'+t('tt_champ_desc')+'</div>';
   } else if(bossEn(c,r)){
-    const bn={canon:'Canonnier · 3 colonnes',sniper:'Sniper · vise 3 vaisseaux',rayon:'Rayon · charge puis balaye',nuee:'Nuée · lâche des ailes',blinde:'Blindé · gros tir central'};
-    html='<div class="tt-name">BOSS — '+(state.boss?bn[state.boss.type]:'')+'</div>';
-    html+='<div class="tt-hp">PV: '+(state.boss?state.boss.hp+'/'+state.boss.maxhp:'?')+'</div>';
+    html='<div class="tt-name">'+t('tt_boss')+' — '+(state.boss?t('boss_'+state.boss.type+'_nom')+' · '+t('boss_'+state.boss.type+'_desc'):'')+'</div>';
+    html+='<div class="tt-hp">'+t('tt_pv')+': '+(state.boss?state.boss.hp+'/'+state.boss.maxhp:'?')+'</div>';
   }
   if(html){ tooltip.innerHTML=html; tooltip.classList.add('visible'); }
   else tooltip.classList.remove('visible');
@@ -312,17 +291,17 @@ function tooltipCarte(x,y){
   icone(nameDiv,ICONE[trouve.type],14); nameDiv.appendChild(document.createTextNode(' '+(NOM_NOEUD[trouve.type]||trouve.type)));
   tooltip.appendChild(nameDiv);
   let html='<div class="tt-spd">'+(DESC_NOEUD[trouve.type]||'')+'</div>';
-  html+='<div class="tt-'+(cur?'grn':(reach?'dmg':'hp'))+'" style="color:'+(cur?'#8fa0c8':(reach?'#ffd23d':'#e5484d'))+'">'+(cur?'Position actuelle':(reach?'▸ Accessible':'Hors de portée'))+'</div>';
+  html+='<div class="tt-'+(cur?'grn':(reach?'dmg':'hp'))+'" style="color:'+(cur?'#8fa0c8':(reach?'#ffd23d':'#e5484d'))+'">'+(cur?t('carte_position_actuelle'):(reach?t('carte_accessible'):t('carte_hors_portee')))+'</div>';
   tooltip.insertAdjacentHTML('beforeend',html); tooltip.classList.add('visible');
 }
 function tooltipBouton(a){
   let html='';
-  if(a.id==='vaisseau'){ html='<div class="tt-name">Générer un vaisseau</div>';
-    if(state.fighters.length>=state.MAX_VAISSEAUX) html+='<div class="tt-hp">Maximum atteint ('+state.MAX_VAISSEAUX+' vaisseaux). Perds-en un pour pouvoir en reconstruire.</div>';
-    else if(state.hangar) html+='<div class="tt-hp">Un vaisseau est déjà en préparation (⏳).</div>';
-    else html+='<div class="tt-spd">Sort du hangar au tour suivant · '+state.fighters.length+'/'+state.MAX_VAISSEAUX+'</div>'; }
-  else if(a.id==='tourelle'){ html='<div class="tt-name">Tourelle du croiseur</div><div class="tt-dmg">Détruit une aile n\'importe où sur la carte</div>'; }
-  else { html='<div class="tt-name">Recharger le bouclier</div><div class="tt-grn" style="color:#2fd6a0">+'+state.RECHARGE+' PV au croiseur</div><div class="tt-spd">'+(state.boucliersRestants>0?state.boucliersRestants+' utilisation'+(state.boucliersRestants>1?'s':'')+' restante'+(state.boucliersRestants>1?'s':'')+' ce combat':'Épuisé pour ce combat')+'</div>'; }
+  if(a.id==='vaisseau'){ html='<div class="tt-name">'+t('tt_vaisseau_generer_nom')+'</div>';
+    if(state.fighters.length>=state.MAX_VAISSEAUX) html+='<div class="tt-hp">'+t('tt_vaisseau_max',{n:state.MAX_VAISSEAUX})+'</div>';
+    else if(state.hangar) html+='<div class="tt-hp">'+t('tt_vaisseau_prep')+'</div>';
+    else html+='<div class="tt-spd">'+t('tt_vaisseau_hangar',{a:state.fighters.length,b:state.MAX_VAISSEAUX})+'</div>'; }
+  else if(a.id==='tourelle'){ html='<div class="tt-name">'+t('tt_tourelle_nom')+'</div><div class="tt-dmg">'+t('tt_tourelle_desc')+'</div>'; }
+  else { html='<div class="tt-name">'+t('tt_bouclier_nom')+'</div><div class="tt-grn" style="color:#2fd6a0">'+t('tt_bouclier_gain',{n:state.RECHARGE})+'</div><div class="tt-spd">'+(state.boucliersRestants>0?t(state.boucliersRestants>1?'tt_bouclier_restants':'tt_bouclier_restant',{n:state.boucliersRestants}):t('tt_bouclier_epuise'))+'</div>'; }
   tooltip.innerHTML=html; tooltip.classList.add('visible');
 }
 
@@ -372,13 +351,13 @@ canvas.addEventListener('pointerdown', ev=>{
     const {ship,kind}=state.modeCapacite;
     if(kind==='bond'){
       if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvementCapacite(ship).some(p=>p.c===c&&p.r===r)){
-        ship.c=c; ship.r=r; ship.capUsed=true; state.modeCapacite=null; state.deplacementsJoueurTotal++; sonTir(); logMsg('💨 Bond !','log-ylw');
+        ship.c=c; ship.r=r; ship.capUsed=true; state.modeCapacite=null; state.deplacementsJoueurTotal++; sonTir(); logMsg(t('log_bond'),'log-ylw');
         const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,ship); else ramasser(b); }
       } else { state.modeCapacite=null; state.selection=null; }
     } else if(kind==='charge'){
       const cible=aileEn(c,r); const an=analyseTir(ship);
       if(cible && an.ailesOk.has(cible)){ tirerCharge(ship,cible); }
-      else { state.modeCapacite=null; state.selection=null; logMsg('Tir chargé annulé','log-ylw'); }
+      else { state.modeCapacite=null; state.selection=null; logMsg(t('log_tir_charge_annule'),'log-ylw'); }
     }
     return;
   }
@@ -387,11 +366,11 @@ canvas.addEventListener('pointerdown', ev=>{
   if(f.c===c&&f.r===r){ if(activerCapacite(f)) return; state.selection=null; return; }
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
-  if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?'Vaisseau brouillé':'Tir bloqué','log-red'); return; }
-  const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?'Vaisseau brouillé (champ magnétique)':'Tir bloqué / hors d’atteinte','log-red'); return; }
-  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
-  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
-  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg('Tir bloqué / hors d’atteinte','log-red'); return; }
+  if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
+  const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?t('tt_vaisseau_brouille_champ'):t('tt_tir_bloque'),'log-red'); return; }
+  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(t('tt_tir_bloque'),'log-red'); return; }
+  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(t('tt_tir_bloque'),'log-red'); return; }
+  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg(t('tt_tir_bloque'),'log-red'); return; }
   if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return; }
   state.selection=null;
 });
@@ -405,7 +384,7 @@ export function undo(){
   state.killsThisWave=s.killsThisWave||0; state.shipsLostThisWave=s.shipsLostThisWave||0; state.bossKilledThisWave=s.bossKilledThisWave||false; state.ultimeJauge=s.ultimeJauge||0;
   state.hpCruiser=s.hpCruiser; state.score=s.score; state.vague=s.vague; state.actionFaite=s.actionFaite; state.tirsGratuits=s.tirsGratuits; state.hangar=s.hangar;
   state.tourCompteur=s.tourCompteur; state.prochainAsteroide=s.prochainAsteroide; state.prochainBoss=s.prochainBoss;
-  state.selection=null; state.modeTourelle=false; sonUndo(); logMsg('↺ Annulé','log-ylw');
+  state.selection=null; state.modeTourelle=false; sonUndo(); logMsg('↺ '+t('log_annule'),'log-ylw');
 }
 export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.toggle('visible',state.paused); tooltip.classList.remove('visible'); if(state.paused){ stopMusic(); sonPause(); } else { startMusic(); } }
 
