@@ -12,11 +12,29 @@ import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScene
 export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon'};
 export const NOM_NOEUD={combat:'Combat',elite:'Élite',event:'Signal',rest:'Relais',tresor:'Trésor',hangar:'Hangar',forge:'Atelier',boss:'BOSS'};
 export const DESC_NOEUD={combat:'Vague standard',elite:'Plus dur · plus de butin',event:'Événement à choix',rest:'Station de réparation',tresor:'Chambre forte : amélioration',hangar:'Renfort : +1 vaisseau au choix',forge:'Atelier : amélioration ou ultime',boss:"Un boss t'attend !"};
-function planeteAleatoire(){ const pool=['combat','combat','combat','event','rest','elite','tresor','hangar','forge']; return pool[Math.floor(Math.random()*pool.length)]; }
+/* Construit les types des noeuds "intermédiaires" (hors départ/boss) pour tout le secteur en une fois,
+   afin de garantir globalement au moins 3 combats (départ inclus) et au plus 2 bonus (relais/trésor/
+   hangar/atelier) sur l'ensemble de la carte — un tirage indépendant par noeud ne le garantissait pas. */
+const BONUS_TYPES=['rest','tresor','hangar','forge'];
+function construireTypesIntermediaires(total){
+  const pool=[];
+  // au moins 2 combats/élites en plus du départ (qui est déjà un combat garanti) => 3 au total
+  for(let i=0;i<2;i++) pool.push(Math.random()<0.8?'combat':'elite');
+  // au plus 2 bonus sur tout le secteur
+  const nbBonus=Math.min(2,Math.max(0,total-pool.length),1+Math.floor(Math.random()*2));
+  for(let i=0;i<nbBonus;i++) pool.push(BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)]);
+  // le reste : mélange combat/élite/événement, toujours pas de bonus supplémentaire
+  while(pool.length<total){ const r=Math.random(); pool.push(r<0.55?'combat':r<0.7?'elite':'event'); }
+  for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  return pool;
+}
 export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},hangar:{c1:'#bfe9ff',c2:'#5a8fd6',d:'#2f4a86'},forge:{c1:'#ffe08a',c2:'#e0a13d',d:'#8f6a1f'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'}};
 export function genererCarte(){ const NB=6, cols=[];
-  for(let c=0;c<NB;c++){ const n=(c===0||c===NB-1)?1:(2+Math.floor(Math.random()*2)); const col=[];
-    for(let r=0;r<n;r++){ const type=c===NB-1?'boss':c===0?'combat':planeteAleatoire(); col.push({col:c,row:r,n,type,liens:[],visite:false}); }
+  const tailles=[]; for(let c=0;c<NB;c++) tailles.push((c===0||c===NB-1)?1:(2+Math.floor(Math.random()*2)));
+  const totalIntermediaire=tailles.slice(1,NB-1).reduce((a,b)=>a+b,0);
+  const typesIntermediaires=construireTypesIntermediaires(totalIntermediaire); let curseur=0;
+  for(let c=0;c<NB;c++){ const n=tailles[c]; const col=[];
+    for(let r=0;r<n;r++){ const type=c===NB-1?'boss':c===0?'combat':typesIntermediaires[curseur++]; col.push({col:c,row:r,n,type,liens:[],visite:false}); }
     cols.push(col); }
   for(let c=0;c<NB-1;c++){ const cur=cols[c], nxt=cols[c+1];
     for(const nd of cur){ const base=Math.round((nd.row/Math.max(1,nd.n-1))*(nxt.length-1));
@@ -139,5 +157,95 @@ export const EVENEMENTS=[
  {titre:'SURTENSION', desc:'Le réacteur crache un surplus d\'énergie.', choix:[
    {ico:'eclair', nom:'Vers l\'ultime', desc:'Jauge d\'ultime pleine', effet:()=>{ state.ultimeJauge=state.ultimeSeuil; }},
    {ico:'bouclier', nom:'Vers le bouclier', desc:'+30% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.3)); }} ]},
+ {titre:'CHAMP DE DÉBRIS', desc:'Un champ de débris bloque la route.', choix:[
+   {ico:'vent', nom:'Foncer', desc:'50% : +1 vaisseau, 50% : -15% PV', effet:()=>{ if(Math.random()<0.5){ deployerVaisseau('normal'); logMsg('Vaisseau récupéré !','log-grn'); } else { state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.85)); logMsg('Collision !','log-red'); } }},
+   {ico:'refuser', nom:'Contourner', desc:'Rien', effet:()=>{}} ]},
+ {titre:'SIGNAL DE DÉTRESSE', desc:'Un vaisseau en perdition appelle à l\'aide.', choix:[
+   {ico:'coeur', nom:'Secourir', desc:'+1 vaisseau, -10% PV', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9)); deployerVaisseau('normal'); }},
+   {ico:'refuser', nom:'Ignorer', desc:'Rien', effet:()=>{}} ]},
+ {titre:'CHAMP D\'ASTÉROÏDES RICHE', desc:'Des minerais rares scintillent parmi les roches.', choix:[
+   {ico:'gemme', nom:'Miner', desc:'+5 cristaux, -10% PV', effet:()=>{ state.meta.cristaux=(state.meta.cristaux||0)+5; state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9)); }},
+   {ico:'refuser', nom:'Continuer', desc:'Rien', effet:()=>{}} ]},
+ {titre:'CACHE PIRATE', desc:'Une cache abandonnée flotte dans le vide.', choix:[
+   {ico:'panier', nom:'Ouvrir', desc:'+10 score, +3 cristaux', effet:()=>{ state.score+=10; state.meta.cristaux=(state.meta.cristaux||0)+3; }},
+   {ico:'alerte', nom:'Se méfier', desc:'+5% PV (prudence)', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.05)); }} ]},
+ {titre:'SURCHARGE DU BOUCLIER', desc:'Le bouclier peut être poussé au-delà de ses limites.', choix:[
+   {ico:'satellite', nom:'Pousser', desc:'+1 utilisation de bouclier ce combat', effet:()=>{ state.boucliersRestants=(state.boucliersRestants||0)+1; }},
+   {ico:'refuser', nom:'Rester prudent', desc:'+10% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }} ]},
+ {titre:'TOURELLE ABANDONNÉE', desc:'Une tourelle dérive, encore fonctionnelle.', choix:[
+   {ico:'cible', nom:'Récupérer', desc:'+2 tirs gratuits', effet:()=>{ state.tirsGratuits=(state.tirsGratuits||0)+2; }},
+   {ico:'refuser', nom:'Laisser', desc:'+5 score', effet:()=>{ state.score+=5; }} ]},
+ {titre:'ESSAIM DE DRONES', desc:'Un essaim inoffensif traverse ta route.', choix:[
+   {ico:'loupe', nom:'Étudier', desc:'+1 amélioration, embuscade possible', effet:()=>{ ameliorationAleatoire(); if(Math.random()<0.35){ for(let k=0;k<2;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('Les drones attaquent !','log-red'); } }},
+   {ico:'refuser', nom:'Éviter', desc:'Rien', effet:()=>{}} ]},
+ {titre:'RECYCLAGE D\'URGENCE', desc:'Convertir un vaisseau en pièces de rechange ?', choix:[
+   {ico:'engrenage', nom:'Recycler', desc:'-1 vaisseau, +25% PV', effet:()=>{ if(state.fighters.length>1){ state.fighters.pop(); state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.25)); logMsg('Vaisseau recyclé','log-grn'); } else logMsg('Pas assez de vaisseaux','log-red'); }},
+   {ico:'refuser', nom:'Garder la flotte', desc:'Rien', effet:()=>{}} ]},
+ {titre:'STATION EN RUINE', desc:'D\'anciens plans techniques traînent encore ici.', choix:[
+   {ico:'fleche_haut', nom:'Récupérer les plans', desc:'+2 améliorations', effet:()=>{ ameliorationAleatoire(); ameliorationAleatoire(); }},
+   {ico:'refuser', nom:'Repartir', desc:'+10% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }} ]},
+ {titre:'ANOMALIE GRAVITATIONNELLE', desc:'Une distorsion étrange affecte la zone.', choix:[
+   {ico:'gel', nom:'Étudier', desc:'+50% ultime, risque de perdre un vaisseau', effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); if(state.fighters.length>1){ state.fighters.pop(); logMsg('Un vaisseau aspiré par la faille !','log-red'); } }},
+   {ico:'refuser', nom:'S\'éloigner', desc:'Rien', effet:()=>{}} ]},
+ {titre:'CONTRAT DE MERCENAIRES', desc:'Des mercenaires proposent leurs services.', choix:[
+   {ico:'de', nom:'Engager (5 cristaux)', desc:'+1 cuirassé', effet:()=>{ if((state.meta.cristaux||0)>=5){ state.meta.cristaux-=5; deployerVaisseau('bouclier'); } else logMsg('Pas assez de cristaux','log-red'); }},
+   {ico:'refuser', nom:'Refuser', desc:'Rien', effet:()=>{}} ]},
+ {titre:'CHAMP DE MINES DÉSAMORCÉ', desc:'Les mines semblent inertes… ou pas.', choix:[
+   {ico:'loupe', nom:'Récupérer les explosifs', desc:'+1 tir gratuit, 30% : -10% PV', effet:()=>{ state.tirsGratuits=(state.tirsGratuits||0)+1; if(Math.random()<0.3){ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9)); logMsg('Une mine explose !','log-red'); } }},
+   {ico:'refuser', nom:'Ne pas toucher', desc:'Rien', effet:()=>{}} ]},
+ {titre:'BALISE ENNEMIE', desc:'Une balise attire l\'attention ennemie… ou brouille leurs senseurs.', choix:[
+   {ico:'demon', nom:'Détruire', desc:'+8 score, embuscade', effet:()=>{ state.score+=8; for(let k=0;k<3;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('Embuscade !','log-red'); }},
+   {ico:'refuser', nom:'Laisser', desc:'Rien', effet:()=>{}} ]},
+ {titre:'GÉNÉRATEUR INSTABLE', desc:'Un générateur abandonné pulse dangereusement.', choix:[
+   {ico:'eclair', nom:'Brancher', desc:'Ultime plein, -20% PV', effet:()=>{ state.ultimeJauge=state.ultimeSeuil; state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.8)); }},
+   {ico:'refuser', nom:'Débrancher', desc:'Rien', effet:()=>{}} ]},
+ {titre:'CONVOI CIVIL', desc:'Un convoi demande une escorte.', choix:[
+   {ico:'bouclier', nom:'Escorter', desc:'+15 score, +1 vaisseau', effet:()=>{ state.score+=15; deployerVaisseau('normal'); }},
+   {ico:'refuser', nom:'Refuser', desc:'+10% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }} ]},
+ {titre:'ARCHIVES PERDUES', desc:'D\'anciennes archives techniques sont récupérables.', choix:[
+   {ico:'info', nom:'Télécharger', desc:'+12 score', effet:()=>{ state.score+=12; }},
+   {ico:'gemme', nom:'Revendre les données', desc:'+4 cristaux', effet:()=>{ state.meta.cristaux=(state.meta.cristaux||0)+4; }} ]},
+ {titre:'RITUEL DE L\'ÉQUIPAGE', desc:'L\'équipage propose un pari amical avant la bataille.', choix:[
+   {ico:'de', nom:'Parier gros', desc:'50% : +20 score, 50% : -10% PV', effet:()=>{ if(Math.random()<0.5){ state.score+=20; logMsg('Pari gagné !','log-ylw'); } else { state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9)); logMsg('Pari perdu…','log-red'); } }},
+   {ico:'main', nom:'Ne pas parier', desc:'Rien', effet:()=>{}} ]},
+ {titre:'NUÉE DE PARASITES', desc:'De petits parasites s\'accrochent à la coque.', choix:[
+   {ico:'feu', nom:'Brûler la coque', desc:'-5% PV, +1 amélioration', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.95)); ameliorationAleatoire(); }},
+   {ico:'refuser', nom:'Ignorer', desc:'Rien', effet:()=>{}} ]},
+ {titre:'OFFRE DU CONSTRUCTEUR', desc:'Un constructeur propose un vaisseau d\'occasion.', choix:[
+   {ico:'vaisseau', nom:'Acheter (5 cristaux)', desc:'+1 tireur', effet:()=>{ if((state.meta.cristaux||0)>=5){ state.meta.cristaux-=5; deployerVaisseau('sniper'); } else logMsg('Pas assez de cristaux','log-red'); }},
+   {ico:'refuser', nom:'Refuser', desc:'Rien', effet:()=>{}} ]},
+ {titre:'CHAMP MAGNÉTIQUE RÉSIDUEL', desc:'Un champ magnétique traîne encore dans la zone.', choix:[
+   {ico:'aimant', nom:'Absorber l\'énergie', desc:'+30% ultime', effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.3)); }},
+   {ico:'refuser', nom:'S\'éloigner', desc:'Rien', effet:()=>{}} ]},
+ {titre:'DUEL D\'HONNEUR', desc:'Un pilote solitaire propose un duel amical.', choix:[
+   {ico:'epee', nom:'Accepter', desc:'+5 grade à un vaisseau au hasard', effet:()=>{ if(state.fighters.length){ const f=state.fighters[Math.floor(Math.random()*state.fighters.length)]; f.kills=(f.kills||0)+5; logMsg('Vaisseau aguerri !','log-grn'); } }},
+   {ico:'refuser', nom:'Refuser', desc:'+5 score', effet:()=>{ state.score+=5; }} ]},
+ {titre:'CARGO EN FUITE', desc:'Un cargo largue sa cargaison pour fuir plus vite.', choix:[
+   {ico:'panier', nom:'Récupérer la cargaison', desc:'+1 vaisseau standard', effet:()=>{ deployerVaisseau('normal'); }},
+   {ico:'refuser', nom:'Le laisser filer', desc:'+6 score', effet:()=>{ state.score+=6; }} ]},
+ {titre:'INTERFÉRENCES', desc:'Des interférences brouillent tes senseurs.', choix:[
+   {ico:'engrenage', nom:'Recalibrer', desc:'-10% PV, +1 amélioration', effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9)); ameliorationAleatoire(); }},
+   {ico:'refuser', nom:'Ignorer', desc:'Rien', effet:()=>{}} ]},
+ {titre:'RATION D\'URGENCE', desc:'Réserves de secours retrouvées à bord.', choix:[
+   {ico:'coeur', nom:'Utiliser', desc:'+20% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2)); }},
+   {ico:'gemme', nom:'Revendre', desc:'+3 cristaux', effet:()=>{ state.meta.cristaux=(state.meta.cristaux||0)+3; }} ]},
+ {titre:'VAISSEAU FANTÔME', desc:'Un vaisseau dérive, sans équipage.', choix:[
+   {ico:'loupe', nom:'Investiguer', desc:'50% : +1 cuirassé, 50% : embuscade', effet:()=>{ if(Math.random()<0.5){ deployerVaisseau('bouclier'); logMsg('Cuirassé récupéré !','log-grn'); } else { for(let k=0;k<2;k++){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,typeAile()); } logMsg('C\'était un piège !','log-red'); } }},
+   {ico:'refuser', nom:'Ignorer', desc:'Rien', effet:()=>{}} ]},
+ {titre:'SURCHAUFFE DES CANONS', desc:'Pousser les canons au maximum ?', choix:[
+   {ico:'explosion', nom:'Surchauffer', desc:'+3 tirs gratuits, -5% PV', effet:()=>{ state.tirsGratuits=(state.tirsGratuits||0)+3; state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.95)); }},
+   {ico:'refuser', nom:'Rester prudent', desc:'Rien', effet:()=>{}} ]},
+ {titre:'MARCHÉ NOIR', desc:'Un marché clandestin propose des upgrades... à prix fort.', choix:[
+   {ico:'panier', nom:'Acheter (8 cristaux)', desc:'+2 améliorations', effet:()=>{ if((state.meta.cristaux||0)>=8){ state.meta.cristaux-=8; ameliorationAleatoire(); ameliorationAleatoire(); } else logMsg('Pas assez de cristaux','log-red'); }},
+   {ico:'refuser', nom:'Partir', desc:'Rien', effet:()=>{}} ]},
+ {titre:'ONDE DE CHOC RÉSIDUELLE', desc:'Les restes d\'une bataille passée flottent ici.', choix:[
+   {ico:'gemme', nom:'Fouiller l\'épave', desc:'+2 cristaux, +5 score', effet:()=>{ state.meta.cristaux=(state.meta.cristaux||0)+2; state.score+=5; }},
+   {ico:'refuser', nom:'Poursuivre', desc:'+8% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.08)); }} ]},
+ {titre:'PACTE AVEC UN PIRATE', desc:'Un pirate propose une alliance temporaire.', choix:[
+   {ico:'de', nom:'Accepter', desc:'+1 vaisseau rapide, -5 score (réputation)', effet:()=>{ deployerVaisseau('rapide'); state.score=Math.max(0,state.score-5); }},
+   {ico:'refuser', nom:'Refuser', desc:'+5 score', effet:()=>{ state.score+=5; }} ]},
+ {titre:'DERNIÈRE VÉRIFICATION', desc:'L\'équipage propose une dernière vérification avant la suite.', choix:[
+   {ico:'cle', nom:'Vérifier la coque', desc:'+12% PV', effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.12)); }},
+   {ico:'eclair', nom:'Vérifier le réacteur', desc:'+25% ultime', effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.25)); }} ]},
 ];
 export function apresEvenement(){ const suite=state.suiteEvenement||demarrerTourJoueur; state.suiteEvenement=null; suite(); }
