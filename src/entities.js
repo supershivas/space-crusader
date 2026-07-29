@@ -2,7 +2,7 @@
    ENTITÉS — création, prédicats et cycle de vie (vaisseaux, ailes,
    astéroïdes, boss, bonus)
    ===================================================================== */
-import { state, centreCase } from './state.js';
+import { state, centreCase, decouvrir } from './state.js';
 import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
@@ -35,11 +35,14 @@ export function cuireUnites(CELL){
 export function rafraichirSkinVaisseaux(){ if(dernierCELL){ cuireUnites(dernierCELL); for(const f of state.fighters) f.img=imgVaisseau(f.type); } }
 function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:type==='transporteur'?imgAileTransporteur:imgAile; }
 export function getImgMimic(){ return imgMimic; }
+/* accès en lecture seule au sprite d'une aile par type, pour le guide (bestiaire) */
+export function imgAileGuide(type){ return imgAilePourType(type); }
 export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : null; }
 export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='medic'?imgVMedic : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   const hp = type==='rouge'?(2+((state.ups&&state.ups.rouge_pv)||0)) : type==='bouclier'?3 : 1;
+  decouvrir('vaisseau',type);
   return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0}; }
 /* case libre la plus proche d'un point donné (diagonales incluses) — utilisé par la capacité du Transporteur */
 export function caseLibreProche(c0,r0){
@@ -89,6 +92,7 @@ export function typeAile(){
   if(state.vague>=4 && Math.random()<0.04) return 'transporteur'; // largue une mini-navette dans le camp allié
   const r=Math.random(); return r<0.55?'normal':r<0.72?'chasseur':r<0.87?'eclaireur':'bombardier'; }
 export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal';
+  decouvrir('aile',type);
   const img=imgAilePourType(type);
   const vitesse=type==='void'?0:(type==='chasseur'||type==='eclaireur')?2:1;   // la faille (void) est immobile mais attire
   const hp=type==='titan'?5:type==='stronghold'?3:type==='lourd'?3:(type==='bombardier'||type==='porteur'||type==='brouilleur'||type==='regenerateur')?2:1;
@@ -118,7 +122,7 @@ export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state
   if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r)); }
 
 /* bonus */
-export function larguerBonus(c,r){ const t=['pv','tir','vaisseau'][Math.floor(Math.random()*3)]; const p=centreCase(c,r); state.bonus.push({c,r,type:t,x:p.x,y:p.y,ttl:4}); }
+export function larguerBonus(c,r){ const t=['pv','tir','vaisseau'][Math.floor(Math.random()*3)]; decouvrir('bonus',t); const p=centreCase(c,r); state.bonus.push({c,r,type:t,x:p.x,y:p.y,ttl:4}); }
 export function ramasser(b){ state.bonus.splice(state.bonus.indexOf(b),1); sonRenfort();
   if(b.type==='pv'){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2)); state.flashRecharge=1; logMsg('Soin !','log-grn'); }
   else if(b.type==='tir'){ state.tirsGratuits++; logMsg('Tir gratuit','log-ylw'); }
@@ -138,6 +142,7 @@ export function spawnAsteroide(){
 export function spawnMimic(){
   for(let t=0;t<12;t++){ const c=Math.floor(Math.random()*state.COLS), r=2+Math.floor(Math.random()*Math.max(1,state.RANGS-4));
     if(aileEn(c,r)||occupe(c,r)||obstacleEn(c,r)||bonusEn(c,r)) continue;
+    decouvrir('bonus','mimic');
     const p=centreCase(c,r); state.bonus.push({c,r,type:'mimic',ttl:99,x:p.x,y:p.y}); return true; }
   return false;
 }
@@ -167,4 +172,5 @@ export function spawnBoss(){ const c=Math.max(0,Math.min(state.COLS-3,Math.round
   let hp=6+Math.floor(state.vague/3);
   if(type==='rayon') hp+=3; if(type==='blinde') hp+=6; if(type==='feu') hp+=3; if(type==='electrique') hp+=3;
   if(type==='nid') hp+=2; if(type==='miroir') hp+=4; if(type==='forge') hp+=5; if(type==='eclipse') hp+=4;
+  decouvrir('boss',type);
   state.boss={c,r:0,w:3,h:2,hp,maxhp:hp,x:p.x,y:p.y+state.CELL/2-state.CELL,type,charge:false}; }

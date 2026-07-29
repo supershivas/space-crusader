@@ -44,6 +44,8 @@ export const state = {
   // persistant (localStorage)
   achievements:{}, highscores:[],
   meta:{cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0},
+  // catalogue des entités déjà rencontrées (guide) : clé "categorie:type" -> true
+  decouvertes:{},
 
   damageThisWave:0,
   hoverCell:null, hoverTime:0,
@@ -75,8 +77,19 @@ export const ACHIEVEMENTS_DEF = {
   'asteroid_dodge': {name:'Esquive', desc:'Survivre à 5 astéroïdes', check:()=>state.achievements.asteroid_dodge>=5},
 };
 
-export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; }catch(e){} }
+export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; const d=localStorage.getItem('dc_decouvertes'); if(d) state.decouvertes=JSON.parse(d); }catch(e){} }
 export function saveData(){ try{ localStorage.setItem('dc_highscores',JSON.stringify(state.highscores)); localStorage.setItem('dc_achievements',JSON.stringify(state.achievements)); localStorage.setItem('dc_meta',JSON.stringify(state.meta)); }catch(e){} }
+
+/* ===== GUIDE : catalogue des vaisseaux/ailes/boss/bonus déjà rencontrés en jeu =====
+   Persisté séparément (petites écritures fréquentes) : chaque nouvelle découverte est
+   sauvegardée immédiatement, les suivantes ne coûtent rien (déjà vraies en mémoire). */
+export function decouvrir(categorie,type){
+  const cle=categorie+':'+type;
+  if(state.decouvertes[cle]) return;
+  state.decouvertes[cle]=true;
+  try{ localStorage.setItem('dc_decouvertes',JSON.stringify(state.decouvertes)); }catch(e){}
+}
+export function estDecouvert(categorie,type){ return !!state.decouvertes[categorie+':'+type]; }
 
 /* =====================================================================
    DIFFICULTÉ (préférence mémorisée depuis l'accueil)

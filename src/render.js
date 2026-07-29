@@ -10,7 +10,7 @@ import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
 import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
 import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD, texteObjectif } from './map.js';
-import { t } from './i18n.js';
+import { t as trad } from './i18n.js';
 
 const canvas=document.getElementById('jeu'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
@@ -24,6 +24,8 @@ let imgCroiseur, imgBossMap, croiseurSC;
 let nebuleuses, planete;
 /* ré-applique la teinte cosmétique du croiseur en cours (après un changement de skin dans le menu méta) */
 export function rafraichirSkinCroiseur(){ if(croiseurSC) imgCroiseur=cuire(CROISEUR,croiseurSC,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); }
+/* accès en lecture seule au sprite d'un boss par type, pour le guide (bestiaire) */
+export function imgBossGuide(type){ return imgBossMap && (imgBossMap[type]||imgBossMap.canon); }
 const etoiles=[];
 
 /* =====================================================================
@@ -324,7 +326,7 @@ export function dessiner(t){
     ctx.strokeStyle=tint; ctx.lineWidth=2; ctx.strokeRect(state.GX+state.boss.c*state.CELL+3,state.GY+state.boss.r*state.CELL+3,3*state.CELL-6,2*state.CELL-6);
     const bw=3*state.CELL-14, bx=state.GX+state.boss.c*state.CELL+7, by=state.GY+state.boss.r*state.CELL-8; ctx.fillStyle='#3a1520'; ctx.fillRect(bx,by,bw,6); ctx.fillStyle=tint; ctx.fillRect(bx,by,bw*Math.max(0,state.boss.hp/state.boss.maxhp),6);
     ctx.fillStyle=tint; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
-    const txtBoss=t('boss_label')+' '+t('boss_'+state.boss.type+'_nom').toUpperCase(); ctx.fillText(txtBoss,state.boss.x,by-4);
+    const txtBoss=trad('boss_label')+' '+trad('boss_'+state.boss.type+'_nom').toUpperCase(); ctx.fillText(txtBoss,state.boss.x,by-4);
     if(state.boss.type==='rayon'&&state.boss.charge) dessinerIcone(imgEclairIco,state.boss.x+ctx.measureText(txtBoss).width/2+8,by-6,1);
     ctx.textAlign='left'; }
 

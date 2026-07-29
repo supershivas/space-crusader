@@ -2,17 +2,17 @@
    UI — DOM (modales, infobulle, journal, HUD texte) + entrées
    (souris + clavier)
    ===================================================================== */
-import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste } from './state.js';
+import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert } from './state.js';
 import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
-         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux } from './entities.js';
-import { rafraichirSkinCroiseur } from './render.js';
+         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic } from './entities.js';
+import { rafraichirSkinCroiseur, imgBossGuide } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
-import { iconCanvas } from './sprites.js';
+import { iconCanvas, imgBonusPV, imgBonusTIR, imgBonusVAIS } from './sprites.js';
 import { t, L } from './i18n.js';
 
 /* icône pixel-art (clé de ICONS) suivie d'un libellé texte, pour un conteneur DOM */
@@ -33,6 +33,7 @@ const metaDiv=document.getElementById('meta'), metaCristaux=document.getElementB
 const planeteDiv=document.getElementById('planete'), planeteTitre=document.getElementById('planeteTitre'), planeteCards=document.getElementById('planeteCards');
 const resultatDiv=document.getElementById('resultat'), resultatTexte=document.getElementById('resultatTexte');
 const majDiv=document.getElementById('maj'), majVersion=document.getElementById('majVersion');
+const guideDiv=document.getElementById('guide');
 
 /* =====================================================================
    JOURNAL + ACHIEVEMENTS + HIGHSCORES
@@ -216,13 +217,43 @@ export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.
 
   metaDiv.classList.add('visible');
 }
+/* ===== GUIDE (bestiaire) : catalogue des vaisseaux/ennemis/boss/bonus déjà rencontrés ===== */
+const GUIDE_ALLIES=['normal','rapide','bombardier','bouclier','sniper','transporteur','medic','rouge'];
+const GUIDE_ENNEMIS=['normal','chasseur','bombardier','eclaireur','porteur','brouilleur','lourd','stronghold','mini_navette','regenerateur','mini_sniper','diagonal_d','diagonal_g','void','saboteur','bruleur','titan','transporteur'];
+const GUIDE_BOSS=['canon','sniper','rayon','nuee','blinde','feu','electrique','nid','miroir','forge','eclipse'];
+const GUIDE_BONUS=['pv','tir','vaisseau','mimic'];
+function carteGuide(img,nomKey,descKey,decouvert){
+  const b=document.createElement('div'); b.className='guide-card'+(decouvert?'':' verrouille');
+  if(decouvert && img){ const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
+    cv.getContext('2d').drawImage(img,0,0); b.appendChild(cv); }
+  else { icone(b,'point',22); }
+  const d=document.createElement('div');
+  d.innerHTML='<div class="nom">'+(decouvert?t(nomKey):t('guide_inconnu'))+'</div>'+(decouvert?'<div class="desc">'+t(descKey)+'</div>':'');
+  b.appendChild(d);
+  return b;
+}
+export function ouvrirGuide(){
+  tooltip.classList.remove('visible');
+  const zoneAllies=document.getElementById('guideAllies'); zoneAllies.innerHTML='';
+  for(const type of GUIDE_ALLIES){ zoneAllies.appendChild(carteGuide(imgVaisseau(type),'ship_'+type+'_nom','ship_'+type+'_desc',estDecouvert('vaisseau',type))); }
+  const zoneEnnemis=document.getElementById('guideEnnemis'); zoneEnnemis.innerHTML='';
+  for(const type of GUIDE_ENNEMIS){ zoneEnnemis.appendChild(carteGuide(imgAileGuide(type),'ail_'+type+'_nom','ail_'+type+'_desc',estDecouvert('aile',type))); }
+  const zoneBoss=document.getElementById('guideBoss'); zoneBoss.innerHTML='';
+  for(const type of GUIDE_BOSS){ zoneBoss.appendChild(carteGuide(imgBossGuide(type),'boss_'+type+'_nom','boss_'+type+'_desc',estDecouvert('boss',type))); }
+  const zoneBonus=document.getElementById('guideBonus'); zoneBonus.innerHTML='';
+  const imgBonusParType={pv:imgBonusPV,tir:imgBonusTIR,vaisseau:imgBonusVAIS,mimic:getImgMimic()};
+  for(const type of GUIDE_BONUS){ zoneBonus.appendChild(carteGuide(imgBonusParType[type],'bonus_'+type+'_nom','bonus_'+type+'_desc',estDecouvert('bonus',type))); }
+  guideDiv.classList.add('visible');
+}
+
 document.getElementById('btnResetProgression').addEventListener('click',()=>{
   if(!confirm(t('meta_reset_confirm'))) return;
-  try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); }catch(e){}
+  try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); localStorage.removeItem('dc_decouvertes'); }catch(e){}
   state.meta={cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0};
-  state.achievements={}; state.highscores=[];
+  state.achievements={}; state.highscores=[]; state.decouvertes={};
   rafraichirSkinCroiseur(); rafraichirSkinVaisseaux();
-  logMsg(t('meta_reset_fait'),'log-red'); ouvrirMeta();
+  document.getElementById('params').classList.remove('visible');
+  montrerToast(t('meta_reset_fait'),'bad');
 });
 
 export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');

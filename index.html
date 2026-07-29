@@ -51,6 +51,12 @@
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
     border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:8px;cursor:pointer;box-shadow:0 6px 22px rgba(47,214,160,.35);}
   button.jouer:active{transform:translateY(3px);border-bottom-width:2px;}
+  button.jouer:disabled{opacity:.5;cursor:default;}
+  /* bouton secondaire (design system) : actions moins prioritaires qu'un bouton primaire (Jouer/Reprendre) */
+  button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;
+    border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
+  /* bouton d'action destructive (ex: effacer la progression) */
+  button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
   .coin{position:absolute;top:8px;z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:8px;width:36px;height:36px;cursor:pointer;line-height:1;}
   #son{left:8px;}
@@ -119,6 +125,20 @@
   .card .desc{font-size:var(--fs-petit);color:#9fb0d8;line-height:1.6;}
   .card canvas{image-rendering:pixelated;border-radius:4px;}
 
+  /* Guide (bestiaire) : modale scrollable, sections avec petites cartes de rappel */
+  #guide{justify-content:flex-start;padding-top:10vh;}
+  .guide-scroll{overflow-y:auto;max-height:70vh;width:100%;max-width:420px;padding:4px 4px 8px;}
+  .guide-section{margin-bottom:16px;}
+  .guide-section h3{font-family:var(--pixel);color:#ffd23d;font-size:var(--fs-corps);margin:0 0 8px;text-align:left;}
+  .guide-section .cards{justify-content:flex-start;gap:8px;}
+  .guide-card{font-family:var(--pixel);width:84px;min-height:96px;background:#111a30;border:2px solid #2f4a86;
+    border-radius:8px;padding:8px 6px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
+  .guide-card canvas{image-rendering:pixelated;}
+  .guide-card .nom{font-size:6.5px;color:#ffd23d;line-height:1.4;}
+  .guide-card .desc{font-size:6px;color:#9fb0d8;line-height:1.5;}
+  .guide-card.verrouille{opacity:.45;border-style:dashed;}
+  .guide-card.verrouille .nom{color:#8fa0c8;}
+
   /* icônes pixel-art (remplacent les emoji) */
   .ico-slot{display:inline-flex;vertical-align:-4px;margin-right:5px;}
   .ico-slot canvas,.pixel-ico{image-rendering:pixelated;vertical-align:middle;}
@@ -182,6 +202,7 @@
       <button class="jouer" id="btnParamsInfos" style="font-size:11px;padding:11px 20px;background:#3b5aa0;border-bottom-color:#25396b;"><span class="ico-slot" data-ico="info"></span><span data-i18n="params_infos">Comment jouer</span></button>
       <button class="jouer" id="btnParamsLangue" style="font-size:11px;padding:11px 20px;background:#5a6dd6;border-bottom-color:#3a4aa0;"><span class="ico-slot" data-ico="globe"></span><span id="langueLabel">Langue : Français</span></button>
       <button class="jouer" id="btnCheckUpdate" style="font-size:10px;padding:10px 18px;background:#2fa36a;border-bottom-color:#1c6b45;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="params_checkupdate">Vérifier les mises à jour</span></button>
+      <button class="jouer danger" id="btnResetProgression" data-i18n="meta_reset">Effacer toute la progression</button>
       <button class="jouer" id="btnParamsFermer" style="font-size:11px;padding:10px 18px;" data-i18n="params_fermer">Fermer</button>
       </div></div>
     <div id="info" class="modal"><h2><span class="ico-slot" data-ico="info"></span><span data-i18n="info_titre">COMMENT JOUER</span></h2>
@@ -201,7 +222,16 @@
     <div id="meta" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="meta_titre">AMÉLIORATIONS PERMANENTES</span></h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div>
       <div id="cosmetiquesBloc" style="display:none;margin-top:16px;"><div class="hint" style="margin-bottom:8px;" data-i18n="meta_cosmetiques_titre">Cosmétiques</div><div class="cards" id="skinCards"></div></div>
       <button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:11px;padding:10px 18px;" data-i18n="params_fermer">Fermer</button>
-      <button class="jouer" id="btnResetProgression" style="margin-top:10px;font-size:9px;padding:8px 14px;background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;" data-i18n="meta_reset">Effacer toute la progression</button>
+    </div>
+    <div id="guide" class="modal">
+      <h2><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="guide_titre">GUIDE</span></h2>
+      <div class="guide-scroll">
+        <div class="guide-section"><h3 data-i18n="guide_allies">Vaisseaux alliés</h3><div class="cards" id="guideAllies"></div></div>
+        <div class="guide-section"><h3 data-i18n="guide_ennemis">Ennemis</h3><div class="cards" id="guideEnnemis"></div></div>
+        <div class="guide-section"><h3 data-i18n="guide_boss">Boss</h3><div class="cards" id="guideBoss"></div></div>
+        <div class="guide-section"><h3 data-i18n="guide_bonus">Bonus</h3><div class="cards" id="guideBonus"></div></div>
+      </div>
+      <button class="jouer" id="btnFermerGuide" style="margin-top:14px;font-size:11px;padding:10px 18px;" data-i18n="guide_fermer">Fermer</button>
     </div>
 
     <div id="accueil" class="ecran">
@@ -210,8 +240,9 @@
       <button class="jouer" id="btnReprendre" style="display:none;background:#2fa36a;border-bottom-color:#1c6b45;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="home_reprendre">REPRENDRE</span></button>
       <button class="jouer" id="btnJouer"><span class="ico-slot" data-ico="play"></span><span data-i18n="home_jouer">JOUER</span></button>
       <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-        <button class="jouer" id="btnInfo" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_params">PARAMÈTRES</span></button>
-        <button class="jouer" id="btnMeta" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+        <button class="jouer secondaire" id="btnInfo"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_params">PARAMÈTRES</span></button>
+        <button class="jouer secondaire" id="btnMeta"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+        <button class="jouer secondaire" id="btnGuide"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="home_guide">GUIDE</span></button>
       </div>
     </div>
     <div id="fin" class="ecran cache">
@@ -223,7 +254,7 @@
       <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:1.7;margin-top:4px;max-width:34ch"></div>
       <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:1.6"></p>
       <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
-      <button class="jouer" id="btnMeta2" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+      <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
     </div>
   </div>
 </div>

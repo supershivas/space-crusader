@@ -10,7 +10,7 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
-import { ouvrirMeta, togglePause, retourAccueil, montrerToast, ouvrirMaj } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil, montrerToast, ouvrirMaj, ouvrirGuide } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
@@ -165,6 +165,8 @@ document.getElementById('btnRejouer').addEventListener('click',()=>{ initAudio()
 document.getElementById('btnMeta').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnMeta2').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnFermerMeta').addEventListener('click',()=>{ document.getElementById('meta').classList.remove('visible'); });
+document.getElementById('btnGuide').addEventListener('click',()=>{ ouvrirGuide(); });
+document.getElementById('btnFermerGuide').addEventListener('click',()=>{ document.getElementById('guide').classList.remove('visible'); });
 
 /* ===== Favicon généré depuis le sprite du vaisseau (pixel-art) ===== */
 function genererFavicon(){
