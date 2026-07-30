@@ -412,8 +412,8 @@ export function tirsBoss(){
   return deg;
 }
 
-export function exploser(x,y,grand){ state.explosions.push({x,y,t:0,scale:grand?2.0:1.05}); const n=grand?22:14;
-  for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=40+Math.random()*(grand?220:150); state.particules.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,vie:.5+Math.random()*.35,t:0,c:['#ffe14d','#ff8a3d','#ff5a3d'][i%3],taille:3+Math.random()*3}); } }
+export function exploser(x,y,grand){ state.explosions.push({x,y,t:0,scale:grand?2.3:1.05}); const n=grand?32:14;
+  for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=40+Math.random()*(grand?260:150); state.particules.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,vie:(grand?.6:.5)+Math.random()*.4,t:0,c:['#ffe14d','#ff8a3d','#ff5a3d','#fff2b0'][i%4],taille:3+Math.random()*(grand?4:3)}); } }
 
 /* =====================================================================
    BOUCLE + ANIMATIONS
@@ -431,7 +431,6 @@ export function animer(dt){
   if(state.flashCroiseur>0) state.flashCroiseur=Math.max(0,state.flashCroiseur-dt*2);
   if(state.flashRecharge>0) state.flashRecharge=Math.max(0,state.flashRecharge-dt*2);
   if(state.secousse>0) state.secousse=Math.max(0,state.secousse-dt*40);
-  if(state.banniereTimer>0) state.banniereTimer=Math.max(0,state.banniereTimer-dt);
   if(state.comboTimer>0){ state.comboTimer-=dt; if(state.comboTimer<=0) state.comboCount=0; }
   if(state.phase==='joueur'&&canPlayAmbiance()){ state.ambianceT+=dt; if(state.ambianceT>2.4){ state.ambianceT=Math.random()*0.6; sonRadar(); } }
   if(state.phase==='ennemi'){ state.lockTimer-=dt; if(state.lockTimer<=0){ if(state.hangar){ state.hangar.tours--; if(state.hangar.tours<=0){ deployerVaisseau(state.hangar.type); state.hangar=null; } } demarrerTourJoueur(); } }

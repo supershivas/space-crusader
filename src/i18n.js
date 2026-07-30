@@ -177,9 +177,9 @@ const STRINGS = {
     forge_surcharger_nom:'Surcharger', forge_surcharger_desc:'Ultime +50%',
 
     // ===== Bannière d'étape (nouveau combat) =====
-    etape_combat_titre:'COMBAT',
-    etape_elite_titre:'ÉLITE',
-    etape_boss_titre:'BOSS',
+    etape_combat_titre:'COMBAT ENGAGÉ !',
+    etape_elite_titre:'ÉLITE ENGAGÉ !',
+    etape_boss_titre:'BOSS ENGAGÉ !',
 
     // ===== Objectifs de vague =====
     obj_sansdegat:'Aucun dégât au croiseur',
@@ -550,9 +550,9 @@ const STRINGS = {
     forge_ameliorer_nom:'Upgrade', forge_ameliorer_desc:'+1 upgrade',
     forge_surcharger_nom:'Overcharge', forge_surcharger_desc:'Ultimate +50%',
 
-    etape_combat_titre:'COMBAT',
-    etape_elite_titre:'ELITE',
-    etape_boss_titre:'BOSS',
+    etape_combat_titre:'COMBAT ENGAGED!',
+    etape_elite_titre:'ELITE ENGAGED!',
+    etape_boss_titre:'BOSS ENGAGED!',
 
     obj_sansdegat:'No damage to the cruiser',
     obj_protege:"Don't lose any ship",

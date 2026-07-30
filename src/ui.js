@@ -162,6 +162,21 @@ export function ouvrirMaj(version){
     btn.addEventListener('click',()=>majDiv.classList.remove('visible'),{once:true});
   }, 600);
 }
+/* bannière de début d'étape (combat / élite / boss) : carte compacte avec un effet de zoom à
+   l'apparition, jamais pleine largeur — voir map.js:annoncerEtape() pour les particules qui
+   l'accompagnent. Se referme d'elle-même après un court délai. */
+let etapeBannerTimeout=null;
+export function ouvrirEtapeBanner(titre,sousTitre,secteurTexte){
+  const banniere=document.getElementById('etapeBanner');
+  document.getElementById('etapeBannerTitre').textContent=titre;
+  const sousEl=document.getElementById('etapeBannerSous'); sousEl.textContent=sousTitre||''; sousEl.style.display=sousTitre?'':'none';
+  document.getElementById('etapeBannerSecteur').textContent=secteurTexte||'';
+  banniere.classList.remove('visible');
+  void banniere.offsetWidth;   // force un reflow pour rejouer l'animation si une étape s'enchaîne vite
+  banniere.classList.add('visible');
+  clearTimeout(etapeBannerTimeout);
+  etapeBannerTimeout=setTimeout(()=>banniere.classList.remove('visible'),2200);
+}
 /* modale de résultat (bouton OK) : utilisée après le choix d'un événement aléatoire, pour que le
    joueur voie clairement ce qui s'est passé avant de revenir à la carte. */
 export function ouvrirResultat(texte,suite){

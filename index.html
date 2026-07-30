@@ -121,6 +121,18 @@
   #achieve.visible{opacity:1;transform:translate(-50%,-50%) scale(1);}
   #achieve .ach-title{color:#37e0ff;font-size:11px;margin-bottom:6px;}
 
+  /* Bannière de début d'étape (combat / élite / boss) : carte compacte, pas pleine largeur,
+     avec un léger effet de zoom à l'apparition ("wow effect") — les particules/explosions
+     déclenchées en même temps (voir map.js) se jouent sur le canvas, derrière la carte. */
+  #etapeBanner{position:absolute;left:50%;top:30%;transform:translate(-50%,-50%) scale(.75);z-index:13;
+    background:rgba(9,14,28,.9);border:3px solid #ffd23d;border-radius:14px;padding:20px 28px;
+    max-width:82%;text-align:center;opacity:0;pointer-events:none;box-shadow:0 0 44px rgba(255,210,61,.45);
+    transition:opacity .3s ease-out,transform .45s cubic-bezier(.22,1.4,.4,1);}
+  #etapeBanner.visible{opacity:1;transform:translate(-50%,-50%) scale(1);}
+  #etapeBanner h1{font-size:var(--fs-display);margin:0;color:#ffd23d;text-shadow:0 3px 0 #6a4a10;}
+  #etapeBanner .sous-titre{font-family:var(--pixel);font-size:var(--fs-souligne);color:#7fd0b0;margin-top:10px;}
+  #etapeBanner .secteur-info{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-top:4px;}
+
   /* Highscore table on game over */
   #highscores{margin-top:8px;font-size:8px;color:#9fb0d8;}
   #highscores td{padding:2px 8px;text-align:center;}
@@ -214,6 +226,7 @@
       <p data-i18n="pause_hint">P = pause · Échap = annuler l'action</p></div>
     <div id="toast"></div>
     <div id="achieve"><div class="ach-title"><span class="ico-slot" data-ico="trophee"></span><span data-i18n="succes_titre">SUCCÈS</span></div><div id="achieveTxt"></div></div>
+    <div id="etapeBanner"><h1 id="etapeBannerTitre"></h1><div class="sous-titre" id="etapeBannerSous"></div><div class="secteur-info" id="etapeBannerSecteur"></div></div>
     <div id="upgrade" class="modal"><h2><span class="ico-slot" data-ico="fleche_haut"></span><span data-i18n="up_titre">AMÉLIORATION</span></h2><div class="hint" data-i18n="up_hint">Choisis une amélioration pour toute la partie</div><div class="cards" id="upgradeCards"></div>
       <button class="jouer" id="btnReroll" style="display:none;margin-top:12px;font-size:10px;padding:9px 16px;background:#243048;border-bottom-color:#141c2c;"><span class="ico-slot" data-ico="de"></span><span id="rerollLabel">Reroll</span></button></div>
     <div id="build" class="modal"><h2><span class="ico-slot" data-ico="cle"></span><span data-i18n="build_titre">CHOISIS TON VAISSEAU</span></h2><div class="hint" data-i18n="build_hint">Il sortira du hangar au prochain tour · tape ailleurs pour annuler</div><div class="cards" id="buildCards"></div></div>

@@ -36,7 +36,7 @@ export const state = {
 
   lockTimer:undefined, flashCroiseur:undefined, flashRecharge:undefined, secousse:undefined,
   tourCompteur:undefined, prochainAsteroide:undefined, prochainBoss:undefined,
-  banniereTxt:undefined, banniereTimer:undefined, banniereTimerMax:undefined, banniereObjectif:undefined, ambianceT:undefined,
+  ambianceT:undefined,
 
   comboCount:undefined, comboTimer:undefined, bestCombo:undefined,
   undoStack:[], paused:false,

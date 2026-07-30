@@ -427,21 +427,6 @@ export function dessiner(t){
   const actif=state.phase==='joueur'; arrondi(state.BTN.x,state.BTN.y,state.BTN.w,state.BTN.h,12); ctx.fillStyle=actif?'#2fd6a0':'#26424a'; ctx.fill();
   ctx.fillStyle=actif?'#07240f':'#4b5f66'; ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('FIN DU TOUR ▶',state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
 
-
-  // bannière d'étape (combat / élite / boss) : titre + mission, avec une brève animation d'entrée/sortie
-  if(state.banniereTimer>0){
-    const age=(state.banniereTimerMax||2.6)-state.banniereTimer;
-    const al=Math.min(1,age/0.25,state.banniereTimer/0.5), echelle=0.85+0.15*Math.min(1,age/0.25);
-    const by=state.HAUTEUR*0.32, bh=state.banniereObjectif?78:54;
-    ctx.save(); ctx.globalAlpha=al;
-    ctx.translate(state.LARGEUR/2,by+bh/2); ctx.scale(echelle,echelle); ctx.translate(-state.LARGEUR/2,-(by+bh/2));
-    ctx.fillStyle='rgba(7,11,24,.62)'; ctx.fillRect(0,by,state.LARGEUR,bh);
-    ctx.strokeStyle='rgba(255,210,61,.7)'; ctx.lineWidth=2; ctx.strokeRect(1,by+1,state.LARGEUR-2,bh-2);
-    ctx.fillStyle='#ffd23d'; ctx.font='15px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(state.banniereTxt,state.LARGEUR/2,by+34);
-    if(state.banniereObjectif){ ctx.fillStyle='#7fd0b0'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText('» '+state.banniereObjectif,state.LARGEUR/2,by+58); }
-    ctx.textAlign='left'; ctx.restore();
-  }
-
   // Transition phase
   if(state.phase==='ennemi'&&state.lockTimer>0.7){ ctx.fillStyle='rgba(229,72,77,'+(.2*(state.lockTimer-0.7)/0.2)+')'; ctx.fillRect(0,0,state.LARGEUR,state.HAUTEUR); }
 }

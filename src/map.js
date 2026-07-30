@@ -7,7 +7,7 @@ import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
-import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast } from './ui.js';
+import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner } from './ui.js';
 import { t, L } from './i18n.js';
 
 export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon'};
@@ -110,11 +110,13 @@ export function demarrerCombat(type){
 /* modale animée (bannière + explosion de particules) qui annonce le type d'étape et sa mission,
    au démarrage de chaque combat (combat standard, élite, boss). */
 function annoncerEtape(type){
-  state.banniereTxt=t('etape_'+type+'_titre');
-  state.banniereObjectif=state.objectifVague?texteObjectif(state.objectifVague):'';
-  state.banniereTimer=state.banniereTimerMax=2.6;
-  const by=state.HAUTEUR*0.32+(state.banniereObjectif?39:27);
-  for(let i=0;i<3;i++) exploser(state.LARGEUR*(0.28+0.22*i),by,true);
+  const titre=t('etape_'+type+'_titre');
+  const sousTitre=state.objectifVague?texteObjectif(state.objectifVague):'';
+  ouvrirEtapeBanner(titre, sousTitre, t('mission_secteur')+' '+state.secteur);
+  const by=state.HAUTEUR*0.3;
+  // double salve d'explosions décalée dans le temps : plus spectaculaire qu'une salve unique
+  for(let i=0;i<3;i++) exploser(state.LARGEUR*(0.25+0.25*i),by,true);
+  setTimeout(()=>{ for(let i=0;i<2;i++) exploser(state.LARGEUR*(0.38+0.24*i),by+18,true); },160);
 }
 export function gagnerCombat(){ state.enCombat=false;
   const reussi=objectifReussi(); if(state.damageThisWave===0) state.achievements.perfect_wave=true;
