@@ -6,10 +6,11 @@
    pouvait servir indéfiniment une version périmée sur certains navigateurs
    (Safari/Firefox mobile) même après un rechargement normal.
    Incrémente CACHE à chaque nouvelle version. */
-const CACHE = 'croiseur-v43';
+const CACHE = 'croiseur-v44';
 const ASSETS = [
   './',
   './index.html',
+  './theme.css',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',

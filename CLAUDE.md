@@ -38,10 +38,9 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
     danger rouge, texte atténué) ;
   - les niveaux de rareté des éléments non jouables (commun/peu commun/rare/épique) ;
   - l'échelle typographique complète : `--fs-display` / `--fs-titre` / `--fs-modale` /
-    `--fs-souligne` / `--fs-corps` / `--fs-petit` (variables CSS définies dans `index.html`,
-    dupliquées en dur dans `design-system.html` car les deux fichiers n'ont pas de style
-    partagé — **toute variable ajoutée ou modifiée dans `index.html` doit être répercutée
-    manuellement dans `design-system.html`**) ;
+    `--fs-souligne` / `--fs-corps` / `--fs-petit` (variables CSS définies une seule fois dans
+    `theme.css`, chargé par `<link>` depuis `index.html` ET `design-system.html` — plus besoin
+    de dupliquer à la main, une modification dans `theme.css` vaut pour les deux) ;
   - les boutons (`button.jouer` primaire, `.secondaire`, `.danger`, état désactivé) ;
   - les cartes de choix (améliorations/événements) et les cartes d'encyclopédie (avec/sans
     badge de rareté, état verrouillé) ;

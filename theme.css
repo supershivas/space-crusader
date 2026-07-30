@@ -1,0 +1,25 @@
+/* =====================================================================
+   VARIABLES CSS PARTAGÉES — design system du jeu (couleurs de base,
+   police, échelle typographique). Chargé par index.html ET
+   design-system.html : toute variable ajoutée ou modifiée ici est
+   immédiatement répercutée dans les deux, plus besoin de dupliquer
+   à la main (voir CLAUDE.md).
+   ===================================================================== */
+:root{
+  --espace:#070b18;
+  --texte:#e8eefc;
+  --pixel:"Press Start 2P", ui-monospace, "Courier New", monospace;
+
+  /* ===== Système typographique (échelle cohérente, une seule police pixel partout) =====
+     --fs-display : le plus gros — écrans de conclusion (défaite, fin de combat/mission)
+     --fs-titre    : titres d'écran principaux (accueil) et titres de modales
+     --fs-souligne : sous-titres / texte d'accompagnement sous un titre
+     --fs-corps    : texte de carte (nom de choix), libellés de blocs
+     --fs-petit    : texte tertiaire (description de carte, hint, tooltip, journal) */
+  --fs-display: clamp(24px,8.6vmin,46px);
+  --fs-titre:   clamp(13px,4vmin,24px);
+  --fs-modale:  clamp(11px,3.4vmin,17px);
+  --fs-souligne:clamp(8px,2.2vmin,12px);
+  --fs-corps:   clamp(8px,2.2vmin,11px);
+  --fs-petit:   clamp(7px,1.9vmin,9px);
+}

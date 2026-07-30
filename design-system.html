@@ -8,16 +8,10 @@
   @font-face{ font-family:'Press Start 2P'; font-style:normal; font-weight:400; font-display:swap;
     src:url('fonts/PressStart2P.woff2') format('woff2'); }
 </style>
+<!-- Variables CSS partagées (couleurs, police, échelle typographique) : voir theme.css,
+     chargé aussi par index.html — toute variable ajoutée/modifiée ici vaut pour les deux pages. -->
+<link rel="stylesheet" href="theme.css">
 <style>
-  :root{
-    --espace:#070b18; --texte:#e8eefc; --pixel:"Press Start 2P", ui-monospace, "Courier New", monospace;
-    --fs-display: clamp(24px,8.6vmin,46px);
-    --fs-titre:   clamp(13px,4vmin,24px);
-    --fs-modale:  clamp(11px,3.4vmin,17px);
-    --fs-souligne:clamp(8px,2.2vmin,12px);
-    --fs-corps:   clamp(8px,2.2vmin,11px);
-    --fs-petit:   clamp(7px,1.9vmin,9px);
-  }
   *{box-sizing:border-box;}
   body{margin:0;background:var(--espace);color:var(--texte);font-family:var(--pixel);line-height:1.7;padding:24px 16px 80px;}
   h1{font-size:clamp(20px,6vw,34px);color:#37e0ff;text-shadow:0 3px 0 #10406a;margin:0 0 6px;}
@@ -102,9 +96,10 @@
 <body>
   <h1>Design system — Croiseur</h1>
   <p class="sous">Référence visuelle des éléments réutilisés dans le jeu (police, échelle typographique,
-    boutons, cartes, rareté, modales, bannière de début d'étape, toasts). Page indépendante, à tenir à
-    jour manuellement si les tokens d'<code>index.html</code> changent — il n'y a pas de build partagé
-    entre les deux fichiers.</p>
+    boutons, cartes, rareté, modales, bannière de début d'étape, toasts). Les couleurs de base et
+    l'échelle typographique viennent de <code>theme.css</code>, partagé avec <code>index.html</code> —
+    seuls les composants eux-mêmes (boutons, cartes, modales…) sont recréés ici en CSS/HTML fidèle,
+    puisque cette page ne charge pas <code>index.html</code>.</p>
 
   <section>
     <h2>Police</h2>
