@@ -206,6 +206,7 @@ loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoi
 genererFavicon();
 poserIcones();
 appliquerLangue();
+document.getElementById('paramsVersion').textContent='Version '+VERSION;
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Au démarrage, on va directement à l'accueil : le tutoriel guidé (voir tuto.js) suffit à
 // apprendre à jouer dès la première partie, plus besoin d'imposer l'écran d'aide en premier.

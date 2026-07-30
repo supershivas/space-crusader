@@ -18,7 +18,7 @@ export const NOM_LANGUE = { fr:'Français', en:'English' };
 const STRINGS = {
   fr: {
     // Accueil
-    home_titre:'DÉFENSE<br>DU CROISEUR',
+    home_titre:'CROISEUR',
     home_reprendre:'REPRENDRE',
     home_jouer:'JOUER',
     home_params:'PARAMÈTRES',
@@ -334,7 +334,7 @@ const STRINGS = {
     resultat_titre:'RÉSULTAT',
   },
   en: {
-    home_titre:'CRUISER<br>DEFENSE',
+    home_titre:'CRUISER',
     home_reprendre:'RESUME',
     home_jouer:'PLAY',
     home_params:'SETTINGS',
