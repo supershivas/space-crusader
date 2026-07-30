@@ -181,6 +181,11 @@ export function ouvrirEtapeBanner(titre,sousTitre,secteurTexte){
   document.getElementById('etapeBannerTitre').textContent=titre;
   const sousEl=document.getElementById('etapeBannerSous'); sousEl.textContent=sousTitre||''; sousEl.style.display=sousTitre?'':'none';
   document.getElementById('etapeBannerSecteur').textContent=secteurTexte||'';
+  // top:30% fixe (CSS) ne centre la bannière que par hasard : la grille ne commence pas à 30%
+  // de la hauteur totale (le cadre HUD au-dessus varie en taille). On centre ici précisément
+  // sur la grille elle-même (state.GY → state.GRID_BAS), en % de state.HAUTEUR.
+  const centreGrille=(state.GY+state.GRID_BAS)/2;
+  banniere.style.top=(centreGrille/state.HAUTEUR*100)+'%';
   banniere.classList.remove('visible');
   void banniere.offsetWidth;   // force un reflow pour rejouer l'animation si une étape s'enchaîne vite
   banniere.classList.add('visible');
