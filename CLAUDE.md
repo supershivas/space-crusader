@@ -27,7 +27,11 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
 - **Police auto-hébergée** : `fonts/PressStart2P.woff2` est servi depuis le jeu lui-même.
   Ne jamais réintroduire de dépendance à un CDN externe (Google Fonts ou autre) pour
   l'identité visuelle du jeu — un chargement externe qui échoue silencieusement fait
-  perdre le rendu pixel-art (déjà arrivé une fois).
+  perdre le rendu pixel-art (déjà arrivé une fois). **Ne jamais retélécharger une copie
+  fraîche de cette police depuis Google Fonts/un CDN** : le fichier a été corrigé à la
+  main (glyphes `Eacute`/`Egrave`/`Ecircumflex`/`Agrave`/`Icircumflex`/`Ocircumflex`/
+  `Ucircumflex` reconstruits via fontTools, l'original mappait les majuscules
+  accentuées vers un corps de lettre minuscule) — un remplacement écraserait ce correctif.
 - **Design system — toujours le consulter avant de styler quoi que ce soit** : la page
   `design-system.html` (racine du repo, liée discrètement en bas des Paramètres du jeu) est
   la référence visuelle vivante du projet. Avant d'ajouter un nouveau composant visuel

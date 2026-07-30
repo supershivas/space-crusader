@@ -77,7 +77,10 @@ export function configurer(){
   // la place lui est toujours réservée pour que Fin du tour ne bouge jamais d'une frame à l'autre.
   const ultH=38, ultGap=8;
   state.ULT={w:state.BTN.w,h:ultH}; state.ULT.x=state.BTN.x; state.ULT.y=state.cruiserY+BANDE+ultGap;
-  state.BTN.y=state.ULT.y+ultH+ultGap; state.HAUTEUR=state.BTN.y+state.BTN.h+50;
+  // (marge de fin de canvas généreuse : la ligne VAGUE/score/statut ci-dessous se dessine à
+  // hudBase-32 = HAUTEUR-50, pile sur l'ancien bord bas de Fin du tour quand la marge était
+  // de 50 — texte et bouton se chevauchaient. 70 laisse un vrai espace entre les deux.)
+  state.BTN.y=state.ULT.y+ultH+ultGap; state.HAUTEUR=state.BTN.y+state.BTN.h+70;
   canvas.width=state.LARGEUR; canvas.height=state.HAUTEUR; ctx.imageSmoothingEnabled=false;
   // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille et la
   // barre de PV), pas une largeur plafonnée par bouton qui laissait un vide inutile de
@@ -190,8 +193,13 @@ function dessinerScenePlanete(t){
   ctx.fillStyle='rgba(18,28,55,.35)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
   ctx.strokeStyle='rgba(95,135,215,.4)'; ctx.lineWidth=2; ctx.strokeRect(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2);
   dessinerStructurePlanete(state.scenePlanete?state.scenePlanete.kind:'marche');
-  // titre de la planète
-  if(state.scenePlanete){ ctx.fillStyle='#37e0ff'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(state.scenePlanete.titre,state.LARGEUR/2,state.HAUTEUR*0.58); ctx.fillStyle='rgba(159,176,216,'+(0.6+0.4*pulse)+')'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText('Choisis en haut de l\'écran',state.LARGEUR/2,state.HAUTEUR*0.58+18); ctx.textAlign='left'; }
+  // rappel discret : le titre de l'événement est déjà affiché en haut de l'écran (#planeteTitre,
+  // DOM) — pas besoin de le redessiner ici en double. Juste une flèche + un rappel pointant
+  // vers les cartes de choix, pour éviter que le joueur ne cherche l'action sur ses vaisseaux
+  // (simplement décoratifs sur cette scène, comme le croiseur).
+  if(state.scenePlanete){ const al=0.6+0.4*pulse, cy=state.HAUTEUR*0.56;
+    ctx.fillStyle='rgba(159,176,216,'+al+')'; ctx.beginPath(); ctx.moveTo(state.LARGEUR/2,cy-8); ctx.lineTo(state.LARGEUR/2-7,cy+4); ctx.lineTo(state.LARGEUR/2+7,cy+4); ctx.closePath(); ctx.fill();
+    ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('Choisis en haut de l\'écran',state.LARGEUR/2,cy+20); ctx.textAlign='left'; }
   // croiseur + nos vaisseaux (comme en combat)
   ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
   for(const f of state.fighters){ ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y+flotte(f,t)-f.img.height/2)); }
