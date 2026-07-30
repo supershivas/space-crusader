@@ -46,6 +46,9 @@
   #illus{width:min(240px,72vw);height:auto;background:#070b18;border-radius:6px;}
   .ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
          gap:14px;padding:20px;text-align:center;background:rgba(7,11,24,.87);backdrop-filter:blur(2px);border-radius:6px;}
+  /* L'accueil n'est pas une pause sur la partie en cours : il ne doit jamais laisser voir le
+     canvas de jeu (étoiles/vaisseaux animés en fond) à travers — fond opaque, sans flou. */
+  #accueil{background:var(--espace);backdrop-filter:none;}
   .cache{display:none;}
   h1{font-size:var(--fs-titre);line-height:1.5;margin:0;color:#37e0ff;text-shadow:0 3px 0 #10406a;}
   /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que les autres écrans */
@@ -69,6 +72,10 @@
   /* Jouer/Continuer : les deux boutons principaux de l'accueil partagent toujours la même
      largeur (le mot le plus long ne doit pas rendre l'un plus large que l'autre). */
   #btnJouer,#btnReprendre{width:min(78vw,260px);}
+  /* Boutons secondaires de l'accueil : empilés à la même largeur que Jouer/Reprendre plutôt
+     qu'en rangée avec une largeur par bouton dépendant du texte (sinon rangée en dents de
+     scie, surtout avec "AMÉLIORATIONS" bien plus long que "GUIDE"). */
+  .home-secondaires{display:flex;flex-direction:column;gap:8px;width:min(78vw,260px);}
   /* bouton secondaire (design system) : actions moins prioritaires qu'un bouton primaire (Jouer/Reprendre) */
   button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;
     border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
@@ -223,7 +230,6 @@
     <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
     <div id="pause"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>
       <button class="jouer" id="btnPauseReprendre"><span class="ico-slot" data-ico="play"></span><span data-i18n="pause_continuer">Continuer</span></button>
-      <button class="jouer secondaire" id="btnPauseRecommencer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="pause_recommencer">Recommencer</span></button>
       <button class="jouer secondaire" id="btnPauseOptions"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
       <button class="jouer secondaire" id="btnPauseGuide"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="pause_guide">Encyclopédie</span></button>
       <button class="jouer secondaire" id="btnPauseAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
@@ -289,7 +295,7 @@
       <canvas id="illus" width="240" height="150" style="image-rendering:pixelated;margin:4px 0 10px;"></canvas>
       <button class="jouer" id="btnReprendre" style="display:none;background:#2fa36a;border-bottom-color:#1c6b45;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="home_reprendre">REPRENDRE</span></button>
       <button class="jouer" id="btnJouer"><span class="ico-slot" data-ico="play"></span><span data-i18n="home_jouer">JOUER</span></button>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <div class="home-secondaires">
         <button class="jouer secondaire" id="btnInfo"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_params">PARAMÈTRES</span></button>
         <button class="jouer secondaire" id="btnMeta"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
         <button class="jouer secondaire" id="btnGuide"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="home_guide">GUIDE</span></button>

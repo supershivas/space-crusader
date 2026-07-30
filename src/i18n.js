@@ -71,7 +71,6 @@ const STRINGS = {
     info_revoir_tuto:'Revoir le tutoriel',
     // Pause
     pause_continuer:'Continuer',
-    pause_recommencer:'Recommencer',
     pause_options:'Options',
     pause_guide:'Encyclopédie',
     pause_accueil:'Accueil',
@@ -181,8 +180,8 @@ const STRINGS = {
 
     // ===== Bannière d'étape (nouveau combat) =====
     etape_combat_titre:'COMBAT ENGAGÉ',
-    etape_elite_titre:'ÉLITE ENGAGÉ !',
-    etape_boss_titre:'BOSS ENGAGÉ !',
+    etape_elite_titre:'ÉLITE ENGAGÉ',
+    etape_boss_titre:'BOSS ENGAGÉ',
 
     // ===== Objectifs de vague =====
     obj_sansdegat:'Aucun dégât au croiseur',
@@ -457,7 +456,6 @@ const STRINGS = {
     info_fermer:'Close',
     info_revoir_tuto:'Replay the tutorial',
     pause_continuer:'Continue',
-    pause_recommencer:'Restart',
     pause_options:'Options',
     pause_guide:'Encyclopedia',
     pause_accueil:'Home',
@@ -557,8 +555,8 @@ const STRINGS = {
     forge_surcharger_nom:'Overcharge', forge_surcharger_desc:'Ultimate +50%',
 
     etape_combat_titre:'COMBAT ENGAGED',
-    etape_elite_titre:'ELITE ENGAGED!',
-    etape_boss_titre:'BOSS ENGAGED!',
+    etape_elite_titre:'ELITE ENGAGED',
+    etape_boss_titre:'BOSS ENGAGED',
 
     obj_sansdegat:'No damage to the cruiser',
     obj_protege:"Don't lose any ship",
