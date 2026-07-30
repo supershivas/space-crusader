@@ -73,6 +73,7 @@ const STRINGS = {
     pause_continuer:'Continuer',
     pause_recommencer:'Recommencer',
     pause_options:'Options',
+    pause_guide:'Encyclopédie',
     pause_accueil:'Accueil',
     pause_abandonner:'Abandonner',
     pause_abandonner_confirm:'Abandonner la partie en cours ? Tu verras le bilan (score, succès, cristaux) puis tu pourras rejouer ou revenir à l\'accueil.',
@@ -179,7 +180,7 @@ const STRINGS = {
     forge_surcharger_nom:'Surcharger', forge_surcharger_desc:'Ultime +50%',
 
     // ===== Bannière d'étape (nouveau combat) =====
-    etape_combat_titre:'COMBAT ENGAGÉ !',
+    etape_combat_titre:'COMBAT ENGAGÉ',
     etape_elite_titre:'ÉLITE ENGAGÉ !',
     etape_boss_titre:'BOSS ENGAGÉ !',
 
@@ -458,6 +459,7 @@ const STRINGS = {
     pause_continuer:'Continue',
     pause_recommencer:'Restart',
     pause_options:'Options',
+    pause_guide:'Encyclopedia',
     pause_accueil:'Home',
     pause_abandonner:'Abandon',
     pause_abandonner_confirm:'Abandon the current run? You\'ll see the recap (score, achievements, crystals) then you can play again or go back home.',
@@ -554,7 +556,7 @@ const STRINGS = {
     forge_ameliorer_nom:'Upgrade', forge_ameliorer_desc:'+1 upgrade',
     forge_surcharger_nom:'Overcharge', forge_surcharger_desc:'Ultimate +50%',
 
-    etape_combat_titre:'COMBAT ENGAGED!',
+    etape_combat_titre:'COMBAT ENGAGED',
     etape_elite_titre:'ELITE ENGAGED!',
     etape_boss_titre:'BOSS ENGAGED!',
 

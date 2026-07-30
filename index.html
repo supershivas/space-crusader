@@ -74,6 +74,9 @@
     border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
   /* bouton d'action destructive (ex: effacer la progression) */
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
+  /* Menu vertical (ex: Pause) : tous les boutons partagent la même largeur, quel que soit
+     le nombre de lettres de leur libellé — sinon la colonne a des bords en escalier. */
+  #pause button.jouer{width:min(70vw,230px);}
   .coin{position:absolute;top:8px;z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:8px;width:36px;height:36px;cursor:pointer;line-height:1;}
   #son{left:8px;}
@@ -220,11 +223,11 @@
     <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
     <div id="pause"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>
       <button class="jouer" id="btnPauseReprendre"><span class="ico-slot" data-ico="play"></span><span data-i18n="pause_continuer">Continuer</span></button>
-      <button class="jouer" id="btnPauseRecommencer" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="pause_recommencer">Recommencer</span></button>
-      <button class="jouer" id="btnPauseOptions" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
-      <button class="jouer" id="btnPauseGuide" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="home_guide">ENCYCLOPÉDIE</span></button>
-      <button class="jouer" id="btnPauseAccueil" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
-      <button class="jouer danger" id="btnPauseAbandonner" style="font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="refuser"></span><span data-i18n="pause_abandonner">Abandonner</span></button>
+      <button class="jouer secondaire" id="btnPauseRecommencer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="pause_recommencer">Recommencer</span></button>
+      <button class="jouer secondaire" id="btnPauseOptions"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
+      <button class="jouer secondaire" id="btnPauseGuide"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="pause_guide">Encyclopédie</span></button>
+      <button class="jouer secondaire" id="btnPauseAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+      <button class="jouer danger" id="btnPauseAbandonner"><span class="ico-slot" data-ico="refuser"></span><span data-i18n="pause_abandonner">Abandonner</span></button>
       <p data-i18n="pause_hint">P = pause · Échap = annuler l'action</p></div>
     <div id="toast"></div>
     <div id="achieve"><div class="ach-title"><span class="ico-slot" data-ico="trophee"></span><span data-i18n="succes_titre">SUCCÈS</span></div><div id="achieveTxt"></div></div>

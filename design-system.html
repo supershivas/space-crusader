@@ -53,6 +53,10 @@
   button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
   .btn-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  /* Menu vertical (ex: Pause) : boutons empilés à largeur uniforme, quel que soit le nombre
+     de lettres du libellé — sinon la colonne a des bords en escalier. */
+  .menu-vertical{display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .menu-vertical button.jouer{width:min(70vw,230px);}
 
   /* ===== Cartes de choix ===== */
   .cards{display:flex;gap:10px;flex-wrap:wrap;}
@@ -149,6 +153,13 @@
       <button class="jouer secondaire">Secondaire</button>
       <button class="jouer danger">Danger</button>
       <button class="jouer" disabled>Désactivé</button>
+    </div>
+    <p class="sous" style="margin-top:24px;margin-bottom:12px;">Menu vertical (ex: menu Pause) : une action primaire, des actions secondaires, une action destructive — toutes à la même largeur.</p>
+    <div class="menu-vertical">
+      <button class="jouer">Continuer</button>
+      <button class="jouer secondaire">Recommencer</button>
+      <button class="jouer secondaire">Encyclopédie</button>
+      <button class="jouer danger">Abandonner</button>
     </div>
   </section>
 
