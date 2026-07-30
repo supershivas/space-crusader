@@ -377,16 +377,20 @@ export function dessiner(t){
 
   // ================= HUD =================
   const hudBase=state.HAUTEUR-18;
-  const bx=44,by=hudBase-16,bw=Math.min(300,state.LARGEUR-210),bh=16,ratio=Math.max(0,state.hpCruiser/state.HP_MAX);
-  arrondi(bx,by,bw,bh,5); ctx.fillStyle='#1a2340'; ctx.fill();
+  // barre de PV du croiseur : pleine largeur (moins les marges) — le libellé "PV" et le
+  // décompte du feu sont incrustés dans la barre elle-même, le score et la vague passent
+  // sur la ligne du dessus pour laisser toute la largeur à la barre.
+  const marge=14;
+  const bx=marge,by=hudBase-18,bw=state.LARGEUR-2*marge,bh=20,ratio=Math.max(0,state.hpCruiser/state.HP_MAX);
+  arrondi(bx,by,bw,bh,6); ctx.fillStyle='#1a2340'; ctx.fill();
   let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
   ctx.fillStyle=coul; ctx.fillRect(bx+2,by+2,Math.max(0,(bw-4)*ratio),bh-4);
   if(state.flashCroiseur>0){ ctx.fillStyle='rgba(255,255,255,'+(state.flashCroiseur*.5)+')'; ctx.fillRect(bx+2,by+2,bw-4,bh-4); }
-  arrondi(bx,by,bw,bh,5); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#9fb0d8'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',14,hudBase-3);
-  if(state.enFeu>0){ dessinerIcone(imgFeuIco,bx+bw+16,hudBase-9,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='10px monospace'; ctx.fillText('×'+state.enFeu,bx+bw+26,hudBase-4); }
-  ctx.fillStyle='#ffd23d'; ctx.font='15px "Press Start 2P", monospace'; ctx.textAlign='right'; ctx.fillText(String(state.score).padStart(3,'0'),state.LARGEUR-14,hudBase-2);
-  ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('VAGUE '+state.vague,14,hudBase-32);
+  arrondi(bx,by,bw,bh,6); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+  ctx.fillStyle='#eef3ff'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',bx+9,by+bh/2+4);
+  if(state.enFeu>0){ dessinerIcone(imgFeuIco,bx+bw-16,by+bh/2,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='10px monospace'; ctx.textAlign='right'; ctx.fillText('×'+state.enFeu,bx+bw-26,by+bh/2+4); ctx.textAlign='left'; }
+  ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('VAGUE '+state.vague,marge,hudBase-32);
+  ctx.fillStyle='#ffd23d'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='right'; ctx.fillText(String(state.score).padStart(3,'0'),state.LARGEUR-marge,hudBase-32);
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
   ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,hudBase-32); ctx.textAlign='left';
   if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),state.LARGEUR/2,15); ctx.textAlign='left'; }

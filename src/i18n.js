@@ -19,7 +19,7 @@ const STRINGS = {
   fr: {
     // Accueil
     home_titre:'CROISEUR',
-    home_reprendre:'REPRENDRE',
+    home_reprendre:'CONTINUER',
     home_jouer:'JOUER',
     home_params:'PARAMÈTRES',
     home_ameliorations:'AMÉLIORATIONS',
@@ -335,7 +335,7 @@ const STRINGS = {
   },
   en: {
     home_titre:'CRUISER',
-    home_reprendre:'RESUME',
+    home_reprendre:'CONTINUE',
     home_jouer:'PLAY',
     home_params:'SETTINGS',
     home_ameliorations:'UPGRADES',

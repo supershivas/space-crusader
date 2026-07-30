@@ -49,9 +49,13 @@
   .sous{font-size:var(--fs-souligne);line-height:1.85;opacity:.92;max-width:36ch;}
   .score-fin{font-size:clamp(11px,3.2vmin,18px);color:#ffd23d;}
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
-    border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:8px;cursor:pointer;box-shadow:0 6px 22px rgba(47,214,160,.35);}
+    border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:8px;cursor:pointer;box-shadow:0 6px 22px rgba(47,214,160,.35);
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;}
   button.jouer:active{transform:translateY(3px);border-bottom-width:2px;}
   button.jouer:disabled{opacity:.5;cursor:default;}
+  /* Jouer/Continuer : les deux boutons principaux de l'accueil partagent toujours la même
+     largeur (le mot le plus long ne doit pas rendre l'un plus large que l'autre). */
+  #btnJouer,#btnReprendre{width:min(78vw,260px);}
   /* bouton secondaire (design system) : actions moins prioritaires qu'un bouton primaire (Jouer/Reprendre) */
   button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;
     border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
@@ -196,7 +200,7 @@
     <div id="carte" class="modal"><h2><span class="ico-slot" data-ico="carte"></span><span data-i18n="carte_titre">CHOISIS TA DESTINATION</span></h2><div class="hint" data-i18n="carte_hint">Deux planètes en vue — trace ta route</div><div class="cards" id="carteChoix"></div></div>
     <div id="difficulte" class="modal"><h2 data-i18n="diff_titre">CHOISIS LA DIFFICULTÉ</h2>
       <div class="cards" id="difficulteCards"></div>
-      <button class="jouer" id="btnDiffAnnuler" style="margin-top:14px;font-size:10px;padding:9px 16px;background:#243048;border-bottom-color:#141c2c;" data-i18n="diff_annuler">Retour</button></div>
+      <button class="jouer secondaire" id="btnDiffAnnuler" style="margin-top:14px;" data-i18n="diff_annuler">Retour</button></div>
     <div id="params" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="params_titre">PARAMÈTRES</span></h2>
       <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:6px;">
       <button class="jouer" id="btnParamsInfos" style="font-size:11px;padding:11px 20px;background:#3b5aa0;border-bottom-color:#25396b;"><span class="ico-slot" data-ico="info"></span><span data-i18n="params_infos">Comment jouer</span></button>
