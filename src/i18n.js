@@ -405,6 +405,11 @@ const STRINGS = {
 
     // ===== Modale de résultat d'événement =====
     resultat_titre:'RÉSULTAT',
+
+    // ===== Surmodale de confirmation (actions destructives) =====
+    confirmation_titre:'CONFIRMATION',
+    confirmation_annuler:'Annuler',
+    confirmation_confirmer:'Confirmer',
   },
   en: {
     home_titre:'CRUISER',
@@ -768,6 +773,10 @@ const STRINGS = {
     tt_champ_lore:"A magnetic residue from an old battle, still active.",
 
     resultat_titre:'RESULT',
+
+    confirmation_titre:'CONFIRMATION',
+    confirmation_annuler:'Cancel',
+    confirmation_confirmer:'Confirm',
   },
 };
 

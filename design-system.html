@@ -202,7 +202,7 @@
       exactement la même taille que les écrans de fin de combat et de défaite. Accompagnée d'explosions de
       particules sur le canvas de jeu, derrière la carte (voir <code>map.js:annoncerEtape()</code>).</p>
     <div class="banner-preview">
-      <h1>COMBAT<br>ENGAGÉ&nbsp;!</h1>
+      <h1>COMBAT<br>ENGAGÉ</h1>
       <div class="sous-titre">Ne perds aucun vaisseau</div>
       <div class="secteur-info">Secteur 3</div>
     </div>
@@ -215,6 +215,19 @@
       <h3>RÉSULTAT</h3>
       <p>+10% PV au croiseur.</p>
       <button class="jouer">OK</button>
+    </div>
+
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Surmodale de confirmation (action destructive)</h3>
+    <p class="note" style="margin-bottom:16px;">Titre + texte + deux boutons (Annuler / Confirmer en <code>.danger</code>).
+      Remplace les <code>confirm()</code> natifs du navigateur — jamais stylés comme le jeu — pour toute action
+      irréversible : abandon de partie, effacement de la progression… Voir <code>ui.js:demanderConfirmation()</code>.</p>
+    <div class="confirm-preview">
+      <h3>CONFIRMATION</h3>
+      <p>Abandonner la partie en cours ?</p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+        <button class="jouer secondaire">Annuler</button>
+        <button class="jouer danger">Confirmer</button>
+      </div>
     </div>
   </section>
 

@@ -56,6 +56,27 @@ export function montrerToast(txt,type=''){
   setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); },300); }, 3000);
   while(toastZone.children.length>3) toastZone.removeChild(toastZone.firstChild);
 }
+
+/* Surmodale de confirmation (remplace les confirm() natifs du navigateur, jamais stylés
+   comme le reste du jeu) : affiche `texte`, exécute `onConfirm` seulement si le joueur
+   valide. Réutilisable pour toute action destructive (abandon de partie, effacement des
+   données…). */
+const confirmationDiv=document.getElementById('confirmation'), confirmationTexte=document.getElementById('confirmationTexte');
+let confirmationCallback=null;
+export function demanderConfirmation(texte,onConfirm){
+  confirmationTexte.textContent=texte;
+  confirmationCallback=onConfirm;
+  confirmationDiv.classList.add('visible');
+}
+document.getElementById('btnConfirmationConfirmer').addEventListener('click',()=>{
+  confirmationDiv.classList.remove('visible');
+  const cb=confirmationCallback; confirmationCallback=null;
+  if(cb) cb();
+});
+document.getElementById('btnConfirmationAnnuler').addEventListener('click',()=>{
+  confirmationDiv.classList.remove('visible'); confirmationCallback=null;
+});
+
 export function checkAchievements(){
   for(const [id,def] of Object.entries(ACHIEVEMENTS_DEF)){
     if(!state.achievements[id] && def.check()){
@@ -334,13 +355,14 @@ export function ouvrirGuide(){
 }
 
 document.getElementById('btnResetProgression').addEventListener('click',()=>{
-  if(!confirm(t('meta_reset_confirm'))) return;
-  try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); localStorage.removeItem('dc_decouvertes'); }catch(e){}
-  state.meta={cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0};
-  state.achievements={}; state.highscores=[]; state.decouvertes={};
-  rafraichirSkinCroiseur(); rafraichirSkinVaisseaux();
-  document.getElementById('params').classList.remove('visible');
-  montrerToast(t('meta_reset_fait'),'bad');
+  demanderConfirmation(t('meta_reset_confirm'),()=>{
+    try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); localStorage.removeItem('dc_decouvertes'); }catch(e){}
+    state.meta={cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0};
+    state.achievements={}; state.highscores=[]; state.decouvertes={};
+    rafraichirSkinCroiseur(); rafraichirSkinVaisseaux();
+    document.getElementById('params').classList.remove('visible');
+    montrerToast(t('meta_reset_fait'),'bad');
+  });
 });
 
 export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');

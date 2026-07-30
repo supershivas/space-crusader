@@ -10,7 +10,7 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
-import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
@@ -167,7 +167,7 @@ document.getElementById('btnPauseReprendre').addEventListener('click',()=>{ if(s
 document.getElementById('btnPauseOptions').addEventListener('click',ouvrirParams);
 document.getElementById('btnPauseGuide').addEventListener('click',()=>{ ouvrirGuide(); });
 document.getElementById('btnPauseAccueil').addEventListener('click',()=>{ retourAccueil(); });
-document.getElementById('btnPauseAbandonner').addEventListener('click',()=>{ if(confirm(t('pause_abandonner_confirm'))) abandonnerPartie(); });
+document.getElementById('btnPauseAbandonner').addEventListener('click',()=>{ demanderConfirmation(t('pause_abandonner_confirm'),abandonnerPartie); });
 document.getElementById('pauseBtn').addEventListener('click',()=>{ if(state.phase!=='accueil'&&state.phase!=='fin'&&state.phase!=='attente') togglePause(); });
 
 document.getElementById('btnRejouer').addEventListener('click',()=>{ initAudio(); state.difficulte=state.difficultePreferee; nouvellePartie(); });
