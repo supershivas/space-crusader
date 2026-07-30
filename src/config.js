@@ -96,3 +96,42 @@ export const CAPACITES = {
   transporteur:{ nom:'Largage',    desc:'Lance une mini-navette sur une case libre adjacente (diagonales incluses)' },
   medic:      { nom:'Réparation', desc:'Soigne 1 PV à un allié adjacent (diagonales incluses)' },
 };
+
+/* ===== RARETÉ (éléments non jouables : ennemis, boss, bonus, menaces) =====
+   Sert à la fois à l'affichage dans l'encyclopédie et pilote réellement les tirages
+   aléatoires "à choix plat" du jeu (butin largué, obstacle généré, type de boss dans
+   son palier, aile de base) — voir tirageParRarete() et ses appels dans entities.js.
+   Les ennemis à déblocage progressif (porteur, titan, etc.) gardent leurs probabilités
+   par vague déjà finement réglées ; leur niveau ici ne fait que refléter leur fréquence
+   réelle pour l'encyclopédie, il ne pilote pas de tirage supplémentaire. */
+export const RARETES = ['commun','peu_commun','rare','epique'];
+export const RARETE_POIDS = { commun:10, peu_commun:5, rare:2, epique:1 };
+export const RARETE = {
+  aile: {
+    normal:'commun', chasseur:'commun', mini_navette:'commun',
+    bombardier:'peu_commun', eclaireur:'peu_commun', lourd:'peu_commun', regenerateur:'peu_commun',
+    mini_sniper:'peu_commun', diagonal_d:'peu_commun', diagonal_g:'peu_commun', saboteur:'peu_commun', bruleur:'peu_commun',
+    stronghold:'rare', transporteur:'rare', porteur:'rare', brouilleur:'rare', void:'rare',
+    titan:'epique',
+  },
+  boss: {
+    canon:'commun', sniper:'commun',
+    rayon:'peu_commun', nuee:'peu_commun', blinde:'peu_commun',
+    feu:'rare', electrique:'rare', nid:'rare',
+    miroir:'epique', forge:'epique', eclipse:'epique',
+  },
+  bonus: { pv:'commun', tir:'commun', vaisseau:'peu_commun', mimic:'rare' },
+  menace: {
+    debris:'commun', aster_essaim:'commun', aster_normal:'commun',
+    station:'peu_commun', mines:'peu_commun', barriere:'peu_commun', aster_gros:'peu_commun', aster_diagonal:'peu_commun',
+    gaz:'rare', gravite:'rare', trounoir:'rare', champ:'rare',
+  },
+};
+/* tire un type au hasard parmi `types`, pondéré par son niveau de rareté dans `dict` */
+export function tirageParRarete(dict,types){
+  const pool=types.map(t=>({t,p:RARETE_POIDS[dict[t]]||1}));
+  let total=0; for(const x of pool) total+=x.p;
+  let r=Math.random()*total;
+  for(const x of pool){ r-=x.p; if(r<=0) return x.t; }
+  return pool[pool.length-1].t;
+}

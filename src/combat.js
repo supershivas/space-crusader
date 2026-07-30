@@ -1,7 +1,7 @@
 /* =====================================================================
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
-import { state, centreCase, saveState, sauvegarderPartie } from './state.js';
+import { state, centreCase, saveState, sauvegarderPartie, decouvrir } from './state.js';
 import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn,
@@ -150,13 +150,14 @@ export function programmerMenace(){
 export function materialiserMenaces(){
   for(const w of state.menacesWarn){
     if(w.kind==='astero'){ const dir=w.dir, cOff=dir>0?-1:state.COLS, xOff=dir>0?state.GX-state.CELL/2:state.GX+state.COLS*state.CELL+state.CELL/2;
+      decouvrir('menace','aster_'+w.sub);
       const push=(r,dc,dr,hp,type)=>{ const rr=Math.max(1,Math.min(state.RANGS-2,r)); state.asteroides.push({c:cOff,r:rr,dc,dr,x:xOff,y:centreCase(0,rr).y,ang:0,img:getImgAster(),hp,maxhp:hp,type}); };
       if(w.sub==='gros'){ push(w.r, dir*Math.max(1,w.s-1), 0, 2, 'gros'); }                                   // gros : plus lent, 2 PV, laisse une traînée
       else if(w.sub==='essaim'){ const n=3+Math.floor(Math.random()*3); for(let k=0;k<n;k++) push(w.r+(k-1), dir*w.s, 0, 1, 'essaim'); }  // essaim de 3-5 petits
       else if(w.sub==='diagonal'){ push(w.r, dir*w.s, 1, 1, 'diagonal'); }                                     // dc ET dr non nuls
       else push(w.r, dir*w.s, 0, 1, 'normal'); }
-    else if(w.kind==='trou'){ const p=centreCase(w.c,w.r); state.trousNoirs.push({c:w.c,r:w.r,turns:3,x:p.x,y:p.y,ang:0}); logMsg('Trou noir !','log-red'); }
-    else if(w.kind==='champ'){ state.champs.push({c0:w.c0,c1:w.c1,turns:3}); logMsg('Champ magnétique !','log-ylw'); }
+    else if(w.kind==='trou'){ decouvrir('menace','trounoir'); const p=centreCase(w.c,w.r); state.trousNoirs.push({c:w.c,r:w.r,turns:3,x:p.x,y:p.y,ang:0}); logMsg('Trou noir !','log-red'); }
+    else if(w.kind==='champ'){ decouvrir('menace','champ'); state.champs.push({c0:w.c0,c1:w.c1,turns:3}); logMsg('Champ magnétique !','log-ylw'); }
   }
   state.menacesWarn=[];
 }

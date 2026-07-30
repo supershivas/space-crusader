@@ -3,9 +3,10 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
-         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic } from './entities.js';
+         estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
+         imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
 import { rafraichirSkinCroiseur, imgBossGuide } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
@@ -34,6 +35,7 @@ const planeteDiv=document.getElementById('planete'), planeteTitre=document.getEl
 const resultatDiv=document.getElementById('resultat'), resultatTexte=document.getElementById('resultatTexte');
 const majDiv=document.getElementById('maj'), majVersion=document.getElementById('majVersion');
 const guideDiv=document.getElementById('guide');
+document.getElementById('btnFermerGuideDetail').addEventListener('click',()=>{ document.getElementById('guideDetail').classList.remove('visible'); });
 
 /* =====================================================================
    JOURNAL + ACHIEVEMENTS + HIGHSCORES
@@ -217,32 +219,99 @@ export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.
 
   metaDiv.classList.add('visible');
 }
-/* ===== GUIDE (bestiaire) : catalogue des vaisseaux/ennemis/boss/bonus déjà rencontrés ===== */
+/* ===== ENCYCLOPÉDIE : catalogue des vaisseaux/ennemis/boss/bonus/menaces déjà rencontrés =====
+   Chaque entrée non jouable (tout sauf "Vaisseaux alliés") porte un niveau de rareté — le même
+   qui pilote réellement certains tirages aléatoires en jeu (voir config.js RARETE / entities.js). */
 const GUIDE_ALLIES=['normal','rapide','bombardier','bouclier','sniper','transporteur','medic','rouge'];
 const GUIDE_ENNEMIS=['normal','chasseur','bombardier','eclaireur','porteur','brouilleur','lourd','stronghold','mini_navette','regenerateur','mini_sniper','diagonal_d','diagonal_g','void','saboteur','bruleur','titan','transporteur'];
 const GUIDE_BOSS=['canon','sniper','rayon','nuee','blinde','feu','electrique','nid','miroir','forge','eclipse'];
 const GUIDE_BONUS=['pv','tir','vaisseau','mimic'];
-function carteGuide(img,nomKey,descKey,decouvert){
+/* menaces : obstacles + astéroïdes + trou noir + champ magnétique — icônes de rappel dédiées
+   (imgObstacle/getImgAster) quand elles existent, sinon un pictogramme générique thématique. */
+const GUIDE_MENACES=[
+  {type:'debris',    nomKey:'obs_debris_nom',    descKey:'obs_debris_desc',    img:()=>imgObstacle({type:'debris',variante:false})},
+  {type:'station',   nomKey:'obs_station_nom',   descKey:'obs_station_desc',   img:()=>imgObstacle({type:'station'})},
+  {type:'barriere',  nomKey:'obs_barriere_nom',  descKey:'obs_barriere_desc',  img:()=>imgObstacle({type:'barriere'})},
+  {type:'mines',     nomKey:'obs_mines_nom',     descKey:'obs_mines_desc',     ico:'alerte'},
+  {type:'gaz',       nomKey:'obs_gaz_nom',       descKey:'obs_gaz_desc',       ico:'alerte'},
+  {type:'gravite',   nomKey:'obs_gravite_nom',   descKey:'obs_gravite_desc',   ico:'gel'},
+  {type:'aster_normal',  nomKey:'ast_default_nom', descKey:'ast_normal_desc',  img:()=>getImgAster()},
+  {type:'aster_gros',    nomKey:'ast_gros_nom',    descKey:'ast_gros_desc',    img:()=>getImgAster()},
+  {type:'aster_essaim',  nomKey:'ast_essaim_nom',  descKey:'ast_essaim_desc',  img:()=>getImgAster()},
+  {type:'aster_diagonal',nomKey:'ast_diagonal_nom',descKey:'ast_diagonal_desc',img:()=>getImgAster()},
+  {type:'trounoir',  nomKey:'tt_trounoir_nom',   descKey:'tt_trounoir_desc',   ico:'demon'},
+  {type:'champ',     nomKey:'tt_champ_nom',      descKey:'tt_champ_desc',      ico:'aimant'},
+];
+function badgeRarete(tier){
+  if(!tier) return '';
+  const coul={commun:'#9fb0d8',peu_commun:'#2fd6a0',rare:'#37e0ff',epique:'#ffd23d'}[tier]||'#9fb0d8';
+  return '<div class="rarete" style="color:'+coul+';border-color:'+coul+'">'+t('rarete_'+tier)+'</div>';
+}
+function carteGuide(img,ico,nomKey,descKey,decouvert,tier,onClick){
   const b=document.createElement('div'); b.className='guide-card'+(decouvert?'':' verrouille');
   if(decouvert && img){ const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
     cv.getContext('2d').drawImage(img,0,0); b.appendChild(cv); }
+  else if(decouvert && ico){ icone(b,ico,22); }
   else { icone(b,'point',22); }
   const d=document.createElement('div');
-  d.innerHTML='<div class="nom">'+(decouvert?t(nomKey):t('guide_inconnu'))+'</div>'+(decouvert?'<div class="desc">'+t(descKey)+'</div>':'');
+  d.innerHTML='<div class="nom">'+(decouvert?t(nomKey):t('guide_inconnu'))+'</div>'
+    +(decouvert&&tier?badgeRarete(tier):'');
   b.appendChild(d);
+  if(decouvert) b.onclick=onClick;
   return b;
+}
+/* modale de détail : description complète + stats, ouverte au clic sur une carte découverte */
+function ouvrirGuideDetail(img,ico,nomKey,descKey,tier,stats){
+  const zone=document.getElementById('guideDetailZone'); zone.innerHTML='';
+  const imgWrap=document.createElement('div'); imgWrap.style.display='flex'; imgWrap.style.justifyContent='center'; imgWrap.style.marginBottom='8px';
+  if(img){ const cv=document.createElement('canvas'); cv.width=img.width*1.6; cv.height=img.height*1.6; cv.style.imageRendering='pixelated';
+    cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height); imgWrap.appendChild(cv); }
+  else if(ico) icone(imgWrap,ico,40);
+  zone.appendChild(imgWrap);
+  const titre=document.createElement('div'); titre.className='nom'; titre.style.fontSize='11px'; titre.style.marginBottom='6px'; titre.textContent=t(nomKey); zone.appendChild(titre);
+  if(tier){ const bd=document.createElement('div'); bd.style.display='flex'; bd.style.justifyContent='center'; bd.style.marginBottom='8px'; bd.innerHTML=badgeRarete(tier); zone.appendChild(bd); }
+  const desc=document.createElement('div'); desc.className='desc'; desc.style.marginBottom='10px'; desc.textContent=t(descKey); zone.appendChild(desc);
+  if(stats&&stats.length){ const st=document.createElement('div'); st.className='guide-stats';
+    st.innerHTML=stats.map(([lbl,val])=>'<div><span>'+lbl+'</span><span>'+val+'</span></div>').join('');
+    zone.appendChild(st); }
+  document.getElementById('guideDetail').classList.add('visible');
 }
 export function ouvrirGuide(){
   tooltip.classList.remove('visible');
   const zoneAllies=document.getElementById('guideAllies'); zoneAllies.innerHTML='';
-  for(const type of GUIDE_ALLIES){ zoneAllies.appendChild(carteGuide(imgVaisseau(type),'ship_'+type+'_nom','ship_'+type+'_desc',estDecouvert('vaisseau',type))); }
+  for(const type of GUIDE_ALLIES){ const dec=estDecouvert('vaisseau',type), img=imgVaisseau(type);
+    const nomKey='ship_'+type+'_nom', descKey='ship_'+type+'_desc';
+    zoneAllies.appendChild(carteGuide(img,null,nomKey,descKey,dec,null,()=>{
+      const cap=CAPACITES[type];
+      const stats=[[t('guide_pv'),hpVaisseauBase(type)]]; if(cap) stats.push([t('cap_'+type+'_nom'),t('cap_'+type+'_desc')]);
+      ouvrirGuideDetail(img,null,nomKey,descKey,null,stats);
+    })); }
   const zoneEnnemis=document.getElementById('guideEnnemis'); zoneEnnemis.innerHTML='';
-  for(const type of GUIDE_ENNEMIS){ zoneEnnemis.appendChild(carteGuide(imgAileGuide(type),'ail_'+type+'_nom','ail_'+type+'_desc',estDecouvert('aile',type))); }
+  for(const type of GUIDE_ENNEMIS){ const dec=estDecouvert('aile',type), img=imgAileGuide(type), tier=RARETE.aile[type];
+    const nomKey='ail_'+type+'_nom', descKey='ail_'+type+'_desc';
+    zoneEnnemis.appendChild(carteGuide(img,null,nomKey,descKey,dec,tier,()=>{
+      const v=vitesseAile(type);
+      const stats=[[t('guide_pv'),hpAile(type)],[t('guide_vitesse'),v+' '+(v>1?t('guide_cases_tour'):t('guide_case_tour'))]];
+      ouvrirGuideDetail(img,null,nomKey,descKey,tier,stats);
+    })); }
   const zoneBoss=document.getElementById('guideBoss'); zoneBoss.innerHTML='';
-  for(const type of GUIDE_BOSS){ zoneBoss.appendChild(carteGuide(imgBossGuide(type),'boss_'+type+'_nom','boss_'+type+'_desc',estDecouvert('boss',type))); }
+  for(const type of GUIDE_BOSS){ const dec=estDecouvert('boss',type), img=imgBossGuide(type), tier=RARETE.boss[type];
+    const nomKey='boss_'+type+'_nom', descKey='boss_'+type+'_desc';
+    zoneBoss.appendChild(carteGuide(img,null,nomKey,descKey,dec,tier,()=>ouvrirGuideDetail(img,null,nomKey,descKey,tier,[]))); }
   const zoneBonus=document.getElementById('guideBonus'); zoneBonus.innerHTML='';
   const imgBonusParType={pv:imgBonusPV,tir:imgBonusTIR,vaisseau:imgBonusVAIS,mimic:getImgMimic()};
-  for(const type of GUIDE_BONUS){ zoneBonus.appendChild(carteGuide(imgBonusParType[type],'bonus_'+type+'_nom','bonus_'+type+'_desc',estDecouvert('bonus',type))); }
+  for(const type of GUIDE_BONUS){ const dec=estDecouvert('bonus',type), img=imgBonusParType[type], tier=RARETE.bonus[type];
+    const nomKey='bonus_'+type+'_nom', descKey='bonus_'+type+'_desc';
+    zoneBonus.appendChild(carteGuide(img,null,nomKey,descKey,dec,tier,()=>ouvrirGuideDetail(img,null,nomKey,descKey,tier,[]))); }
+  const zoneMenaces=document.getElementById('guideMenaces'); zoneMenaces.innerHTML='';
+  for(const m of GUIDE_MENACES){ const dec=estDecouvert('menace',m.type), tier=RARETE.menace[m.type], img=m.img?m.img():null;
+    zoneMenaces.appendChild(carteGuide(img,m.ico,m.nomKey,m.descKey,dec,tier,()=>{
+      const stats=[]; const ob=OBSTACLES[m.type];
+      if(ob) stats.push([t('guide_pv'), ob.destructible?ob.hp:t('guide_indestructible')]);
+      if(m.type==='mines') stats.push([t('guide_degats'),2]);
+      if(m.type.startsWith('aster')) stats.push([t('guide_pv'), m.type==='aster_gros'?2:1],[t('guide_degats'),DEG_ASTEROIDE]);
+      ouvrirGuideDetail(img,m.ico,m.nomKey,m.descKey,tier,stats);
+    })); }
   guideDiv.classList.add('visible');
 }
 

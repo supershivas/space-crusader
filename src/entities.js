@@ -3,7 +3,7 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase, decouvrir } from './state.js';
-import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX } from './config.js';
+import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE,
@@ -40,6 +40,8 @@ export function imgAileGuide(type){ return imgAilePourType(type); }
 export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : null; }
 export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='medic'?imgVMedic : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
+/* PV de base d'un vaisseau allié, hors améliorations de la partie en cours (encyclopédie) */
+export function hpVaisseauBase(type){ return type==='rouge'?2 : type==='bouclier'?3 : 1; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   const hp = type==='rouge'?(2+((state.ups&&state.ups.rouge_pv)||0)) : type==='bouclier'?3 : 1;
   decouvrir('vaisseau',type);
@@ -90,12 +92,18 @@ export function typeAile(){
   if(state.vague>=2 && Math.random()<0.06) return 'saboteur'; // décharge électrique : gèle un allié 1 tour
   if(state.vague>=2 && Math.random()<0.06) return 'bruleur';  // tir incendiaire : brûle le croiseur (1 PV/tour)
   if(state.vague>=4 && Math.random()<0.04) return 'transporteur'; // largue une mini-navette dans le camp allié
-  const r=Math.random(); return r<0.55?'normal':r<0.72?'chasseur':r<0.87?'eclaireur':'bombardier'; }
+  // aile de base : tirage pondéré par rareté (voir config.js) parmi les 4 types toujours débloqués
+  return tirageParRarete(RARETE.aile,['normal','chasseur','eclaireur','bombardier']); }
+/* PV/vitesse de base d'une aile par type — exportées pour être réutilisées telles quelles
+   dans l'encyclopédie (onglet Ennemis), afin de ne jamais afficher des stats désynchronisées
+   de celles réellement appliquées en jeu. */
+export function vitesseAile(type){ return type==='void'?0:(type==='chasseur'||type==='eclaireur')?2:1; }   // la faille (void) est immobile mais attire
+export function hpAile(type){ return type==='titan'?5:type==='stronghold'?3:type==='lourd'?3:(type==='bombardier'||type==='porteur'||type==='brouilleur'||type==='regenerateur')?2:1; }
 export function faireAile(c,r,type){ const p=centreCase(c,r); type=type||'normal';
   decouvrir('aile',type);
   const img=imgAilePourType(type);
-  const vitesse=type==='void'?0:(type==='chasseur'||type==='eclaireur')?2:1;   // la faille (void) est immobile mais attire
-  const hp=type==='titan'?5:type==='stronghold'?3:type==='lourd'?3:(type==='bombardier'||type==='porteur'||type==='brouilleur'||type==='regenerateur')?2:1;
+  const vitesse=vitesseAile(type);
+  const hp=hpAile(type);
   const a={c,r,x:p.x,y:p.y-state.CELL,img,type,vitesse,hp,maxhp:hp};
   if(type==='regenerateur') a.regenTimer=3;
   if(type==='diagonal_d') a.dc=1; if(type==='diagonal_g') a.dc=-1;
@@ -122,7 +130,7 @@ export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state
   if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r)); }
 
 /* bonus */
-export function larguerBonus(c,r){ const t=['pv','tir','vaisseau'][Math.floor(Math.random()*3)]; decouvrir('bonus',t); const p=centreCase(c,r); state.bonus.push({c,r,type:t,x:p.x,y:p.y,ttl:4}); }
+export function larguerBonus(c,r){ const t=tirageParRarete(RARETE.bonus,['pv','tir','vaisseau']); decouvrir('bonus',t); const p=centreCase(c,r); state.bonus.push({c,r,type:t,x:p.x,y:p.y,ttl:4}); }
 export function ramasser(b){ state.bonus.splice(state.bonus.indexOf(b),1); sonRenfort();
   if(b.type==='pv'){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2)); state.flashRecharge=1; logMsg('Soin !','log-grn'); }
   else if(b.type==='tir'){ state.tirsGratuits++; logMsg('Tir gratuit','log-ylw'); }
@@ -159,7 +167,8 @@ export function genererObstacles(){
     tries++;
     const c=Math.floor(Math.random()*state.COLS), r=rMin+Math.floor(Math.random()*Math.max(1,rMax-rMin+1));
     if(occupe(c,r)||aileEn(c,r)||obstacleEn(c,r)||asterEn(c,r)) continue;
-    const type=types[Math.floor(Math.random()*types.length)];
+    const type=tirageParRarete(RARETE.menace,types);
+    decouvrir('menace',type);
     const p=centreCase(c,r);
     state.obstacles.push({c,r,type,hp:OBSTACLES[type].hp,maxhp:OBSTACLES[type].hp,x:p.x,y:p.y,variante:Math.random()<0.5,ang:0});
   }
@@ -168,7 +177,7 @@ export function spawnBoss(){ const c=Math.max(0,Math.min(state.COLS-3,Math.round
   const pool = state.bossVaincus>=6 ? ['canon','sniper','rayon','nuee','blinde','feu','electrique','nid','miroir','forge','eclipse']
              : state.bossVaincus>=3 ? ['canon','sniper','rayon','nuee','blinde','feu','electrique']
              : ['canon','sniper','rayon'];
-  const type=pool[Math.floor(Math.random()*pool.length)];
+  const type=tirageParRarete(RARETE.boss,pool);
   let hp=6+Math.floor(state.vague/3);
   if(type==='rayon') hp+=3; if(type==='blinde') hp+=6; if(type==='feu') hp+=3; if(type==='electrique') hp+=3;
   if(type==='nid') hp+=2; if(type==='miroir') hp+=4; if(type==='forge') hp+=5; if(type==='eclipse') hp+=4;

@@ -46,6 +46,10 @@
   h1{font-size:var(--fs-titre);line-height:1.5;margin:0;color:#37e0ff;text-shadow:0 3px 0 #10406a;}
   /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que les autres écrans */
   #fin h1, #mission h1{font-size:var(--fs-display);text-shadow:0 3px 0 #10406a;}
+  /* titre de l'accueil : occupe toute la largeur de l'écran (moins les marges), le plus gros
+     texte du jeu — dimensionné sur la largeur (vw) plutôt que min(largeur,hauteur) comme les
+     autres titres, puisque c'est justement la largeur qu'on veut remplir. */
+  #accueil h1{font-size:clamp(32px,15vw,72px);}
   .sous{font-size:var(--fs-souligne);line-height:1.85;opacity:.92;max-width:36ch;}
   .score-fin{font-size:clamp(11px,3.2vmin,18px);color:#ffd23d;}
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
@@ -142,6 +146,14 @@
   .guide-card .desc{font-size:6px;color:#9fb0d8;line-height:1.5;}
   .guide-card.verrouille{opacity:.45;border-style:dashed;}
   .guide-card.verrouille .nom{color:#8fa0c8;}
+  .guide-card:not(.verrouille){cursor:pointer;}
+  .guide-card:not(.verrouille):active{transform:translateY(1px);}
+  .rarete{font-size:5.5px;border:1px solid;border-radius:4px;padding:1px 5px;margin-top:2px;}
+  #guideDetail .nom{font-size:11px;color:#ffd23d;}
+  #guideDetail .desc{font-size:var(--fs-petit);color:#9fb0d8;line-height:1.7;}
+  .guide-stats{font-size:var(--fs-petit);color:#cbd6f0;border-top:1px solid #24406e;padding-top:8px;display:flex;flex-direction:column;gap:5px;}
+  .guide-stats div{display:flex;justify-content:space-between;gap:14px;}
+  .guide-stats span:first-child{color:#7fd0b0;}
 
   /* icônes pixel-art (remplacent les emoji) */
   .ico-slot{display:inline-flex;vertical-align:-4px;margin-right:5px;}
@@ -235,8 +247,13 @@
         <div class="guide-section"><h3 data-i18n="guide_ennemis">Ennemis</h3><div class="cards" id="guideEnnemis"></div></div>
         <div class="guide-section"><h3 data-i18n="guide_boss">Boss</h3><div class="cards" id="guideBoss"></div></div>
         <div class="guide-section"><h3 data-i18n="guide_bonus">Bonus</h3><div class="cards" id="guideBonus"></div></div>
+        <div class="guide-section"><h3 data-i18n="guide_menaces">Menaces</h3><div class="cards" id="guideMenaces"></div></div>
       </div>
       <button class="jouer" id="btnFermerGuide" style="margin-top:14px;font-size:11px;padding:10px 18px;" data-i18n="guide_fermer">Fermer</button>
+    </div>
+    <div id="guideDetail" class="modal">
+      <div id="guideDetailZone" style="max-width:280px;"></div>
+      <button class="jouer" id="btnFermerGuideDetail" style="margin-top:14px;font-size:11px;padding:10px 18px;" data-i18n="guide_fermer">Fermer</button>
     </div>
 
     <div id="accueil" class="ecran">
