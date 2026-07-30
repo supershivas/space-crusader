@@ -70,9 +70,15 @@ export function configurer(){
   state.nebuleuses=[{x:state.LARGEUR*0.25,y:state.HAUTEUR*0.30,r:state.LARGEUR*0.55,c1:'rgba(90,55,150,.16)',v:3},{x:state.LARGEUR*0.82,y:state.HAUTEUR*0.18,r:state.LARGEUR*0.5,c1:'rgba(40,95,150,.14)',v:5}];
   planete={x:state.LARGEUR*0.80,y:state.HAUTEUR*0.11,r:Math.min(state.LARGEUR,state.HAUTEUR)*0.10};
 }
-export function redimensionner(){ const fe=document.fullscreenElement, availW=fe?fe.clientWidth:window.innerWidth, availH=fe?fe.clientHeight:window.innerHeight;
+/* Sur mobile (Safari surtout), window.innerHeight/innerWidth ne suivent pas fidèlement la barre
+   d'adresse qui apparaît/disparaît : visualViewport reflète, lui, la zone RÉELLEMENT visible à
+   l'instant présent, ce qui évite qu'une mise en page calculée avant que la barre ne réapparaisse
+   ne déborde de l'écran (titre ou boutons coupés en haut/bas sans pouvoir défiler pour les voir). */
+export function redimensionner(){ const fe=document.fullscreenElement, vv=window.visualViewport;
+  const availW=fe?fe.clientWidth:(vv?vv.width:window.innerWidth), availH=fe?fe.clientHeight:(vv?vv.height:window.innerHeight);
   const ar=canvas.width/canvas.height; let w=availW,h=w/ar; if(h>availH){ h=availH; w=h*ar; } scene.style.width=w+'px'; scene.style.height=h+'px'; }
 window.addEventListener('resize',redimensionner);
+if(window.visualViewport){ window.visualViewport.addEventListener('resize',redimensionner); window.visualViewport.addEventListener('scroll',redimensionner); }
 
 export function initEtoiles(){ etoiles.length=0; const L=[{n:40,v:4,sz:1,a:.35,col:'#8ea0c8',big:false},{n:34,v:11,sz:1.5,a:.6,col:'#cdd8ff',big:false},{n:16,v:22,sz:2,a:.9,col:'#ffffff',big:true}];
   for(const l of L) for(let i=0;i<l.n;i++) etoiles.push({x:Math.random()*state.LARGEUR,y:Math.random()*state.HAUTEUR,v:l.v,sz:l.sz,a:l.a,col:l.col,big:l.big}); }

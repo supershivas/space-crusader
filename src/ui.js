@@ -270,7 +270,10 @@ function ouvrirGuideDetail(img,ico,nomKey,descKey,tier,stats){
   zone.appendChild(imgWrap);
   const titre=document.createElement('div'); titre.className='nom'; titre.style.fontSize='11px'; titre.style.marginBottom='6px'; titre.textContent=t(nomKey); zone.appendChild(titre);
   if(tier){ const bd=document.createElement('div'); bd.style.display='flex'; bd.style.justifyContent='center'; bd.style.marginBottom='8px'; bd.innerHTML=badgeRarete(tier); zone.appendChild(bd); }
-  const desc=document.createElement('div'); desc.className='desc'; desc.style.marginBottom='10px'; desc.textContent=t(descKey); zone.appendChild(desc);
+  const desc=document.createElement('div'); desc.className='desc'; desc.style.marginBottom='10px';
+  const loreKey=descKey.replace(/_desc$/,'_lore'), lore=t(loreKey);
+  desc.textContent=t(descKey)+(lore!==loreKey?' '+lore:'');
+  zone.appendChild(desc);
   if(stats&&stats.length){ const st=document.createElement('div'); st.className='guide-stats';
     st.innerHTML=stats.map(([lbl,val])=>'<div><span>'+lbl+'</span><span>'+val+'</span></div>').join('');
     zone.appendChild(st); }
