@@ -369,7 +369,7 @@ document.getElementById('btnResetProgression').addEventListener('click',()=>{
 
 export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');
   missionTitre.textContent = type==='boss'?t('mission_boss_titre'):(type==='elite'?t('mission_elite_titre'):t('mission_normal_titre'));
-  const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+texteObjectif(state.objectifVague)) : '';
+  const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+t('objectif_secondaire')+' : '+texteObjectif(state.objectifVague)) : '';
   missionStats.innerHTML = (obj?obj+'<br>':'')+t('mission_secteur')+' '+state.secteur+' · '+t('mission_score')+' '+state.score+'<br>'+t('mission_croiseur')+' '+state.hpCruiser+'/'+state.HP_MAX+' '+t('mission_pv');
   missionDiv.classList.add('visible'); }
 

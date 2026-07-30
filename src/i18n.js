@@ -185,6 +185,7 @@ const STRINGS = {
     etape_boss_titre:'BOSS ENGAGÉ',
 
     // ===== Objectifs de vague =====
+    objectif_secondaire:'Objectif secondaire',
     obj_sansdegat:'Aucun dégât au croiseur',
     obj_protege:'Ne perds aucun vaisseau',
     obj_kills:'Détruis {n} ennemis',
@@ -565,6 +566,7 @@ const STRINGS = {
     etape_elite_titre:'ELITE ENGAGED',
     etape_boss_titre:'BOSS ENGAGED',
 
+    objectif_secondaire:'Secondary objective',
     obj_sansdegat:'No damage to the cruiser',
     obj_protege:"Don't lose any ship",
     obj_kills:'Destroy {n} enemies',

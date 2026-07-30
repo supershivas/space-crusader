@@ -154,7 +154,14 @@ function dessinerCadreHUD(){
   ctx.font='10px "Press Start 2P", monospace'; ctx.fillStyle='#ffd23d'; ctx.fillText(scoreTxt,cx-demi+secW+gap,fy+22);
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
   ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',cx,fy+46);
-  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),cx,fy+66); }
+  // Le libellé "OBJECTIF SECONDAIRE" clarifie que cette mission de vague est un bonus
+  // (récompense en cas de réussite) et non une condition d'échec de la vague en cours.
+  if(state.objectifVague){
+    ctx.font='7px "Press Start 2P", monospace'; ctx.fillStyle='rgba(159,176,216,.85)';
+    ctx.fillText(trad('objectif_secondaire').toUpperCase(),cx,fy+65);
+    ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='rgba(127,208,176,.95)';
+    ctx.fillText('» '+texteObjectif(state.objectifVague),cx,fy+80);
+  }
   ctx.textAlign='left';
 }
 

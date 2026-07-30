@@ -111,7 +111,7 @@ export function demarrerCombat(type){
    au démarrage de chaque combat (combat standard, élite, boss). */
 function annoncerEtape(type){
   const titre=t('etape_'+type+'_titre');
-  const sousTitre=state.objectifVague?texteObjectif(state.objectifVague):'';
+  const sousTitre=state.objectifVague?(t('objectif_secondaire')+' : '+texteObjectif(state.objectifVague)):'';
   ouvrirEtapeBanner(titre, sousTitre, t('mission_secteur')+' '+state.secteur);
   const by=state.HAUTEUR*0.3;
   // double salve d'explosions décalée dans le temps : plus spectaculaire qu'une salve unique
