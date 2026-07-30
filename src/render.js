@@ -67,24 +67,26 @@ function dessinerAstrePixel(px,py,R,a){
 export function configurer(){
   state.COLS=COLS_N; state.RANGS=RANGS_N; state.CELL=CELL_N; state.PORTEE_DEP=DEP_N;
   const MARGE=14; state.LARGEUR=state.COLS*state.CELL+2*MARGE; state.GX=MARGE; state.GY=86; state.GRID_BAS=state.GY+state.RANGS*state.CELL;
-  const sc=Math.ceil(state.LARGEUR/CROISEUR[0].length); croiseurSC=sc; imgCroiseur=cuire(CROISEUR,sc,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); const BANDE=CROISEUR.length*sc;
+  // Croiseur : plus petit qu'avant (80% de la largeur du terrain, centré) — il occupait toute
+  // la largeur libre, ce qui l'écrasait en une simple bande plutôt qu'un vaisseau qu'on distingue.
+  // Toute la console (PV, ultime, score/statut, Fin du tour) est incrustée sur sa coque : des
+  // décalages fixes depuis le haut de la coque (pas une proportion de la hauteur du vaisseau,
+  // qui varierait trop selon la taille d'écran) garantissent que le texte reste lisible.
+  const sc=Math.max(3,Math.round(state.LARGEUR*0.80/CROISEUR[0].length)); croiseurSC=sc;
+  imgCroiseur=cuire(CROISEUR,sc,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); const BANDE=CROISEUR.length*sc;
   imgBossMap={}; for(const kk in BOSS_GRIDS){ const g=BOSS_GRIDS[kk]; imgBossMap[kk]=cuire(g,Math.max(4,Math.round(3*state.CELL/g[0].length))); }
   cuireUnites(state.CELL);
-  const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6;
-  state.BTN={w:Math.min(320,state.LARGEUR-80),h:50}; state.BTN.x=(state.LARGEUR-state.BTN.w)/2;
-  // jauge d'ultime : se charge sur le croiseur (voir dessinerUltime()) puis, une fois prête,
-  // devient un vrai bouton jaune dans cet emplacement réservé juste au-dessus de Fin du tour —
-  // la place lui est toujours réservée pour que Fin du tour ne bouge jamais d'une frame à l'autre.
-  const ultH=38, ultGap=8;
-  state.ULT={w:state.BTN.w,h:ultH}; state.ULT.x=state.BTN.x; state.ULT.y=state.cruiserY+BANDE+ultGap;
-  // (marge de fin de canvas généreuse : la ligne VAGUE/score/statut ci-dessous se dessine à
-  // hudBase-32 = HAUTEUR-50, pile sur l'ancien bord bas de Fin du tour quand la marge était
-  // de 50 — texte et bouton se chevauchaient. 70 laisse un vrai espace entre les deux.)
-  state.BTN.y=state.ULT.y+ultH+ultGap; state.HAUTEUR=state.BTN.y+state.BTN.h+70;
+  const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6; state.BANDE=BANDE;
+  state.CROISEUR_X=Math.round((state.LARGEUR-imgCroiseur.width)/2);
+  const consX=state.CROISEUR_X+Math.round(imgCroiseur.width*0.06), consW=Math.round(imgCroiseur.width*0.88), cy0=state.cruiserY;
+  state.PV={x:consX,w:consW,y:cy0+8,h:15};
+  state.INFO_Y=cy0+36;
+  state.ULT={x:consX,w:consW,y:cy0+50,h:15};
+  state.BTN={x:consX,w:consW,y:cy0+73,h:40};
+  state.HAUTEUR=Math.round(cy0+Math.max(BANDE,state.BTN.h+(state.BTN.y-cy0))+18);
   canvas.width=state.LARGEUR; canvas.height=state.HAUTEUR; ctx.imageSmoothingEnabled=false;
-  // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille et la
-  // barre de PV), pas une largeur plafonnée par bouton qui laissait un vide inutile de
-  // chaque côté sur grand écran.
+  // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille), pas une
+  // largeur plafonnée par bouton qui laissait un vide inutile de chaque côté sur grand écran.
   const gap=8, ax=MARGE, aw=(state.LARGEUR-2*MARGE-2*gap)/3;
   state.ACT=[{id:'vaisseau',lbl:'VAISSEAU',x:ax,y:actY,w:aw,h:actH},{id:'tourelle',lbl:'TOURELLE',x:ax+aw+gap,y:actY,w:aw,h:actH},{id:'bouclier',lbl:'BOUCLIER',x:ax+2*(aw+gap),y:actY,w:aw,h:actH}];
   state.HP_MAX=Math.round(100*state.COLS/7); state.MAX_VAISSEAUX=Math.max(6,Math.round(state.COLS*0.8)); state.AILES_MAX=Math.max(10,Math.round(state.COLS*1.5));
@@ -312,7 +314,9 @@ export function dessiner(t){
   if(dmgRatio>0.6){ ctx.globalAlpha=.4+.2*Math.sin(t/100); ctx.fillStyle='#3a1515'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
   if(state.flashCroiseur>0){ ctx.fillStyle='rgba(229,72,77,'+(state.flashCroiseur*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
   if(state.flashRecharge>0){ ctx.fillStyle='rgba(47,214,160,'+(state.flashRecharge*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
-  if(state.hangar){ const him=imgVaisseau(state.hangar.type); ctx.globalAlpha=.5; ctx.drawImage(him,Math.round(state.LARGEUR/2-him.width/2),Math.round(state.cruiserY+8)); ctx.globalAlpha=1; ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('⏳'+(state.hangar.tours>1?' '+state.hangar.tours:''),state.LARGEUR/2,state.cruiserY+6); ctx.textAlign='left'; }
+  // aperçu du vaisseau en construction : au-dessus de la console (pas dessus, elle l'aurait
+  // sinon recouvert), dans la zone des tourelles en haut de la coque.
+  if(state.hangar){ const him=imgVaisseau(state.hangar.type), hy=state.cruiserY-him.height-4; ctx.globalAlpha=.5; ctx.drawImage(him,Math.round(state.LARGEUR/2-him.width/2),Math.round(hy)); ctx.globalAlpha=1; ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('⏳'+(state.hangar.tours>1?' '+state.hangar.tours:''),state.LARGEUR/2,hy-4); ctx.textAlign='left'; }
 
   // obstacles (débris, station, barrière, mines, gaz, gravité)
   if(state.obstacles) for(const o of state.obstacles){ const def=OBSTACLES[o.type], im=imgObstacle(o), cx=state.GX+o.c*state.CELL+state.CELL/2, cy=state.GY+o.r*state.CELL+state.CELL/2;
@@ -412,45 +416,44 @@ export function dessiner(t){
 
   ctx.restore();
 
-  // ================= HUD =================
-  const hudBase=state.HAUTEUR-18;
-  // barre de PV du croiseur : pleine largeur (moins les marges) — le libellé "PV" et le
-  // décompte du feu sont incrustés dans la barre elle-même, le score et la vague passent
-  // sur la ligne du dessus pour laisser toute la largeur à la barre.
-  const marge=14;
-  const bx=marge,by=hudBase-18,bw=state.LARGEUR-2*marge,bh=20,ratio=Math.max(0,state.hpCruiser/state.HP_MAX);
-  arrondi(bx,by,bw,bh,RADIUS.bar); ctx.fillStyle='#1a2340'; ctx.fill();
-  let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
-  ctx.fillStyle=coul; ctx.fillRect(bx+2,by+2,Math.max(0,(bw-4)*ratio),bh-4);
-  if(state.flashCroiseur>0){ ctx.fillStyle='rgba(255,255,255,'+(state.flashCroiseur*.5)+')'; ctx.fillRect(bx+2,by+2,bw-4,bh-4); }
-  arrondi(bx,by,bw,bh,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#eef3ff'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',bx+9,by+bh/2+4);
-  if(state.enFeu>0){ dessinerIcone(imgFeuIco,bx+bw-16,by+bh/2,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='10px monospace'; ctx.textAlign='right'; ctx.fillText('×'+state.enFeu,bx+bw-26,by+bh/2+4); ctx.textAlign='left'; }
-  ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('VAGUE '+state.vague,marge,hudBase-32);
-  ctx.fillStyle='#ffd23d'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='right'; ctx.fillText(String(state.score).padStart(3,'0'),state.LARGEUR-marge,hudBase-32);
-  ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
-  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,hudBase-32); ctx.textAlign='left';
+  // ================= CONSOLE DU CROISEUR =================
+  // Toute la console de bord (PV, ultime, score/vague/statut, Fin du tour) est incrustée sur
+  // la coque elle-même plutôt qu'éparpillée en HUD flottant tout autour — comme un vrai
+  // tableau de bord de vaisseau. Deux barres consécutives de même style (radius, cadre),
+  // seule la couleur de remplissage change : vert/jaune/rouge selon les PV, violet→jaune
+  // pour l'ultime (qui devient un vrai bouton une fois prête).
+  { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
+    arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
+    let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
+    ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
+    if(state.flashCroiseur>0){ ctx.fillStyle='rgba(255,255,255,'+(state.flashCroiseur*.5)+')'; ctx.fillRect(pv.x+2,pv.y+2,pv.w-4,pv.h-4); }
+    arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',pv.x+8,pv.y+pv.h/2+3);
+    if(state.enFeu>0){ dessinerIcone(imgFeuIco,pv.x+pv.w-14,pv.y+pv.h/2,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='9px monospace'; ctx.textAlign='right'; ctx.fillText('×'+state.enFeu,pv.x+pv.w-24,pv.y+pv.h/2+3); ctx.textAlign='left'; }
+  }
+  // score/vague/statut : entre la barre de PV et la jauge d'ultime, sur la coque — son propre
+  // petit panneau sombre, sinon le texte se lit mal directement sur la coque claire du croiseur.
+  const ligneCy=state.INFO_Y;
+  arrondi(state.PV.x,ligneCy-10,state.PV.w,15,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.75)'; ctx.fill();
+  ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('V'+state.vague,state.PV.x+4,ligneCy);
+  ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='right'; ctx.fillText(String(state.score).padStart(3,'0'),state.PV.x+state.PV.w-4,ligneCy);
+  ctx.textAlign='center'; ctx.font='7px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
+  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,ligneCy); ctx.textAlign='left';
   if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),state.LARGEUR/2,15); ctx.textAlign='left'; }
-  { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil;
+  { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil, u=state.ULT;
     if(!pret){
-      // en charge : incrustée sur le croiseur lui-même (pas un HUD flottant loin du vaisseau
-      // qu'elle concerne) — un filet violet qui se remplit sur la coque.
-      const uw=imgCroiseur.width*0.72, ux=(state.LARGEUR-uw)/2, uy=state.cruiserY+imgCroiseur.height*0.66, uh=9;
-      arrondi(ux,uy,uw,uh,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.75)'; ctx.fill();
-      ctx.fillStyle='#7a3fd6'; ctx.fillRect(ux+2,uy+2,Math.max(0,(uw-4)*pr),uh-4);
-      arrondi(ux,uy,uw,uh,RADIUS.bar); ctx.strokeStyle='rgba(155,107,214,.7)'; ctx.lineWidth=1.5; ctx.stroke();
-      // emplacement réservé (juste au-dessus de Fin du tour) : vide tant que ce n'est pas prêt,
-      // contour discret + pourcentage, pour ne jamais faire bouger Fin du tour d'une frame à l'autre.
-      arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,RADIUS.bar); ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(74,90,134,.5)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
-      ctx.fillStyle='#7f8db0'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center';
-      ctx.fillText('ULTIME '+Math.floor(pr*100)+'%',state.LARGEUR/2,state.ULT.y+state.ULT.h/2+4); ctx.textAlign='left';
+      arrondi(u.x,u.y,u.w,u.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
+      ctx.fillStyle='#7a3fd6'; ctx.fillRect(u.x+2,u.y+2,Math.max(0,(u.w-4)*pr),u.h-4);
+      arrondi(u.x,u.y,u.w,u.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#cbd6f0'; ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center';
+      ctx.fillText('ULTIME '+Math.floor(pr*100)+'%',state.LARGEUR/2,u.y+u.h/2+3); ctx.textAlign='left';
     } else {
-      // prête : un vrai bouton jaune, juste au-dessus de Fin du tour.
-      arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,RADIUS.bar); ctx.fillStyle='rgba(255,210,61,'+(0.75+0.25*pulse)+')'; ctx.fill();
+      // prête : un vrai bouton jaune, à la même place et à la même échelle que la barre.
+      arrondi(u.x,u.y,u.w,u.h,RADIUS.bar); ctx.fillStyle='rgba(255,210,61,'+(0.75+0.25*pulse)+')'; ctx.fill();
       ctx.strokeStyle='#ffd23d'; ctx.lineWidth=2; ctx.stroke();
-      ctx.fillStyle='#241a00'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center';
-      const txtUlt='FRAPPE ORBITALE', cyUlt=state.ULT.y+state.ULT.h/2+4, w=ctx.measureText(txtUlt).width;
-      dessinerIcone(imgEclairIco,state.LARGEUR/2-w/2-11,cyUlt-4,1);
+      ctx.fillStyle='#241a00'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center';
+      const txtUlt='FRAPPE ORBITALE', cyUlt=u.y+u.h/2+3, w=ctx.measureText(txtUlt).width;
+      dessinerIcone(imgEclairIco,state.LARGEUR/2-w/2-10,cyUlt-3,1);
       ctx.fillText(txtUlt,state.LARGEUR/2,cyUlt); ctx.textAlign='left';
     }
   }

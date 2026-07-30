@@ -65,18 +65,18 @@
   /* Jouer/Continuer : les deux boutons principaux de l'accueil partagent toujours la même
      largeur (le mot le plus long ne doit pas rendre l'un plus large que l'autre). */
   #btnJouer,#btnReprendre{width:min(78vw,260px);}
-  /* Boutons secondaires de l'accueil : empilés à la même largeur que Jouer/Reprendre plutôt
-     qu'en rangée avec une largeur par bouton dépendant du texte (sinon rangée en dents de
-     scie, surtout avec "AMÉLIORATIONS" bien plus long que "GUIDE"). */
-  .home-secondaires{display:flex;flex-direction:column;gap:8px;width:min(78vw,260px);}
+  /* RÈGLE : dès qu'une modale/écran affiche plusieurs boutons .jouer empilés (Pause,
+     Paramètres, Comment jouer, accueil…), les envelopper dans .menu-vertical — jamais une
+     rangée/colonne à largeurs ad hoc dépendant du texte (sinon bords en dents de scie, cf.
+     Paramètres avant ce correctif). Même largeur partout dans le jeu : min(78vw,260px),
+     comme Jouer/Reprendre sur l'accueil. */
+  .menu-vertical{display:flex;flex-direction:column;gap:var(--space-sm);align-items:center;}
+  .menu-vertical button.jouer{width:min(78vw,260px);}
   /* bouton secondaire (design system) : actions moins prioritaires qu'un bouton primaire (Jouer/Reprendre) */
   button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;
     border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
   /* bouton d'action destructive (ex: effacer la progression) */
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
-  /* Menu vertical (ex: Pause) : tous les boutons partagent la même largeur, quel que soit
-     le nombre de lettres de leur libellé — sinon la colonne a des bords en escalier. */
-  #pause button.jouer{width:min(70vw,230px);}
   .coin{position:absolute;top:8px;z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:var(--radius-md);width:36px;height:36px;cursor:pointer;line-height:1;}
   #son{left:8px;}
@@ -101,7 +101,7 @@
   #log .log-red{color:#e5484d;} #log .log-grn{color:#2fd6a0;} #log .log-ylw{color:#ffd23d;}
 
   /* Pause overlay (menu) */
-  #pause{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  #pause{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(7,11,24,.78);backdrop-filter:blur(3px);border-radius:var(--radius-md);pointer-events:none;opacity:0;transition:opacity .2s;}
   #pause.visible{opacity:1;pointer-events:auto;}
   #pause h2{color:#ffd23d;font-size:var(--fs-modale);margin:0 0 8px;display:flex;align-items:center;justify-content:center;gap:6px;}
@@ -231,7 +231,7 @@
     <div id="tutoLine"></div>
     <div id="tutoBar"><p id="tutoTexte"></p><button id="tutoSkip" data-i18n="tuto_passer">Passer le tutoriel</button></div>
     <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
-    <div id="pause"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>
+    <div id="pause" class="menu-vertical"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>
       <button class="jouer" id="btnPauseReprendre"><span class="ico-slot" data-ico="play"></span><span data-i18n="pause_continuer">Continuer</span></button>
       <button class="jouer secondaire" id="btnPauseOptions"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
       <button class="jouer secondaire" id="btnPauseGuide"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="pause_guide">Encyclopédie</span></button>
@@ -250,21 +250,21 @@
       <div class="cards" id="difficulteCards"></div>
       <button class="jouer secondaire" id="btnDiffAnnuler" style="margin-top:14px;" data-i18n="diff_annuler">Retour</button></div>
     <div id="params" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="params_titre">PARAMÈTRES</span></h2>
-      <div style="display:flex;flex-direction:column;gap:10px;align-items:center;margin-top:6px;">
-      <button class="jouer" id="btnParamsInfos" style="font-size:11px;padding:11px 20px;background:#3b5aa0;border-bottom-color:#25396b;"><span class="ico-slot" data-ico="info"></span><span data-i18n="params_infos">Comment jouer</span></button>
-      <button class="jouer" id="btnParamsLangue" style="font-size:11px;padding:11px 20px;background:#5a6dd6;border-bottom-color:#3a4aa0;"><span class="ico-slot" data-ico="globe"></span><span id="langueLabel">Langue : Français</span></button>
-      <button class="jouer" id="btnCheckUpdate" style="font-size:10px;padding:10px 18px;background:#2fa36a;border-bottom-color:#1c6b45;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="params_checkupdate">Vérifier les mises à jour</span></button>
+      <div class="menu-vertical" style="margin-top:6px;">
+      <button class="jouer secondaire" id="btnParamsInfos"><span class="ico-slot" data-ico="info"></span><span data-i18n="params_infos">Comment jouer</span></button>
+      <button class="jouer secondaire" id="btnParamsLangue"><span class="ico-slot" data-ico="globe"></span><span id="langueLabel">Langue : Français</span></button>
+      <button class="jouer secondaire" id="btnCheckUpdate"><span class="ico-slot" data-ico="restart"></span><span data-i18n="params_checkupdate">Vérifier les mises à jour</span></button>
       <button class="jouer danger" id="btnResetProgression" data-i18n="meta_reset">Effacer toute la progression</button>
-      <button class="jouer" id="btnParamsFermer" style="font-size:11px;padding:10px 18px;" data-i18n="params_fermer">Fermer</button>
+      <button class="jouer secondaire" id="btnParamsFermer" data-i18n="params_fermer">Fermer</button>
       <div class="hint" id="paramsVersion" style="margin-top:2px;opacity:.7;"></div>
       <a href="design-system.html" target="_blank" rel="noopener" style="font-family:var(--pixel);font-size:6px;color:#4a5a86;text-decoration:underline;margin-top:2px;">Design system</a>
       </div></div>
     <div id="info" class="modal"><h2><span class="ico-slot" data-ico="info"></span><span data-i18n="info_titre">COMMENT JOUER</span></h2>
       <div class="hint" data-i18n-html="info_body" style="max-width:340px;text-align:left;line-height:1.9;"></div>
       <div class="hint" id="infoStats" style="margin-top:10px;color:#8fd0ff;"></div>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;">
-      <button class="jouer" id="btnFermerInfo" style="font-size:12px;padding:11px 22px;" data-i18n="info_fermer">Fermer</button>
-      <button class="jouer" id="btnRelancerTuto" style="font-size:10px;padding:11px 16px;background:#5a6dd6;border-bottom-color:#3a4aa0;"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="info_revoir_tuto">Revoir le tutoriel</span></button>
+      <div class="menu-vertical" style="margin-top:14px;">
+      <button class="jouer" id="btnFermerInfo" data-i18n="info_fermer">Fermer</button>
+      <button class="jouer secondaire" id="btnRelancerTuto"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="info_revoir_tuto">Revoir le tutoriel</span></button>
       </div></div>
     <div id="mission" class="modal"><h1 id="missionTitre" style="color:#37e0ff">ZONE SÉCURISÉE</h1><div class="hint" id="missionStats"></div><button class="jouer" id="btnMission" style="margin-top:14px;font-size:12px;padding:11px 22px;" data-i18n="mission_continuer">Continuer ▶</button></div>
     <div id="resultat" class="modal"><h2><span class="ico-slot" data-ico="point"></span><span data-i18n="resultat_titre">RÉSULTAT</span></h2>
@@ -306,7 +306,7 @@
       <p id="homeMeilleurScore" style="display:none;margin:-6px 0 2px;color:#ffd23d;font-family:var(--pixel);font-size:var(--fs-petit);"></p>
       <button class="jouer" id="btnReprendre" style="display:none;background:#2fa36a;border-bottom-color:#1c6b45;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="home_reprendre">REPRENDRE</span></button>
       <button class="jouer" id="btnJouer"><span class="ico-slot" data-ico="play"></span><span data-i18n="home_jouer">JOUER</span></button>
-      <div class="home-secondaires">
+      <div class="menu-vertical">
         <button class="jouer secondaire" id="btnInfo"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_params">PARAMÈTRES</span></button>
         <button class="jouer secondaire" id="btnMeta"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
         <button class="jouer secondaire" id="btnGuide"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="home_guide">GUIDE</span></button>
@@ -321,8 +321,8 @@
       <table id="highscores"></table>
       <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:1.7;margin-top:4px;max-width:34ch"></div>
       <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:1.6"></p>
-      <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
-      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <div class="menu-vertical">
+        <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
         <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
         <button class="jouer secondaire" id="btnFinAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
       </div>

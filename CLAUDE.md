@@ -49,7 +49,12 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
     radius (`--radius-sm/md/lg/xl`) — jamais une marge, un gap ou un border-radius inventé au
     cas par cas ; les éléments dessinés sur le canvas de jeu (barres/boutons du HUD) suivent la
     même échelle de radius via la constante `RADIUS` dans `render.js` ;
-  - les boutons (`button.jouer` primaire, `.secondaire`, `.danger`, état désactivé) ;
+  - les boutons (`button.jouer` primaire, `.secondaire`, `.danger`, état désactivé) — **règle :
+    dès que 2 boutons `.jouer` ou plus apparaissent ensemble dans un écran/une modale, les
+    envelopper dans `.menu-vertical`** (défini une fois dans `index.html`, redéfini à
+    l'identique dans `design-system.html` puisque cette page ne charge pas `index.html`) —
+    jamais une rangée à largeurs ad hoc dépendant du texte de chaque bouton (sinon bords en
+    dents de scie, comme c'était le cas dans Paramètres avant correction) ;
   - les cartes de choix (améliorations/événements) et les cartes d'encyclopédie (avec/sans
     badge de rareté, état verrouillé) ;
   - les modales (fenêtre semi-plein écran type `.modal`, titre centré, texte

@@ -50,7 +50,7 @@
   /* Menu vertical (ex: Pause) : boutons empilés à largeur uniforme, quel que soit le nombre
      de lettres du libellé — sinon la colonne a des bords en escalier. */
   .menu-vertical{display:flex;flex-direction:column;gap:var(--space-sm);align-items:center;}
-  .menu-vertical button.jouer{width:min(70vw,230px);}
+  .menu-vertical button.jouer{width:min(78vw,260px);}
 
   /* ===== Cartes de choix ===== */
   .cards{display:flex;gap:var(--space-sm);flex-wrap:wrap;}
@@ -178,9 +178,11 @@
       <button class="jouer danger">Danger</button>
       <button class="jouer" disabled>Désactivé</button>
     </div>
-    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Menu vertical (ex: menu Pause)</h3>
-    <p class="note">Une action primaire, des actions secondaires, une action destructive —
-      toutes à la même largeur, quel que soit le nombre de lettres de leur libellé.</p>
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Menu vertical (classe <code>.menu-vertical</code>)</h3>
+    <p class="note">RÈGLE : dès que 2 boutons <code>.jouer</code> ou plus apparaissent ensemble dans un
+      écran/une modale, les envelopper dans <code>.menu-vertical</code> — jamais une rangée à largeurs
+      ad hoc dépendant du texte (sinon bords en dents de scie, cf. Paramètres avant ce correctif).
+      Utilisée par Pause, Paramètres, Comment jouer, l'accueil et l'écran de fin.</p>
     <div class="menu-vertical">
       <button class="jouer">Continuer</button>
       <button class="jouer secondaire">Options</button>
