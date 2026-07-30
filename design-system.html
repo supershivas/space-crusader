@@ -93,11 +93,14 @@
   .radius-row{display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;margin-bottom:var(--space-md);}
   .radius-swatch{width:40px;height:40px;background:#243048;border:2px solid #3b5aa0;flex-shrink:0;}
 
-  /* ===== Toast / log ===== */
-  .toast-demo{font-family:var(--pixel);font-size:var(--fs-corps);color:#e8eefc;background:rgba(13,21,48,.96);
+  /* ===== Toast / log =====
+     Chaque variante teinte aussi le texte (pas seulement la bordure), y compris "Neutre"
+     qui reprend le cyan d'accent plutôt qu'un blanc terne — sinon trop discret une fois
+     posé sur un écran de jeu déjà chargé. */
+  .toast-demo{font-family:var(--pixel);font-size:var(--fs-corps);color:#bfeeff;background:rgba(13,21,48,.96);
     border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);display:inline-block;}
-  .toast-demo.t-ok{border-color:#2fd6a0;} .toast-demo.t-warn{border-color:#ffb347;}
-  .toast-demo.t-bad{border-color:#e5484d;} .toast-demo.t-gold{border-color:#ffd23d;color:#ffd23d;}
+  .toast-demo.t-ok{border-color:#2fd6a0;color:#baffe0;} .toast-demo.t-warn{border-color:#ffb347;color:#ffdcae;}
+  .toast-demo.t-bad{border-color:#e5484d;color:#ffb8ba;} .toast-demo.t-gold{border-color:#ffd23d;color:#ffd23d;}
 </style>
 </head>
 <body>
