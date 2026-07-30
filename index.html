@@ -170,6 +170,11 @@
   .card .nom{font-size:var(--fs-corps);color:#ffd23d;line-height:1.4;}
   .card .desc{font-size:var(--fs-petit);color:#9fb0d8;line-height:1.6;}
   .card canvas{image-rendering:pixelated;border-radius:4px;}
+  /* Difficulté : toujours les 3 cartes sur une seule ligne (jamais 2+1 qui déséquilibre la
+     modale) — largeur flexible plutôt que fixe, le texte se réenroule si l'écran est étroit. */
+  #difficulteCards{flex-wrap:nowrap;gap:6px;}
+  #difficulteCards .card{width:auto;flex:1 1 0;min-width:0;min-height:auto;padding:10px 5px;}
+  #difficulteCards .card .desc{line-height:1.5;}
 
   /* Guide (bestiaire) : modale scrollable, sections avec petites cartes de rappel */
   #guide{justify-content:flex-start;padding-top:10vh;}
