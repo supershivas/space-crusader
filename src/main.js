@@ -10,7 +10,7 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
-import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
@@ -96,7 +96,8 @@ function reprendrePartie(){
 let dernier=0;
 function boucle(t){ const dt=Math.min((t-dernier)/1000,.05); dernier=t;
   if(!state.paused){ animer(dt); }
-  dessiner(t); mettreAJourTuto(); requestAnimationFrame(boucle); }
+  if(state.phase==='accueil'||state.phase==='attente') dessinerIllustration(t); else dessiner(t);
+  mettreAJourTuto(); requestAnimationFrame(boucle); }
 
 /* =====================================================================
    PLEIN ÉCRAN + DÉMARRAGE
@@ -140,7 +141,7 @@ function ouvrirInfos(){
 }
 document.getElementById('btnInfo').addEventListener('click',ouvrirParams);
 document.getElementById('btnParamsInfos').addEventListener('click',ouvrirInfos);
-document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); ajusterTitreAccueil(); });
+document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); ajusterTitreAccueil(); majMeilleurScoreAccueil(); });
 document.getElementById('btnParamsFermer').addEventListener('click',()=>{ document.getElementById('params').classList.remove('visible'); });
 /* Force un rechargement complet (déchargement des caches connus + reload) pour récupérer
    la dernière version du jeu sans que le joueur ait à vider manuellement le cache du navigateur. */
@@ -220,11 +221,12 @@ function verifierMiseAJour(){
   if(precedente && precedente!==VERSION) ouvrirMaj(VERSION);
 }
 
-loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoiles(); etatVide(); redimensionner(); dessinerIllustration();
+loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoiles(); etatVide(); redimensionner();
 genererFavicon();
 poserIcones();
 appliquerLangue();
 ajusterTitreAccueil();
+majMeilleurScoreAccueil();
 document.getElementById('paramsVersion').textContent='Version '+VERSION;
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Au démarrage, on va directement à l'accueil : le tutoriel guidé (voir tuto.js) suffit à

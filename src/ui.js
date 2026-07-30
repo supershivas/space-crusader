@@ -391,6 +391,16 @@ export function finPartie(){
   document.getElementById('fin').classList.remove('cache');
 }
 
+/* Meilleur score déjà réalisé, affiché sur l'accueil (juste sous le titre) pour donner un
+   objectif immédiat sans devoir ouvrir les Améliorations. Rien à afficher tant qu'aucune
+   partie n'est terminée (state.highscores vide). */
+export function majMeilleurScoreAccueil(){
+  const el=document.getElementById('homeMeilleurScore'); if(!el) return;
+  const meilleur=state.highscores[0];
+  if(!meilleur){ el.style.display='none'; return; }
+  el.textContent=t('home_meilleur_score',{n:meilleur.score}); el.style.display='';
+}
+
 /* Retour à l'écran d'accueil depuis le menu pause. */
 export function retourAccueil(){
   state.paused=false; pauseDiv.classList.remove('visible');
@@ -399,6 +409,7 @@ export function retourAccueil(){
   document.getElementById('fin').classList.add('cache');
   document.getElementById('accueil').classList.remove('cache');
   document.getElementById('btnReprendre').style.display = sauvegardeExiste()?'':'none';
+  majMeilleurScoreAccueil();
 }
 
 /* Abandon volontaire depuis le menu pause : ferme la pause puis affiche
@@ -585,6 +596,7 @@ document.addEventListener('keydown', ev=>{
   else if(ev.key==='2'){ if(state.phase==='joueur'&&!state.choixBuild) choisirAction('tourelle'); }
   else if(ev.key==='3'){ if(state.phase==='joueur'&&!state.choixBuild) choisirAction('bouclier'); }
   else if(ev.key==='u'||ev.key==='U'){ if(state.phase==='joueur'&&!state.choixBuild&&ultimePret()) declencheUltime(); }
+  else if(ev.key==='g'||ev.key==='G'){ ouvrirGuide(); ev.preventDefault(); }
 });
 
 document.getElementById('son').addEventListener('click',()=>{ const on=toggleSound(); const slot=document.querySelector('#son .ico-slot'); slot.innerHTML=''; icone(slot,on?'son_on':'son_off',16); });

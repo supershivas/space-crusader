@@ -20,6 +20,7 @@ const STRINGS = {
     // Accueil
     home_titre:'CROISEUR',
     home_reprendre:'CONTINUER',
+    home_meilleur_score:'🏆 Meilleur score : {n}',
     home_jouer:'JOUER',
     home_params:'PARAMÈTRES',
     home_ameliorations:'AMÉLIORATIONS',
@@ -66,7 +67,7 @@ const STRINGS = {
       +'<b style="color:#ffd23d">Vaisseaux</b> — chaque ennemi détruit fait monter leur grade (• Recrue → ★ As). Le <span style="color:#ff8f92">Rouge</span> tire en zone (2 PV, +1 déplacement).<br><br>'
       +'<b style="color:#ffd23d">Menaces</b> — astéroïdes, débris, barrières, mines, gaz : détruis-les ou évite-les. Le <span style="color:#ff8f92">leurre</span> (contour rouge) imite un renfort : c\'est un piège.<br><br>'
       +'<b style="color:#ffd23d">Ultime</b> ⚡ — remplis la jauge en haut puis tape-la pour une frappe orbitale.<br><br>'
-      +'<b style="color:#ffd23d">Raccourcis</b> — Espace : fin du tour · 1/2/3 : actions · U : ultime · Échap : annuler · P : pause',
+      +'<b style="color:#ffd23d">Raccourcis</b> — Espace : fin du tour · 1/2/3 : actions · U : ultime · Échap : annuler · P : pause · G : encyclopédie',
     info_fermer:'Fermer',
     info_revoir_tuto:'Revoir le tutoriel',
     // Pause
@@ -414,6 +415,7 @@ const STRINGS = {
   en: {
     home_titre:'CRUISER',
     home_reprendre:'CONTINUE',
+    home_meilleur_score:'🏆 Best score: {n}',
     home_jouer:'PLAY',
     home_params:'SETTINGS',
     home_ameliorations:'UPGRADES',
@@ -457,7 +459,7 @@ const STRINGS = {
       +'<b style="color:#ffd23d">Ships</b> — each kill raises their rank (• Rookie → ★ Ace). The <span style="color:#ff8f92">Red</span> ship fires in an area (2 HP, +1 move).<br><br>'
       +'<b style="color:#ffd23d">Hazards</b> — asteroids, debris, barriers, mines, gas: destroy or avoid them. The <span style="color:#ff8f92">decoy</span> (red outline) mimics a reinforcement — it\'s a trap.<br><br>'
       +'<b style="color:#ffd23d">Ultimate</b> ⚡ — fill the gauge at the top then tap it for an orbital strike.<br><br>'
-      +'<b style="color:#ffd23d">Shortcuts</b> — Space: end turn · 1/2/3: actions · U: ultimate · Esc: undo · P: pause',
+      +'<b style="color:#ffd23d">Shortcuts</b> — Space: end turn · 1/2/3: actions · U: ultimate · Esc: undo · P: pause · G: encyclopedia',
     info_fermer:'Close',
     info_revoir_tuto:'Replay the tutorial',
     pause_continuer:'Continue',

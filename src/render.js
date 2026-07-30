@@ -20,6 +20,11 @@ const wrap=document.getElementById('wrap'), scene=document.getElementById('scene
 const imgAlerte=iconImage('alerte',3), imgGel=iconImage('gel',3), imgEclairIco=iconImage('eclair',3), imgFeuIco=iconImage('feu',3);
 function dessinerIcone(img,cx,cy,alpha=1){ ctx.globalAlpha=alpha; ctx.drawImage(img,Math.round(cx-img.width/2),Math.round(cy-img.height/2)); ctx.globalAlpha=1; }
 
+/* mini flottaison des vaisseaux (immobiles au sol) : léger balancement vertical, jamais synchronisé
+   entre deux vaisseaux (phase aléatoire mémorisée sur l'objet lui-même, pas sur sa position — sinon
+   elle sauterait à chaque déplacement). Purement visuel : ne touche jamais f.x/f.y réels. */
+export function flotte(o,t){ if(o.__bob===undefined) o.__bob=Math.random()*Math.PI*2; return Math.sin(t/480+o.__bob)*1.3; }
+
 let imgCroiseur, imgBossMap, croiseurSC;
 let nebuleuses, planete;
 /* ré-applique la teinte cosmétique du croiseur en cours (après un changement de skin dans le menu méta) */
@@ -175,7 +180,7 @@ function dessinerScenePlanete(t){
   if(state.scenePlanete){ ctx.fillStyle='#37e0ff'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(state.scenePlanete.titre,state.LARGEUR/2,state.HAUTEUR*0.58); ctx.fillStyle='rgba(159,176,216,'+(0.6+0.4*pulse)+')'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText('Choisis en haut de l\'écran',state.LARGEUR/2,state.HAUTEUR*0.58+18); ctx.textAlign='left'; }
   // croiseur + nos vaisseaux (comme en combat)
   ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
-  for(const f of state.fighters){ ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y-f.img.height/2)); }
+  for(const f of state.fighters){ ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y+flotte(f,t)-f.img.height/2)); }
   ctx.restore();
 }
 
@@ -188,6 +193,9 @@ function dessinerPV(cx,by,hp,maxhp,coul){ const sq=5,gap=2,tot=maxhp*sq+(maxhp-1
    DESSIN — scène de jeu
    ===================================================================== */
 export function dessiner(t){
+  // rien à voir : l'accueil (opaque, plein écran) et l'attente (avant le choix de difficulté)
+  // recouvrent entièrement ce canvas — inutile de dessiner la scène de jeu en dessous.
+  if(state.phase==='accueil'||state.phase==='attente') return;
   if(state.phase==='carte'){ dessinerCarte(t); return; }
   if(state.phase==='planete'){ dessinerScenePlanete(t); return; }
   const pulse=.5+.5*Math.sin(t/160);
@@ -305,19 +313,20 @@ export function dessiner(t){
   // restent invisibles et hors de portée tant qu'elles n'ont pas atteint la rangée 0)
   for(const a of state.ailes){
     if(a.r<0) continue;
+    const ay=a.y+flotte(a,t);
     if(a.r>=state.RANGS-2){ ctx.fillStyle='rgba(229,72,77,.22)'; ctx.fillRect(state.GX+a.c*state.CELL,state.GY+a.r*state.CELL,state.CELL,state.CELL); }
-    ctx.drawImage(a.img,Math.round(a.x-a.img.width/2),Math.round(a.y-a.img.height/2));
-    if(a.type==='porteur'){ ctx.strokeStyle='rgba(255,210,61,'+(.4+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.52,0,7); ctx.stroke(); }
-    else if(a.type==='brouilleur'){ ctx.strokeStyle='rgba(155,107,214,'+(.4+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.52,0,7); ctx.stroke(); }
-    else if(a.type==='regenerateur'){ ctx.fillStyle='rgba(140,255,90,'+(.5+.5*pulse)+')'; ctx.fillRect(Math.round(a.x-1),Math.round(a.y-a.img.height/2-9),3,7); ctx.fillRect(Math.round(a.x-4),Math.round(a.y-a.img.height/2-7),9,3); }   // croix verte clignotante
-    else if(a.type==='void'){ ctx.strokeStyle='rgba(107,63,160,'+(.4+.4*pulse)+')'; ctx.lineWidth=2; for(let k=1;k<=2;k++){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.4*k*(0.7+0.3*Math.sin(t/240+k)),0,7); ctx.stroke(); } }
-    if(a.bouclier){ ctx.strokeStyle='rgba(255,210,61,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,a.y+2,state.CELL*0.4,Math.PI*0.15,Math.PI*0.85); ctx.stroke(); }
-    else if(estProtege(a)){ ctx.fillStyle='rgba(155,107,214,.18)'; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.fill(); }
+    ctx.drawImage(a.img,Math.round(a.x-a.img.width/2),Math.round(ay-a.img.height/2));
+    if(a.type==='porteur'){ ctx.strokeStyle='rgba(255,210,61,'+(.4+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,ay,state.CELL*0.52,0,7); ctx.stroke(); }
+    else if(a.type==='brouilleur'){ ctx.strokeStyle='rgba(155,107,214,'+(.4+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,ay,state.CELL*0.52,0,7); ctx.stroke(); }
+    else if(a.type==='regenerateur'){ ctx.fillStyle='rgba(140,255,90,'+(.5+.5*pulse)+')'; ctx.fillRect(Math.round(a.x-1),Math.round(ay-a.img.height/2-9),3,7); ctx.fillRect(Math.round(a.x-4),Math.round(ay-a.img.height/2-7),9,3); }   // croix verte clignotante
+    else if(a.type==='void'){ ctx.strokeStyle='rgba(107,63,160,'+(.4+.4*pulse)+')'; ctx.lineWidth=2; for(let k=1;k<=2;k++){ ctx.beginPath(); ctx.arc(a.x,ay,state.CELL*0.4*k*(0.7+0.3*Math.sin(t/240+k)),0,7); ctx.stroke(); } }
+    if(a.bouclier){ ctx.strokeStyle='rgba(255,210,61,.85)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(a.x,ay+2,state.CELL*0.4,Math.PI*0.15,Math.PI*0.85); ctx.stroke(); }
+    else if(estProtege(a)){ ctx.fillStyle='rgba(155,107,214,.18)'; ctx.beginPath(); ctx.arc(a.x,ay,state.CELL*0.42,0,7); ctx.fill(); }
     // PV : petits carrés (rouge = plein, gris = vide) pour les ennemis blindés (maxhp>1)
-    if(a.maxhp>1) dessinerPV(a.x,Math.round(a.y+a.img.height/2+2),a.hp,a.maxhp,'#ff2a5a');
+    if(a.maxhp>1) dessinerPV(a.x,Math.round(ay+a.img.height/2+2),a.hp,a.maxhp,'#ff2a5a');
     // marqueurs des attaques spéciales (saboteur : électrique, brûleur : incendiaire)
-    if(a.type==='saboteur') dessinerIcone(imgEclairIco,a.x,a.y-a.img.height/2-7,.6+.4*pulse);
-    else if(a.type==='bruleur') dessinerIcone(imgFeuIco,a.x,a.y-a.img.height/2-7,.6+.4*pulse);
+    if(a.type==='saboteur') dessinerIcone(imgEclairIco,a.x,ay-a.img.height/2-7,.6+.4*pulse);
+    else if(a.type==='bruleur') dessinerIcone(imgFeuIco,a.x,ay-a.img.height/2-7,.6+.4*pulse);
   }
   // marqueurs cibles alliées
   if(state.phase==='joueur'){ ctx.strokeStyle='rgba(255,70,70,'+(.55+.4*pulse)+')'; ctx.lineWidth=3; const marque=(x,y)=>{ ctx.beginPath(); ctx.moveTo(x-9,y-9); ctx.lineTo(x+9,y+9); ctx.moveTo(x+9,y-9); ctx.lineTo(x-9,y+9); ctx.stroke(); };
@@ -349,20 +358,20 @@ export function dessiner(t){
     ctx.strokeStyle=l.ennemi?'#e5484d':'#37e0ff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(l.x1,l.y1); ctx.lineTo(l.x2,l.y2); ctx.stroke(); ctx.globalAlpha=1; }
 
   // vaisseaux joueur
-  for(const f of state.fighters){ if(f===state.selection){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=4; const cc=centreCase(f.c,f.r); ctx.strokeRect(cc.x-state.CELL/2+5,cc.y-state.CELL/2+5,state.CELL-10,state.CELL-10); }
+  for(const f of state.fighters){ const fy=f.y+flotte(f,t); if(f===state.selection){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=4; const cc=centreCase(f.c,f.r); ctx.strokeRect(cc.x-state.CELL/2+5,cc.y-state.CELL/2+5,state.CELL-10,state.CELL-10); }
     // améliorations du Vaisseau Rouge : aura élargie (rouge_range) + réacteurs arrière (rouge_back)
-    if(f.type==='rouge'&&state.ups){ if(state.ups.rouge_range){ ctx.strokeStyle='rgba(229,72,77,'+(.25+.2*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,f.y,state.CELL*0.62,0,7); ctx.stroke(); }
-      if(state.ups.rouge_back){ ctx.fillStyle='#ff8a3d'; for(const dx of [-6,0,6]){ ctx.fillRect(Math.round(f.x+dx-1),Math.round(f.y+f.img.height/2+1),3,4); } } }
-    ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y-f.img.height/2)); ctx.globalAlpha=1;
-    if(f.gele>0) dessinerIcone(imgGel,f.x,f.y,.7+.3*pulse);
+    if(f.type==='rouge'&&state.ups){ if(state.ups.rouge_range){ ctx.strokeStyle='rgba(229,72,77,'+(.25+.2*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(f.x,fy,state.CELL*0.62,0,7); ctx.stroke(); }
+      if(state.ups.rouge_back){ ctx.fillStyle='#ff8a3d'; for(const dx of [-6,0,6]){ ctx.fillRect(Math.round(f.x+dx-1),Math.round(fy+f.img.height/2+1),3,4); } } }
+    ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(fy-f.img.height/2)); ctx.globalAlpha=1;
+    if(f.gele>0) dessinerIcone(imgGel,f.x,fy,.7+.3*pulse);
     // PV : mêmes carrés harmonisés que les ennemis, sous le vaisseau (rouge = coque renforcée, bleu = cuirassé)
-    if(f.maxhp>1){ const coul=f.type==='rouge'?'#ff5a5a':f.type==='bouclier'?'#4aa3ff':'#ff2a5a'; dessinerPV(f.x,Math.round(f.y+f.img.height/2+2),f.hp,f.maxhp,coul); }
+    if(f.maxhp>1){ const coul=f.type==='rouge'?'#ff5a5a':f.type==='bouclier'?'#4aa3ff':'#ff2a5a'; dessinerPV(f.x,Math.round(fy+f.img.height/2+2),f.hp,f.maxhp,coul); }
     // grade du vaisseau (kills) : 1-3 points jaunes puis étoile dorée à 15+
-    { const k=f.kills||0; if(k>=1){ const gy=Math.round(f.y-f.img.height/2-16);
+    { const k=f.kills||0; if(k>=1){ const gy=Math.round(fy-f.img.height/2-16);
       if(k>=15){ ctx.fillStyle='#ffd23d'; ctx.beginPath(); for(let i=0;i<10;i++){ const ang=-Math.PI/2+i*Math.PI/5, rr=(i%2)?2.4:5.5, x=f.x+Math.cos(ang)*rr, y=gy+Math.sin(ang)*rr; i?ctx.lineTo(x,y):ctx.moveTo(x,y); } ctx.closePath(); ctx.fill(); ctx.strokeStyle='#fff6c0'; ctx.lineWidth=1; ctx.stroke(); }
       else { const n=k<5?1:k<10?2:3; ctx.fillStyle='#ffe14d'; for(let i=0;i<n;i++){ ctx.beginPath(); ctx.arc(f.x-(n-1)*3.5+i*7, gy, 2, 0, 7); ctx.fill(); } } } }
     // pastille de capacité active disponible
-    if(CAPACITES[f.type] && !f.capUsed){ const bx=f.x+f.img.width/2-2, by=f.y-f.img.height/2-2;
+    if(CAPACITES[f.type] && !f.capUsed){ const bx=f.x+f.img.width/2-2, by=fy-f.img.height/2-2;
       ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.beginPath(); ctx.arc(bx,by,4,0,7); ctx.fill();
       ctx.strokeStyle='#fff'; ctx.lineWidth=1; ctx.stroke(); } }
 
@@ -433,22 +442,43 @@ export function dessiner(t){
 function arrondi(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
 /* =====================================================================
-   ILLUSTRATION PIXEL ART DE L'ACCUEIL
+   ILLUSTRATION PIXEL ART DE L'ACCUEIL — ciel étoilé animé plein écran,
+   rejoué en continu (boucle() l'appelle à chaque frame tant que phase
+   est 'accueil' ou 'attente'), pas un décor statique dessiné une fois.
    ===================================================================== */
-export function dessinerIllustration(){
+let illusEtoiles=null;
+function initIllusEtoiles(W,H){
+  illusEtoiles=[];
+  const L=[{n:50,v:5,sz:1,a:.35,col:'#8ea0c8'},{n:34,v:12,sz:1.5,a:.6,col:'#cdd8ff'},{n:16,v:22,sz:2,a:.9,col:'#ffffff'}];
+  for(const l of L) for(let i=0;i<l.n;i++) illusEtoiles.push({x:Math.random()*W,baseY:Math.random()*H,v:l.v,sz:l.sz,a:l.a,col:l.col});
+}
+export function dessinerIllustration(t){
   const cv=document.getElementById('illus'); if(!cv) return; const c=cv.getContext('2d'); c.imageSmoothingEnabled=false;
-  const W=cv.width,H=cv.height; c.clearRect(0,0,W,H);
-  c.fillStyle='#080d1c'; c.fillRect(0,0,W,H);
-  let seed=7; const rnd=()=>((seed=seed*16807%2147483647)/2147483647);
-  for(let i=0;i<40;i++){ const x=Math.floor(rnd()*W),y=Math.floor(rnd()*H),b=120+Math.floor(rnd()*135); c.fillStyle='rgb('+b+','+b+',255)'; c.fillRect(x,y,1+(rnd()<0.2?1:0),1); }
+  const W=state.LARGEUR||240, H=state.HAUTEUR||420;
+  if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; illusEtoiles=null; }
+  if(!illusEtoiles) initIllusEtoiles(W,H);
+  c.clearRect(0,0,W,H); c.fillStyle='#070b18'; c.fillRect(0,0,W,H);
+  // étoiles qui défilent doucement vers le bas, en boucle (position dérivée de t, pas d'état à faire évoluer)
+  for(const s of illusEtoiles){ const y=(s.baseY+t*s.v/1000)%H; c.globalAlpha=s.a; c.fillStyle=s.col; c.fillRect(Math.round(s.x),Math.round(y),s.sz,s.sz); } c.globalAlpha=1;
   // planète en pixel art (coin haut droit)
-  const px=W-34,py=30,R=22,pas=4;
+  const R=Math.round(W*0.16), px=W-R*0.9, py=H*0.13, pas=Math.max(3,Math.round(R/6));
   for(let gx=-R;gx<=R;gx+=pas) for(let gy=-R;gy<=R;gy+=pas){ const cx=gx+pas/2,cy=gy+pas/2; if(Math.hypot(cx,cy)>R) continue;
-    const t=cx+cy; c.fillStyle=t<-R*0.35?'#7ea8e0':t>R*0.45?'#1e2f55':'#4a6ea8'; c.fillRect(px+gx,py+gy,pas,pas); }
-  const draw=(g,ox,oy,sc)=>{ for(let y=0;y<g.length;y++){ const row=g[y]; for(let x=0;x<row.length;x++){ const col=PAL[row[x]]; if(!col) continue; c.fillStyle=col; c.fillRect(ox+x*sc,oy+y*sc,sc,sc); } } };
-  draw(AILE,44,4,2); draw(AILE,W-92,10,2);                 // ennemis en haut
-  draw(JOUEUR,26,72,3); draw(ROUGE,W/2-16,64,3); draw(JOUEUR,W-56,72,3);  // escadrille
-  draw(CROISEUR,Math.round((W-CROISEUR[0].length*3)/2),H-30,3);           // croiseur en bas
-  // lasers
-  c.strokeStyle='#37e0ff'; c.lineWidth=2; c.beginPath(); c.moveTo(41,72); c.lineTo(48,26); c.moveTo(W-46,72); c.lineTo(W-84,32); c.stroke();
+    const tt=cx+cy; c.fillStyle=tt<-R*0.35?'#7ea8e0':tt>R*0.45?'#1e2f55':'#4a6ea8'; c.fillRect(Math.round(px+gx),Math.round(py+gy),pas,pas); }
+  const draw=(g,ox,oy,sc)=>{ for(let y=0;y<g.length;y++){ const row=g[y]; for(let x=0;x<row.length;x++){ const col=PAL[row[x]]; if(!col) continue; c.fillStyle=col; c.fillRect(Math.round(ox+x*sc),Math.round(oy+y*sc),sc,sc); } } };
+  const sc=Math.max(3,Math.round(W/95)), bob=ph=>Math.sin(t/480+ph)*3;
+  // tout le monde reste dans les bandes hautes et basses de l'écran : la bande médiane
+  // (titre + boutons, en DOM par-dessus) ne doit jamais être traversée par l'illustration.
+  // ennemis + escadrille joueur, groupés dans la bande haute (au-dessus du titre)
+  draw(AILE, W*0.14, H*0.05+bob(1.1), sc*0.8);
+  draw(AILE, W*0.74, H*0.04+bob(3.4), sc*0.8);
+  const scJ=sc*1.05;
+  draw(JOUEUR, W*0.16, H*0.15+bob(0), scJ);
+  draw(ROUGE,  W*0.5-ROUGE[0].length*scJ/2, H*0.12+bob(2.2), scJ);
+  draw(JOUEUR, W*0.84-JOUEUR[0].length*scJ, H*0.15+bob(4.6), scJ);
+  // lasers décoratifs
+  c.strokeStyle='rgba(55,224,255,.7)'; c.lineWidth=2; c.beginPath();
+  c.moveTo(W*0.16+scJ*1.5,H*0.15); c.lineTo(W*0.19,H*0.05);
+  c.moveTo(W*0.84-scJ*1.5,H*0.15); c.lineTo(W*0.80,H*0.04); c.stroke();
+  // croiseur, tout en bas (bande basse, sous les boutons)
+  draw(CROISEUR, Math.round((W-CROISEUR[0].length*sc)/2), H*0.90, sc);
 }
