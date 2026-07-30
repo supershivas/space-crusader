@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Croiseur — Design system</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --espace:#070b18; --texte:#e8eefc; --pixel:"Press Start 2P", ui-monospace, "Courier New", monospace;
+    --fs-display: clamp(24px,8.6vmin,46px);
+    --fs-titre:   clamp(13px,4vmin,24px);
+    --fs-modale:  clamp(11px,3.4vmin,17px);
+    --fs-souligne:clamp(8px,2.2vmin,12px);
+    --fs-corps:   clamp(8px,2.2vmin,11px);
+    --fs-petit:   clamp(7px,1.9vmin,9px);
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--espace);color:var(--texte);font-family:var(--pixel);line-height:1.7;padding:24px 16px 80px;}
+  h1{font-size:clamp(20px,6vw,34px);color:#37e0ff;text-shadow:0 3px 0 #10406a;margin:0 0 6px;}
+  .sous{font-size:var(--fs-petit);color:#9fb0d8;max-width:60ch;margin:0 0 40px;}
+  section{max-width:720px;margin:0 auto 56px;}
+  h2{font-size:var(--fs-modale);color:#ffd23d;border-bottom:2px solid #24406e;padding-bottom:8px;margin-bottom:18px;}
+  .note{font-size:var(--fs-petit);color:#7fd0b0;margin-top:6px;}
+
+  /* ===== Couleurs ===== */
+  .swatches{display:flex;flex-wrap:wrap;gap:14px;}
+  .swatch{width:120px;font-size:var(--fs-petit);}
+  .swatch .puce{height:56px;border-radius:8px;border:2px solid rgba(255,255,255,.15);margin-bottom:6px;}
+  .swatch .label{color:#cbd6f0;}
+  .swatch .hex{color:#7f8db0;}
+
+  /* ===== Typographie ===== */
+  .type-row{display:flex;align-items:baseline;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+  .type-row .ex{color:#e8eefc;}
+  .type-row .meta{font-size:var(--fs-petit);color:#7f8db0;}
+  .t-display{font-size:var(--fs-display);color:#37e0ff;text-shadow:0 3px 0 #10406a;}
+  .t-titre{font-size:var(--fs-titre);color:#37e0ff;}
+  .t-modale{font-size:var(--fs-modale);color:#37e0ff;}
+  .t-souligne{font-size:var(--fs-souligne);color:#9fb0d8;}
+  .t-corps{font-size:var(--fs-corps);}
+  .t-petit{font-size:var(--fs-petit);color:#9fb0d8;}
+
+  /* ===== Boutons (repris tels quels de index.html) ===== */
+  button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
+    border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:8px;cursor:pointer;
+    box-shadow:0 6px 22px rgba(47,214,160,.35);display:inline-flex;align-items:center;justify-content:center;gap:8px;}
+  button.jouer:active{transform:translateY(3px);border-bottom-width:2px;}
+  button.jouer:disabled{opacity:.5;cursor:default;}
+  button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
+  button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
+  .btn-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+
+  /* ===== Cartes de choix ===== */
+  .cards{display:flex;gap:10px;flex-wrap:wrap;}
+  .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:10px;
+    padding:12px 8px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;}
+  .card .nom{font-size:9px;color:#ffd23d;line-height:1.4;}
+  .card .desc{font-size:7px;color:#9fb0d8;line-height:1.6;}
+
+  /* ===== Cartes encyclopédie + rareté ===== */
+  .guide-card{font-family:var(--pixel);width:96px;min-height:90px;background:#111a30;border:2px solid #2f4a86;
+    border-radius:8px;padding:8px 6px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;}
+  .guide-card.verrouille{opacity:.45;border-style:dashed;}
+  .guide-card .nom{font-size:6.5px;color:#ffd23d;}
+  .rarete{font-size:5.5px;border:1px solid;border-radius:4px;padding:1px 5px;margin-top:2px;}
+
+  /* ===== Toast / log ===== */
+  .toast-demo{font-family:var(--pixel);font-size:10px;color:#e8eefc;background:rgba(13,21,48,.96);
+    border:3px solid #37e0ff;border-radius:9px;padding:9px 14px;display:inline-block;}
+  .toast-demo.t-ok{border-color:#2fd6a0;} .toast-demo.t-warn{border-color:#ffb347;}
+  .toast-demo.t-bad{border-color:#e5484d;} .toast-demo.t-gold{border-color:#ffd23d;color:#ffd23d;}
+</style>
+</head>
+<body>
+  <h1>Design system — Croiseur</h1>
+  <p class="sous">Référence visuelle des éléments réutilisés dans le jeu (police, échelle typographique,
+    boutons, cartes, rareté, toasts). Page indépendante, à tenir à jour manuellement si les tokens
+    d'<code>index.html</code> changent — il n'y a pas de build partagé entre les deux fichiers.</p>
+
+  <section>
+    <h2>Police</h2>
+    <p style="font-size:14px;">"Press Start 2P" — pixel font unique, utilisée partout (titres, boutons, HUD, texte).</p>
+  </section>
+
+  <section>
+    <h2>Couleurs</h2>
+    <div class="swatches">
+      <div class="swatch"><div class="puce" style="background:#070b18"></div><div class="label">Fond</div><div class="hex">#070b18</div></div>
+      <div class="swatch"><div class="puce" style="background:#e8eefc"></div><div class="label">Texte</div><div class="hex">#e8eefc</div></div>
+      <div class="swatch"><div class="puce" style="background:#37e0ff"></div><div class="label">Accent (cyan)</div><div class="hex">#37e0ff</div></div>
+      <div class="swatch"><div class="puce" style="background:#2fd6a0"></div><div class="label">Primaire</div><div class="hex">#2fd6a0</div></div>
+      <div class="swatch"><div class="puce" style="background:#ffd23d"></div><div class="label">Or / doré</div><div class="hex">#ffd23d</div></div>
+      <div class="swatch"><div class="puce" style="background:#3b5aa0"></div><div class="label">Secondaire</div><div class="hex">#3b5aa0</div></div>
+      <div class="swatch"><div class="puce" style="background:#e5484d"></div><div class="label">Danger / alerte</div><div class="hex">#e5484d</div></div>
+      <div class="swatch"><div class="puce" style="background:#9fb0d8"></div><div class="label">Texte atténué</div><div class="hex">#9fb0d8</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Rareté (éléments non jouables)</h2>
+    <div class="swatches">
+      <div class="swatch"><div class="rarete" style="color:#9fb0d8;border-color:#9fb0d8;display:inline-block;">Commun</div></div>
+      <div class="swatch"><div class="rarete" style="color:#2fd6a0;border-color:#2fd6a0;display:inline-block;">Peu commun</div></div>
+      <div class="swatch"><div class="rarete" style="color:#37e0ff;border-color:#37e0ff;display:inline-block;">Rare</div></div>
+      <div class="swatch"><div class="rarete" style="color:#ffd23d;border-color:#ffd23d;display:inline-block;">Épique</div></div>
+    </div>
+    <p class="note">Ce niveau pilote aussi certains tirages aléatoires en jeu (config.js → RARETE / tirageParRarete).</p>
+  </section>
+
+  <section>
+    <h2>Échelle typographique</h2>
+    <div class="type-row"><span class="ex t-display">CROISEUR</span><span class="meta">--fs-display · écrans de conclusion, titre de l'accueil</span></div>
+    <div class="type-row"><span class="ex t-titre">Titre d'écran</span><span class="meta">--fs-titre</span></div>
+    <div class="type-row"><span class="ex t-modale">Titre de modale</span><span class="meta">--fs-modale</span></div>
+    <div class="type-row"><span class="ex t-souligne">Sous-titre / hint</span><span class="meta">--fs-souligne</span></div>
+    <div class="type-row"><span class="ex t-corps">Texte de carte</span><span class="meta">--fs-corps</span></div>
+    <div class="type-row"><span class="ex t-petit">Texte tertiaire</span><span class="meta">--fs-petit</span></div>
+  </section>
+
+  <section>
+    <h2>Boutons</h2>
+    <div class="btn-row">
+      <button class="jouer">Primaire</button>
+      <button class="jouer secondaire">Secondaire</button>
+      <button class="jouer danger">Danger</button>
+      <button class="jouer" disabled>Désactivé</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cartes de choix</h2>
+    <div class="cards">
+      <div class="card"><div class="nom">Nom du choix</div><div class="desc">Description de l'effet</div></div>
+      <div class="card"><div class="nom">Autre choix</div><div class="desc">+10% PV</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Cartes encyclopédie</h2>
+    <div class="cards">
+      <div class="guide-card"><div class="nom">Découvert</div><div class="rarete" style="color:#37e0ff;border-color:#37e0ff;">Rare</div></div>
+      <div class="guide-card verrouille"><div class="nom">???</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Toasts</h2>
+    <div class="btn-row">
+      <div class="toast-demo">Neutre</div>
+      <div class="toast-demo t-ok">Succès</div>
+      <div class="toast-demo t-warn">Avertissement</div>
+      <div class="toast-demo t-bad">Erreur</div>
+      <div class="toast-demo t-gold">Or</div>
+    </div>
+  </section>
+</body>
+</html>
