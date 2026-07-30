@@ -200,8 +200,12 @@ function poserIcones(){ document.querySelectorAll('[data-ico]').forEach(el=>{ el
    taille si besoin, plutôt que de risquer un débordement ou une coupure. Une seule ligne, toujours. */
 function ajusterTitreAccueil(){
   const h1=document.querySelector('#accueil h1'); if(!h1) return;
+  const accueil=document.getElementById('accueil');
   h1.style.fontSize='';
-  const disponible=h1.parentElement.clientWidth - 2*20 - 6;   // moins le padding de #accueil + marge de sécurité
+  // largeur de référence : #accueil lui-même (son padding fixe), jamais .accueil-contenu —
+  // ce dernier n'a pas de largeur propre (il s'ajuste à son contenu le plus large), donc s'y
+  // référencer rendait le calcul circulaire et désactivait le rétrécissement.
+  const disponible=accueil.clientWidth - 2*20 - 6;   // moins le padding de #accueil + marge de sécurité
   if(h1.scrollWidth>disponible && disponible>0){
     const taille=parseFloat(getComputedStyle(h1).fontSize);
     h1.style.fontSize=Math.max(14, Math.floor(taille*disponible/h1.scrollWidth))+'px';
@@ -226,6 +230,10 @@ genererFavicon();
 poserIcones();
 appliquerLangue();
 ajusterTitreAccueil();
+// la police pixel charge en arrière-plan (font-display:swap) : tant qu'elle n'est pas prête,
+// le titre se mesure avec la police de repli (métriques différentes, souvent plus étroite) —
+// sans ce réajustement une fois la vraie police en place, le titre peut déborder de l'écran.
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(ajusterTitreAccueil);
 majMeilleurScoreAccueil();
 document.getElementById('paramsVersion').textContent='Version '+VERSION;
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';

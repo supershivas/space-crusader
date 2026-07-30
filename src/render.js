@@ -66,23 +66,22 @@ function dessinerAstrePixel(px,py,R,a){
    ===================================================================== */
 export function configurer(){
   state.COLS=COLS_N; state.RANGS=RANGS_N; state.CELL=CELL_N; state.PORTEE_DEP=DEP_N;
-  const MARGE=14; state.LARGEUR=state.COLS*state.CELL+2*MARGE; state.GX=MARGE; state.GY=86; state.GRID_BAS=state.GY+state.RANGS*state.CELL;
-  // Croiseur : plus petit qu'avant (80% de la largeur du terrain, centré) — il occupait toute
-  // la largeur libre, ce qui l'écrasait en une simple bande plutôt qu'un vaisseau qu'on distingue.
-  // Toute la console (PV, ultime, score/statut, Fin du tour) est incrustée sur sa coque : des
-  // décalages fixes depuis le haut de la coque (pas une proportion de la hauteur du vaisseau,
-  // qui varierait trop selon la taille d'écran) garantissent que le texte reste lisible.
-  const sc=Math.max(3,Math.round(state.LARGEUR*0.80/CROISEUR[0].length)); croiseurSC=sc;
+  const MARGE=14; state.LARGEUR=state.COLS*state.CELL+2*MARGE; state.GX=MARGE;
+  // Cadre HUD au-dessus de la grille : boutons son/pause, secteur, score, statut et objectif
+  // de vague y sont tous regroupés (voir dessinerCadreHUD()) — GY laisse la place nécessaire.
+  state.GY=108; state.GRID_BAS=state.GY+state.RANGS*state.CELL;
+  // Croiseur : pleine largeur du terrain (mêmes marges que la grille), comme Fin du tour et
+  // la barre de PV. PV et ultime restent incrustées sur sa coque (voir dessinerConsoleCroiseur()).
+  const sc=Math.max(3,Math.round((state.LARGEUR-2*MARGE)/CROISEUR[0].length)); croiseurSC=sc;
   imgCroiseur=cuire(CROISEUR,sc,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); const BANDE=CROISEUR.length*sc;
   imgBossMap={}; for(const kk in BOSS_GRIDS){ const g=BOSS_GRIDS[kk]; imgBossMap[kk]=cuire(g,Math.max(4,Math.round(3*state.CELL/g[0].length))); }
   cuireUnites(state.CELL);
   const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6; state.BANDE=BANDE;
   state.CROISEUR_X=Math.round((state.LARGEUR-imgCroiseur.width)/2);
   const consX=state.CROISEUR_X+Math.round(imgCroiseur.width*0.06), consW=Math.round(imgCroiseur.width*0.88), cy0=state.cruiserY;
-  state.PV={x:consX,w:consW,y:cy0+8,h:15};
-  state.INFO_Y=cy0+36;
-  state.ULT={x:consX,w:consW,y:cy0+50,h:15};
-  state.BTN={x:consX,w:consW,y:cy0+73,h:40};
+  state.PV={x:consX,w:consW,y:cy0+10,h:16};
+  state.ULT={x:consX,w:consW,y:cy0+34,h:16};
+  state.BTN={x:consX,w:consW,y:cy0+58,h:44};
   state.HAUTEUR=Math.round(cy0+Math.max(BANDE,state.BTN.h+(state.BTN.y-cy0))+18);
   canvas.width=state.LARGEUR; canvas.height=state.HAUTEUR; ctx.imageSmoothingEnabled=false;
   // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille), pas une
@@ -129,6 +128,26 @@ function fond(){
   else if(s5===4) fondPlaneteGeante(th);   // 4 · planète géante
   else fondEtoileGeante();                 // 0 · étoile géante
   for(const s of etoiles){ s.y+=s.v*.016; if(s.y>state.HAUTEUR){s.y=0;s.x=Math.random()*state.LARGEUR;} ctx.globalAlpha=s.a; ctx.fillStyle=s.big?th.star:s.col; ctx.fillRect(s.x,s.y,s.sz,s.sz); } ctx.globalAlpha=1;
+}
+
+/* =====================================================================
+   CADRE HUD (au-dessus de la grille) — regroupe dans un seul encart, même
+   style que les autres panneaux du HUD (radius, cadre) : secteur/vague,
+   score, statut du tour et objectif de vague. Les boutons son/pause (DOM,
+   coin haut-gauche) se posent par-dessus son côté gauche, laissé vide.
+   ===================================================================== */
+function dessinerCadreHUD(){
+  const marge=state.GX, fx=marge, fy=4, fw=state.LARGEUR-2*marge, fh=state.GY-10, txtX0=fx+160;
+  arrondi(fx,fy,fw,fh,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
+  ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+  ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0';
+  ctx.fillText('SECTEUR '+state.secteur+' · V'+state.vague,txtX0,fy+22);
+  ctx.fillStyle='#ffd23d'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='right';
+  ctx.fillText(String(state.score).padStart(3,'0'),fx+fw-8,fy+22);
+  ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
+  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',fx+fw/2,fy+46);
+  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),fx+fw/2,fy+66); }
+  ctx.textAlign='left';
 }
 
 /* =====================================================================
@@ -225,6 +244,7 @@ export function dessiner(t){
   const pulse=.5+.5*Math.sin(t/160);
   ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); if(state.secousse>0) ctx.translate((Math.random()-.5)*state.secousse,(Math.random()-.5)*state.secousse);
   fond();
+  dessinerCadreHUD();
   // fond du champ de bataille (délimite clairement la zone jouable)
   ctx.fillStyle='rgba(18,28,55,.5)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
   ctx.strokeStyle='rgba(95,135,215,.55)'; ctx.lineWidth=2; ctx.strokeRect(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2);
@@ -417,11 +437,10 @@ export function dessiner(t){
   ctx.restore();
 
   // ================= CONSOLE DU CROISEUR =================
-  // Toute la console de bord (PV, ultime, score/vague/statut, Fin du tour) est incrustée sur
-  // la coque elle-même plutôt qu'éparpillée en HUD flottant tout autour — comme un vrai
-  // tableau de bord de vaisseau. Deux barres consécutives de même style (radius, cadre),
-  // seule la couleur de remplissage change : vert/jaune/rouge selon les PV, violet→jaune
-  // pour l'ultime (qui devient un vrai bouton une fois prête).
+  // PV et ultime restent incrustées sur la coque — même style de barre (radius, cadre), seule
+  // la couleur de remplissage change : vert/jaune/rouge selon les PV, violet→jaune pour
+  // l'ultime (qui devient un vrai bouton une fois prête). Secteur/score/statut/objectif sont
+  // dans le cadre HUD au-dessus de la grille (voir dessinerCadreHUD()), pas sur le croiseur.
   { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
     arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
     let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
@@ -431,15 +450,6 @@ export function dessiner(t){
     ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',pv.x+8,pv.y+pv.h/2+3);
     if(state.enFeu>0){ dessinerIcone(imgFeuIco,pv.x+pv.w-14,pv.y+pv.h/2,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='9px monospace'; ctx.textAlign='right'; ctx.fillText('×'+state.enFeu,pv.x+pv.w-24,pv.y+pv.h/2+3); ctx.textAlign='left'; }
   }
-  // score/vague/statut : entre la barre de PV et la jauge d'ultime, sur la coque — son propre
-  // petit panneau sombre, sinon le texte se lit mal directement sur la coque claire du croiseur.
-  const ligneCy=state.INFO_Y;
-  arrondi(state.PV.x,ligneCy-10,state.PV.w,15,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.75)'; ctx.fill();
-  ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('V'+state.vague,state.PV.x+4,ligneCy);
-  ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='right'; ctx.fillText(String(state.score).padStart(3,'0'),state.PV.x+state.PV.w-4,ligneCy);
-  ctx.textAlign='center'; ctx.font='7px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
-  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,ligneCy); ctx.textAlign='left';
-  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),state.LARGEUR/2,15); ctx.textAlign='left'; }
   { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil, u=state.ULT;
     if(!pret){
       arrondi(u.x,u.y,u.w,u.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();

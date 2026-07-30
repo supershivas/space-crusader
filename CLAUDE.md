@@ -49,6 +49,9 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
     radius (`--radius-sm/md/lg/xl`) — jamais une marge, un gap ou un border-radius inventé au
     cas par cas ; les éléments dessinés sur le canvas de jeu (barres/boutons du HUD) suivent la
     même échelle de radius via la constante `RADIUS` dans `render.js` ;
+  - l'interlignage (`--lh-tight` 1.4 / `--lh-normal` 1.6 / `--lh-loose` 1.9, aussi dans
+    `theme.css`) — tout texte multi-ligne doit en hériter un explicitement (jamais laissé au
+    défaut du navigateur, trop serré pour une police pixel) ;
   - les boutons (`button.jouer` primaire, `.secondaire`, `.danger`, état désactivé) — **règle :
     dès que 2 boutons `.jouer` ou plus apparaissent ensemble dans un écran/une modale, les
     envelopper dans `.menu-vertical`** (défini une fois dans `index.html`, redéfini à

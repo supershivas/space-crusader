@@ -38,4 +38,11 @@
   --radius-md: 8px;   /* boutons, icônes rondes, bandeaux (tutoBar, tooltip) */
   --radius-lg: 10px;  /* cartes de choix, encarts (achieve, résultat) */
   --radius-xl: 14px;  /* le plus grand encart (bannière de début d'étape) */
+
+  /* ===== Interlignage — 3 crans, jamais une valeur ad hoc (1.4/1.5/1.6/1.7/1.8/1.85/1.9
+     dispersées sans raison, avec pas mal de texte multi-ligne sans aucun line-height,
+     laissé au défaut du navigateur — trop serré pour une police pixel). */
+  --lh-tight: 1.4;   /* libellés compacts sur une ligne ou deux (nom/desc de petite carte) */
+  --lh-normal: 1.6;  /* texte courant : hints, tooltips, journal, la plupart des paragraphes */
+  --lh-loose: 1.9;   /* paragraphes denses à bien aérer (règles du jeu, menu pause) */
 }
