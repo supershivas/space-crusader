@@ -166,6 +166,7 @@ document.getElementById('btnRelancerTuto').addEventListener('click',()=>{
 document.getElementById('btnPauseReprendre').addEventListener('click',()=>{ if(state.paused) togglePause(); });
 document.getElementById('btnPauseRecommencer').addEventListener('click',()=>{ state.paused=false; document.getElementById('pause').classList.remove('visible'); initAudio(); nouvellePartie(); });
 document.getElementById('btnPauseOptions').addEventListener('click',ouvrirParams);
+document.getElementById('btnPauseGuide').addEventListener('click',()=>{ ouvrirGuide(); });
 document.getElementById('btnPauseAccueil').addEventListener('click',()=>{ retourAccueil(); });
 document.getElementById('btnPauseAbandonner').addEventListener('click',()=>{ if(confirm(t('pause_abandonner_confirm'))) abandonnerPartie(); });
 document.getElementById('pauseBtn').addEventListener('click',()=>{ if(state.phase!=='accueil'&&state.phase!=='fin'&&state.phase!=='attente') togglePause(); });

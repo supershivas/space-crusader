@@ -77,7 +77,7 @@
   .coin{position:absolute;top:8px;z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:8px;width:36px;height:36px;cursor:pointer;line-height:1;}
   #son{left:8px;}
-  #pauseBtn{left:50px;display:none;}
+  #pauseBtn{left:50px;display:none;z-index:16;}
   .coin:active{transform:scale(.94);}
 
   /* Infobulle */
@@ -222,6 +222,7 @@
       <button class="jouer" id="btnPauseReprendre"><span class="ico-slot" data-ico="play"></span><span data-i18n="pause_continuer">Continuer</span></button>
       <button class="jouer" id="btnPauseRecommencer" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="pause_recommencer">Recommencer</span></button>
       <button class="jouer" id="btnPauseOptions" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
+      <button class="jouer" id="btnPauseGuide" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="home_guide">ENCYCLOPÉDIE</span></button>
       <button class="jouer" id="btnPauseAccueil" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
       <button class="jouer danger" id="btnPauseAbandonner" style="font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="refuser"></span><span data-i18n="pause_abandonner">Abandonner</span></button>
       <p data-i18n="pause_hint">P = pause · Échap = annuler l'action</p></div>
