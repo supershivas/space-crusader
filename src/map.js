@@ -143,15 +143,17 @@ export function texteObjectif(o){
   if(!o) return '';
   return o.type==='kills' ? t('obj_kills',{n:o.cible}) : t('obj_'+o.type);
 }
+// "Survis à la vague" n'est jamais tiré comme objectif secondaire : survivre est déjà
+// l'objectif principal implicite de tout combat (on perd la partie sinon), donc ça ne
+// pouvait jamais échouer — un faux objectif toujours réussi.
 export function assignerObjectif(){
-  const pool=[{type:'sansdegat'},{type:'protege'},{type:'kills',cible:Math.max(6,state.COLS)},{type:'survie'}];
+  const pool=[{type:'sansdegat'},{type:'protege'},{type:'kills',cible:Math.max(6,state.COLS)}];
   if(state.boss) pool.push({type:'boss'});
   const o={...pool[Math.floor(Math.random()*pool.length)]};
   state.objectifVague=o; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false; state.damageThisWave=0;
 }
 export function objectifReussi(){ const o=state.objectifVague; if(!o) return false;
-  return o.type==='survie'    ? true
-       : o.type==='sansdegat' ? state.damageThisWave===0
+  return o.type==='sansdegat' ? state.damageThisWave===0
        : o.type==='protege'   ? state.shipsLostThisWave===0
        : o.type==='kills'     ? state.killsThisWave>=o.cible
        : o.type==='boss'      ? state.bossKilledThisWave : false; }

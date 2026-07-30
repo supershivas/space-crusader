@@ -367,11 +367,25 @@ document.getElementById('btnResetProgression').addEventListener('click',()=>{
   });
 });
 
+/* Rétrécit un titre --fs-display (mission/fin de partie) pour qu'il tienne sur une seule
+   ligne, comme ajusterTitreAccueil() dans main.js — même technique (mesure le rendu réel via
+   scrollWidth plutôt que deviner une taille), dupliquée ici plutôt qu'importée pour éviter
+   une dépendance circulaire ui.js↔main.js. Sans ça, un titre long ("FORTERESSE DÉTRUITE !",
+   "ÉLITES ANÉANTIS !") retombe sur 2 lignes et vient chevaucher le texte juste en dessous. */
+function ajusterTitreModale(h1){
+  if(!h1) return; h1.style.fontSize='';
+  const disponible=h1.parentElement.clientWidth-2*16-6;
+  if(h1.scrollWidth>disponible && disponible>0){
+    const taille=parseFloat(getComputedStyle(h1).fontSize);
+    h1.style.fontSize=Math.max(14,Math.floor(taille*disponible/h1.scrollWidth))+'px';
+  }
+}
+
 export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');
   missionTitre.textContent = type==='boss'?t('mission_boss_titre'):(type==='elite'?t('mission_elite_titre'):t('mission_normal_titre'));
   const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+t('objectif_secondaire')+' : '+texteObjectif(state.objectifVague)) : '';
   missionStats.innerHTML = (obj?obj+'<br>':'')+t('mission_secteur')+' '+state.secteur+' · '+t('mission_score')+' '+state.score+'<br>'+t('mission_croiseur')+' '+state.hpCruiser+'/'+state.HP_MAX+' '+t('mission_pv');
-  missionDiv.classList.add('visible'); }
+  missionDiv.classList.add('visible'); ajusterTitreModale(missionTitre); }
 
 export function finPartie(){
   state.phase='fin'; stopMusic(); effacerSauvegarde();
@@ -391,6 +405,7 @@ export function finPartie(){
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
   document.getElementById('fin').classList.remove('cache');
+  ajusterTitreModale(document.querySelector('#fin h1'));
 }
 
 /* Meilleur score déjà réalisé, affiché sur l'accueil (juste sous le titre) pour donner un

@@ -44,8 +44,11 @@
   #accueil{background:var(--espace);backdrop-filter:none;}
   .cache{display:none;}
   h1{font-size:var(--fs-titre);line-height:var(--lh-normal);margin:0;color:#37e0ff;text-shadow:0 3px 0 #10406a;}
-  /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que les autres écrans */
-  #fin h1, #mission h1{font-size:var(--fs-display);text-shadow:0 3px 0 #10406a;text-align:center;width:100%;}
+  /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que
+     les autres écrans. Marge basse de sécurité : même rétréci pour tenir sur une ligne (voir
+     ui.js:ajusterTitreModale), un titre encore trop long sur un petit écran peut retomber sur
+     2 lignes — sans cette marge il venait alors chevaucher le texte juste en dessous. */
+  #fin h1, #mission h1{font-size:var(--fs-display);text-shadow:0 3px 0 #10406a;text-align:center;width:100%;margin-bottom:var(--space-sm);}
   /* titre de l'accueil : occupe toute la largeur de l'écran (moins les marges), le plus gros
      texte du jeu — dimensionné sur la largeur (vw) plutôt que min(largeur,hauteur) comme les
      autres titres, puisque c'est justement la largeur qu'on veut remplir. */

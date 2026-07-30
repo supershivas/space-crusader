@@ -189,7 +189,6 @@ const STRINGS = {
     obj_sansdegat:'Aucun dégât au croiseur',
     obj_protege:'Ne perds aucun vaisseau',
     obj_kills:'Détruis {n} ennemis',
-    obj_survie:'Survis à la vague',
     obj_boss:'Détruis le boss',
 
     // ===== Boss =====
@@ -570,7 +569,6 @@ const STRINGS = {
     obj_sansdegat:'No damage to the cruiser',
     obj_protege:"Don't lose any ship",
     obj_kills:'Destroy {n} enemies',
-    obj_survie:'Survive the wave',
     obj_boss:'Destroy the boss',
 
     boss_canon_nom:'Gunner', boss_canon_desc:'3 columns',
