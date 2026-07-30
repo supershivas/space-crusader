@@ -17,18 +17,18 @@
   h1{font-size:clamp(20px,6vw,34px);color:#37e0ff;text-shadow:0 3px 0 #10406a;margin:0 0 6px;}
   .sous{font-size:var(--fs-petit);color:#9fb0d8;max-width:60ch;margin:0 0 40px;}
   section{max-width:720px;margin:0 auto 56px;}
-  h2{font-size:var(--fs-modale);color:#ffd23d;border-bottom:2px solid #24406e;padding-bottom:8px;margin-bottom:18px;}
-  .note{font-size:var(--fs-petit);color:#7fd0b0;margin-top:6px;}
+  h2{font-size:var(--fs-modale);color:#ffd23d;border-bottom:2px solid #24406e;padding-bottom:var(--space-sm);margin-bottom:var(--space-lg);}
+  .note{font-size:var(--fs-petit);color:#7fd0b0;margin:var(--space-xs) 0 var(--space-md);}
 
   /* ===== Couleurs ===== */
-  .swatches{display:flex;flex-wrap:wrap;gap:14px;}
+  .swatches{display:flex;flex-wrap:wrap;gap:var(--space-md);}
   .swatch{width:120px;font-size:var(--fs-petit);}
-  .swatch .puce{height:56px;border-radius:8px;border:2px solid rgba(255,255,255,.15);margin-bottom:6px;}
+  .swatch .puce{height:56px;border-radius:var(--radius-md);border:2px solid rgba(255,255,255,.15);margin-bottom:var(--space-xs);}
   .swatch .label{color:#cbd6f0;}
   .swatch .hex{color:#7f8db0;}
 
   /* ===== Typographie ===== */
-  .type-row{display:flex;align-items:baseline;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+  .type-row{display:flex;align-items:baseline;gap:var(--space-md);margin-bottom:var(--space-lg);flex-wrap:wrap;}
   .type-row .ex{color:#e8eefc;}
   .type-row .meta{font-size:var(--fs-petit);color:#7f8db0;}
   .t-display{font-size:var(--fs-display);color:#37e0ff;text-shadow:0 3px 0 #10406a;}
@@ -40,55 +40,62 @@
 
   /* ===== Boutons (repris tels quels de index.html) ===== */
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
-    border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:8px;cursor:pointer;
+    border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:var(--radius-md);cursor:pointer;
     box-shadow:0 6px 22px rgba(47,214,160,.35);display:inline-flex;align-items:center;justify-content:center;gap:8px;}
   button.jouer:active{transform:translateY(3px);border-bottom-width:2px;}
   button.jouer:disabled{opacity:.5;cursor:default;}
   button.jouer.secondaire{font-size:var(--fs-corps);color:var(--texte);background:#3b5aa0;border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
-  .btn-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;}
+  .btn-row{display:flex;gap:var(--space-md);flex-wrap:wrap;align-items:center;}
   /* Menu vertical (ex: Pause) : boutons empilés à largeur uniforme, quel que soit le nombre
      de lettres du libellé — sinon la colonne a des bords en escalier. */
-  .menu-vertical{display:flex;flex-direction:column;gap:10px;align-items:center;}
+  .menu-vertical{display:flex;flex-direction:column;gap:var(--space-sm);align-items:center;}
   .menu-vertical button.jouer{width:min(70vw,230px);}
 
   /* ===== Cartes de choix ===== */
-  .cards{display:flex;gap:10px;flex-wrap:wrap;}
-  .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:10px;
+  .cards{display:flex;gap:var(--space-sm);flex-wrap:wrap;}
+  .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-lg);
     padding:12px 8px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;}
   .card .nom{font-size:9px;color:#ffd23d;line-height:1.4;}
   .card .desc{font-size:7px;color:#9fb0d8;line-height:1.6;}
 
   /* ===== Cartes encyclopédie + rareté ===== */
   .guide-card{font-family:var(--pixel);width:96px;min-height:90px;background:#111a30;border:2px solid #2f4a86;
-    border-radius:8px;padding:8px 6px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;}
+    border-radius:var(--radius-md);padding:8px 6px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;}
   .guide-card.verrouille{opacity:.45;border-style:dashed;}
   .guide-card .nom{font-size:6.5px;color:#ffd23d;}
-  .rarete{font-size:5.5px;border:1px solid;border-radius:4px;padding:1px 5px;margin-top:2px;}
+  .rarete{font-size:5.5px;border:1px solid;border-radius:var(--radius-sm);padding:1px 5px;margin-top:2px;}
 
   /* ===== Modales (aperçu statique — la vraie .modal est position:absolute;inset:0 en jeu) ===== */
-  .modal-preview{background:rgba(7,11,24,.9);border-radius:10px;padding:28px 16px;display:flex;justify-content:center;}
+  .modal-preview{background:rgba(7,11,24,.9);border-radius:var(--radius-lg);padding:28px 16px;display:flex;justify-content:center;}
   .modal-inner{text-align:center;max-width:320px;width:100%;}
   .modal-inner h3{font-family:var(--pixel);font-size:var(--fs-modale);color:#37e0ff;text-shadow:0 2px 0 #10406a;margin:0 0 6px;text-align:center;}
-  .modal-inner .m-hint{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-bottom:14px;}
-  .modal-inner .cards{justify-content:center;margin-bottom:14px;}
+  .modal-inner .m-hint{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-bottom:var(--space-md);}
+  .modal-inner .cards{justify-content:center;margin-bottom:var(--space-md);}
 
   /* Bannière de début d'étape (combat/élite/boss) — carte compacte + zoom à l'apparition,
      jamais pleine largeur. Le vrai composant est #etapeBanner dans index.html. */
-  .banner-preview{background:rgba(9,14,28,.92);border:3px solid #ffd23d;border-radius:14px;padding:20px 26px;
+  .banner-preview{background:rgba(9,14,28,.92);border:3px solid #ffd23d;border-radius:var(--radius-xl);padding:20px 26px;
     max-width:300px;margin:0 auto;text-align:center;box-shadow:0 0 44px rgba(255,210,61,.45);}
   .banner-preview h1{font-family:var(--pixel);font-size:var(--fs-display);color:#ffd23d;text-shadow:0 3px 0 #6a4a10;margin:0;line-height:1.3;}
-  .banner-preview .sous-titre{font-family:var(--pixel);font-size:var(--fs-souligne);color:#7fd0b0;margin-top:10px;}
-  .banner-preview .secteur-info{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-top:4px;}
+  .banner-preview .sous-titre{font-family:var(--pixel);font-size:var(--fs-souligne);color:#7fd0b0;margin-top:var(--space-sm);}
+  .banner-preview .secteur-info{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-top:var(--space-xs);}
 
   /* Petite modale de confirmation (résultat d'événement, mise à jour) — titre + texte + un seul bouton OK */
-  .confirm-preview{background:rgba(7,11,24,.9);border-radius:10px;padding:24px 16px;text-align:center;max-width:280px;margin:0 auto;}
-  .confirm-preview h3{font-family:var(--pixel);font-size:var(--fs-modale);color:#37e0ff;margin:0 0 8px;}
-  .confirm-preview p{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin:0 0 14px;}
+  .confirm-preview{background:rgba(7,11,24,.9);border-radius:var(--radius-lg);padding:24px 16px;text-align:center;max-width:280px;margin:0 auto;}
+  .confirm-preview h3{font-family:var(--pixel);font-size:var(--fs-modale);color:#37e0ff;margin:0 0 var(--space-sm);}
+  .confirm-preview p{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin:0 0 var(--space-md);}
+
+  /* ===== Espacements & radius ===== */
+  .space-rows{display:flex;flex-direction:column;gap:var(--space-sm);margin-bottom:var(--space-md);}
+  .space-row{display:flex;align-items:center;gap:var(--space-md);}
+  .space-bar{height:10px;background:#37e0ff;border-radius:var(--radius-sm);flex-shrink:0;}
+  .radius-row{display:flex;align-items:center;gap:var(--space-md);flex-wrap:wrap;margin-bottom:var(--space-md);}
+  .radius-swatch{width:40px;height:40px;background:#243048;border:2px solid #3b5aa0;flex-shrink:0;}
 
   /* ===== Toast / log ===== */
   .toast-demo{font-family:var(--pixel);font-size:10px;color:#e8eefc;background:rgba(13,21,48,.96);
-    border:3px solid #37e0ff;border-radius:9px;padding:9px 14px;display:inline-block;}
+    border:3px solid #37e0ff;border-radius:var(--radius-md);padding:9px 14px;display:inline-block;}
   .toast-demo.t-ok{border-color:#2fd6a0;} .toast-demo.t-warn{border-color:#ffb347;}
   .toast-demo.t-bad{border-color:#e5484d;} .toast-demo.t-gold{border-color:#ffd23d;color:#ffd23d;}
 </style>
@@ -142,6 +149,28 @@
   </section>
 
   <section>
+    <h2>Espacements &amp; radius</h2>
+    <p class="note" style="margin-top:0;">Mêmes crans partout — jamais une marge/un radius inventé au cas par cas
+      pour un composant particulier.</p>
+    <div class="space-rows">
+      <div class="space-row"><div class="space-bar" style="width:var(--space-xs)"></div><span class="meta">--space-xs · 4px — badge/étiquette, marge serrée sous un titre</span></div>
+      <div class="space-row"><div class="space-bar" style="width:var(--space-sm)"></div><span class="meta">--space-sm · 8px — gap entre cartes, padding de bouton</span></div>
+      <div class="space-row"><div class="space-bar" style="width:var(--space-md)"></div><span class="meta">--space-md · 14px — gap entre lignes de démo, marge sous un paragraphe</span></div>
+      <div class="space-row"><div class="space-bar" style="width:var(--space-lg)"></div><span class="meta">--space-lg · 20px — marge sous un titre de section, padding de l'accueil</span></div>
+      <div class="space-row"><div class="space-bar" style="width:var(--space-xl)"></div><span class="meta">--space-xl · 32px — grand espace entre blocs indépendants</span></div>
+    </div>
+    <div class="radius-row">
+      <div class="radius-swatch" style="border-radius:var(--radius-sm)"></div><span class="meta">--radius-sm · badges, miniatures</span>
+      <div class="radius-swatch" style="border-radius:var(--radius-md)"></div><span class="meta">--radius-md · boutons, icônes, bandeaux</span>
+      <div class="radius-swatch" style="border-radius:var(--radius-lg)"></div><span class="meta">--radius-lg · cartes, encarts</span>
+      <div class="radius-swatch" style="border-radius:var(--radius-xl)"></div><span class="meta">--radius-xl · plus grand encart (bannière d'étape)</span>
+    </div>
+    <p class="note">Les barres/boutons dessinés sur le canvas de jeu (PV du croiseur, jauge d'ultime, boutons
+      d'action, Fin du tour) ne peuvent pas lire ces variables CSS — ils suivent la même échelle via la
+      constante <code>RADIUS</code> dans <code>render.js</code>.</p>
+  </section>
+
+  <section>
     <h2>Boutons</h2>
     <div class="btn-row">
       <button class="jouer">Primaire</button>
@@ -149,7 +178,9 @@
       <button class="jouer danger">Danger</button>
       <button class="jouer" disabled>Désactivé</button>
     </div>
-    <p class="sous" style="margin-top:24px;margin-bottom:12px;">Menu vertical (ex: menu Pause) : une action primaire, des actions secondaires, une action destructive — toutes à la même largeur.</p>
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Menu vertical (ex: menu Pause)</h3>
+    <p class="note">Une action primaire, des actions secondaires, une action destructive —
+      toutes à la même largeur, quel que soit le nombre de lettres de leur libellé.</p>
     <div class="menu-vertical">
       <button class="jouer">Continuer</button>
       <button class="jouer secondaire">Options</button>
@@ -176,7 +207,7 @@
 
   <section>
     <h2>Modales</h2>
-    <p class="note" style="margin-bottom:16px;">Fenêtre semi-plein écran (fond assombri + flou, <code>.modal</code>),
+    <p class="note">Fenêtre semi-plein écran (fond assombri + flou, <code>.modal</code>),
       titre centré en <code>--fs-modale</code> (largeur 100%, jamais laissé en <em>shrink-to-fit</em> pour rester
       centré même sur plusieurs lignes), texte d'accompagnement, cartes de choix, un seul bouton de fermeture.</p>
     <div class="modal-preview">
@@ -192,7 +223,7 @@
     </div>
 
     <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Bannière de début d'étape ("wow effect")</h3>
-    <p class="note" style="margin-bottom:16px;">Carte compacte (pas pleine largeur) avec effet de zoom à l'apparition
+    <p class="note">Carte compacte (pas pleine largeur) avec effet de zoom à l'apparition
       (<code>transform:scale()</code> + <code>cubic-bezier</code> "spring"), titre en <code>--fs-display</code> —
       exactement la même taille que les écrans de fin de combat et de défaite. Accompagnée d'explosions de
       particules sur le canvas de jeu, derrière la carte (voir <code>map.js:annoncerEtape()</code>).</p>
@@ -203,7 +234,7 @@
     </div>
 
     <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Modale de confirmation (résultat / mise à jour)</h3>
-    <p class="note" style="margin-bottom:16px;">Titre + texte + un seul bouton OK. Utilisée pour confirmer le
+    <p class="note">Titre + texte + un seul bouton OK. Utilisée pour confirmer le
       résultat d'un événement aléatoire ou d'un bonus de planète, et pour la notification de mise à jour
       (bouton désactivé ~600ms à l'ouverture pour éviter un clic fantôme juste après un chargement de page).</p>
     <div class="confirm-preview">
@@ -213,7 +244,7 @@
     </div>
 
     <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Surmodale de confirmation (action destructive)</h3>
-    <p class="note" style="margin-bottom:16px;">Titre + texte + deux boutons (Annuler / Confirmer en <code>.danger</code>).
+    <p class="note">Titre + texte + deux boutons (Annuler / Confirmer en <code>.danger</code>).
       Remplace les <code>confirm()</code> natifs du navigateur — jamais stylés comme le jeu — pour toute action
       irréversible : abandon de partie, effacement de la progression… Voir <code>ui.js:demanderConfirmation()</code>.</p>
     <div class="confirm-preview">

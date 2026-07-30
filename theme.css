@@ -22,4 +22,20 @@
   --fs-souligne:clamp(8px,2.2vmin,12px);
   --fs-corps:   clamp(8px,2.2vmin,11px);
   --fs-petit:   clamp(7px,1.9vmin,9px);
+
+  /* ===== Échelle d'espacement (marges, gap, padding) — mêmes crans partout, jamais
+     une valeur ad hoc inventée pour un cas particulier. */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 14px;
+  --space-lg: 20px;
+  --space-xl: 32px;
+
+  /* ===== Échelle de radius — mêmes crans pour tout ce qui est arrondi, du plus petit
+     badge au plus grand encart. Les barres/boutons du HUD (dessinés sur le canvas de
+     jeu, pas en CSS) suivent la même échelle : voir RADIUS dans render.js. */
+  --radius-sm: 4px;   /* badges, miniatures */
+  --radius-md: 8px;   /* boutons, icônes rondes, bandeaux (tutoBar, tooltip) */
+  --radius-lg: 10px;  /* cartes de choix, encarts (achieve, résultat) */
+  --radius-xl: 14px;  /* le plus grand encart (bannière de début d'étape) */
 }

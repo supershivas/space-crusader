@@ -41,6 +41,10 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
     `--fs-souligne` / `--fs-corps` / `--fs-petit` (variables CSS définies une seule fois dans
     `theme.css`, chargé par `<link>` depuis `index.html` ET `design-system.html` — plus besoin
     de dupliquer à la main, une modification dans `theme.css` vaut pour les deux) ;
+  - l'échelle d'espacement (`--space-xs/sm/md/lg/xl`, aussi dans `theme.css`) et l'échelle de
+    radius (`--radius-sm/md/lg/xl`) — jamais une marge, un gap ou un border-radius inventé au
+    cas par cas ; les éléments dessinés sur le canvas de jeu (barres/boutons du HUD) suivent la
+    même échelle de radius via la constante `RADIUS` dans `render.js` ;
   - les boutons (`button.jouer` primaire, `.secondaire`, `.danger`, état désactivé) ;
   - les cartes de choix (améliorations/événements) et les cartes d'encyclopédie (avec/sans
     badge de rareté, état verrouillé) ;

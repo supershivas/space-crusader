@@ -16,6 +16,12 @@ const canvas=document.getElementById('jeu'), ctx=canvas.getContext('2d');
 ctx.imageSmoothingEnabled=false;
 const wrap=document.getElementById('wrap'), scene=document.getElementById('scene');
 
+/* Échelle de radius du HUD dessiné sur le canvas — même échelle que --radius-* dans
+   theme.css (le canvas ne peut pas lire les variables CSS). Une seule valeur pour toutes
+   les barres/boutons du HUD (PV du croiseur, jauge/bouton d'ultime, actions, fin du tour) :
+   c'était avant 6/7/9/12 selon l'élément, sans raison. */
+const RADIUS={bar:8};
+
 /* petites icônes pixel-art dessinées directement sur le canvas de jeu (remplacent les emoji ⚠❄⚡🔥) */
 const imgAlerte=iconImage('alerte',3), imgGel=iconImage('gel',3), imgEclairIco=iconImage('eclair',3), imgFeuIco=iconImage('feu',3);
 function dessinerIcone(img,cx,cy,alpha=1){ ctx.globalAlpha=alpha; ctx.drawImage(img,Math.round(cx-img.width/2),Math.round(cy-img.height/2)); ctx.globalAlpha=1; }
@@ -65,10 +71,18 @@ export function configurer(){
   imgBossMap={}; for(const kk in BOSS_GRIDS){ const g=BOSS_GRIDS[kk]; imgBossMap[kk]=cuire(g,Math.max(4,Math.round(3*state.CELL/g[0].length))); }
   cuireUnites(state.CELL);
   const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6;
-  state.BTN={w:Math.min(320,state.LARGEUR-80),h:50}; state.BTN.x=(state.LARGEUR-state.BTN.w)/2; state.BTN.y=state.cruiserY+BANDE+8; state.HAUTEUR=state.BTN.y+state.BTN.h+50;
-  state.ULT={w:Math.min(230,state.LARGEUR-40),h:15}; state.ULT.x=(state.LARGEUR-state.ULT.w)/2; state.ULT.y=22;
+  state.BTN={w:Math.min(320,state.LARGEUR-80),h:50}; state.BTN.x=(state.LARGEUR-state.BTN.w)/2;
+  // jauge d'ultime : se charge sur le croiseur (voir dessinerUltime()) puis, une fois prête,
+  // devient un vrai bouton jaune dans cet emplacement réservé juste au-dessus de Fin du tour —
+  // la place lui est toujours réservée pour que Fin du tour ne bouge jamais d'une frame à l'autre.
+  const ultH=38, ultGap=8;
+  state.ULT={w:state.BTN.w,h:ultH}; state.ULT.x=state.BTN.x; state.ULT.y=state.cruiserY+BANDE+ultGap;
+  state.BTN.y=state.ULT.y+ultH+ultGap; state.HAUTEUR=state.BTN.y+state.BTN.h+50;
   canvas.width=state.LARGEUR; canvas.height=state.HAUTEUR; ctx.imageSmoothingEnabled=false;
-  const gap=8, aw=Math.min(150,(state.LARGEUR-2*MARGE-2*gap)/3), tot=aw*3+gap*2, ax=(state.LARGEUR-tot)/2;
+  // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille et la
+  // barre de PV), pas une largeur plafonnée par bouton qui laissait un vide inutile de
+  // chaque côté sur grand écran.
+  const gap=8, ax=MARGE, aw=(state.LARGEUR-2*MARGE-2*gap)/3;
   state.ACT=[{id:'vaisseau',lbl:'VAISSEAU',x:ax,y:actY,w:aw,h:actH},{id:'tourelle',lbl:'TOURELLE',x:ax+aw+gap,y:actY,w:aw,h:actH},{id:'bouclier',lbl:'BOUCLIER',x:ax+2*(aw+gap),y:actY,w:aw,h:actH}];
   state.HP_MAX=Math.round(100*state.COLS/7); state.MAX_VAISSEAUX=Math.max(6,Math.round(state.COLS*0.8)); state.AILES_MAX=Math.max(10,Math.round(state.COLS*1.5));
   state.STARTF=Math.max(4,Math.round(state.COLS*0.5)); state.STARTA=Math.max(3,Math.round(state.COLS*0.4)); state.RANG_TIR=Math.max(2,Math.round(state.RANGS*0.25)); state.RECHARGE=Math.round(state.HP_MAX*0.10);
@@ -267,9 +281,9 @@ export function dessiner(t){
     ctx.save(); ctx.setLineDash([5,6]); ctx.lineWidth=2;
     for(const bm of an.beams){ if(bm.kind==='allie') continue;   // pas de ligne de tir entre alliés
       const cc=centreCase(bm.c,bm.r1);
-      const col = bm.kind==='ennemi' ? 'rgba(255,80,80,.6)'
+      const col = bm.kind==='ennemi' ? 'rgba(80,170,255,.65)'    // bleu = tir allié, cible atteignable
                 : bm.kind==='menace' ? 'rgba(255,176,61,.5)'     // orange = bloqué par une menace
-                :                      'rgba(255,120,120,.16)';  // rouge pâle = voie libre
+                :                      'rgba(80,170,255,.18)';   // bleu pâle = voie libre, pas de cible
       ctx.strokeStyle=col; ctx.beginPath(); ctx.moveTo(sx,sy); ctx.lineTo(cc.x,cc.y); ctx.stroke(); }
     ctx.restore();
     // cases de déplacement : BLEU (bien distinct du tir en rouge) — étendues pendant un "bond"
@@ -397,11 +411,11 @@ export function dessiner(t){
   // sur la ligne du dessus pour laisser toute la largeur à la barre.
   const marge=14;
   const bx=marge,by=hudBase-18,bw=state.LARGEUR-2*marge,bh=20,ratio=Math.max(0,state.hpCruiser/state.HP_MAX);
-  arrondi(bx,by,bw,bh,6); ctx.fillStyle='#1a2340'; ctx.fill();
+  arrondi(bx,by,bw,bh,RADIUS.bar); ctx.fillStyle='#1a2340'; ctx.fill();
   let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
   ctx.fillStyle=coul; ctx.fillRect(bx+2,by+2,Math.max(0,(bw-4)*ratio),bh-4);
   if(state.flashCroiseur>0){ ctx.fillStyle='rgba(255,255,255,'+(state.flashCroiseur*.5)+')'; ctx.fillRect(bx+2,by+2,bw-4,bh-4); }
-  arrondi(bx,by,bw,bh,6); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+  arrondi(bx,by,bw,bh,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
   ctx.fillStyle='#eef3ff'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',bx+9,by+bh/2+4);
   if(state.enFeu>0){ dessinerIcone(imgFeuIco,bx+bw-16,by+bh/2,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='10px monospace'; ctx.textAlign='right'; ctx.fillText('×'+state.enFeu,bx+bw-26,by+bh/2+4); ctx.textAlign='left'; }
   ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0'; ctx.fillText('VAGUE '+state.vague,marge,hudBase-32);
@@ -410,18 +424,33 @@ export function dessiner(t){
   ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',state.LARGEUR/2,hudBase-32); ctx.textAlign='left';
   if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),state.LARGEUR/2,15); ctx.textAlign='left'; }
   { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil;
-    arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,7); ctx.fillStyle='#141d34'; ctx.fill();
-    ctx.fillStyle=pret?('rgba(255,210,61,'+(0.6+0.4*pulse)+')'):'#7a3fd6'; ctx.fillRect(state.ULT.x+2,state.ULT.y+2,(state.ULT.w-4)*pr,state.ULT.h-4);
-    arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,7); ctx.strokeStyle=pret?'#ffd23d':'#4a5a86'; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle=pret?'#241a00':'#cbd6f0'; ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center';
-    const txtUlt=pret?'FRAPPE ORBITALE':'ULTIME '+Math.floor(pr*100)+'%', cyUlt=state.ULT.y+state.ULT.h-4;
-    if(pret){ const w=ctx.measureText(txtUlt).width; dessinerIcone(imgEclairIco,state.LARGEUR/2-w/2-9,cyUlt-5,1); }
-    ctx.fillText(txtUlt,state.LARGEUR/2,cyUlt); ctx.textAlign='left'; }
+    if(!pret){
+      // en charge : incrustée sur le croiseur lui-même (pas un HUD flottant loin du vaisseau
+      // qu'elle concerne) — un filet violet qui se remplit sur la coque.
+      const uw=imgCroiseur.width*0.72, ux=(state.LARGEUR-uw)/2, uy=state.cruiserY+imgCroiseur.height*0.66, uh=9;
+      arrondi(ux,uy,uw,uh,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.75)'; ctx.fill();
+      ctx.fillStyle='#7a3fd6'; ctx.fillRect(ux+2,uy+2,Math.max(0,(uw-4)*pr),uh-4);
+      arrondi(ux,uy,uw,uh,RADIUS.bar); ctx.strokeStyle='rgba(155,107,214,.7)'; ctx.lineWidth=1.5; ctx.stroke();
+      // emplacement réservé (juste au-dessus de Fin du tour) : vide tant que ce n'est pas prêt,
+      // contour discret + pourcentage, pour ne jamais faire bouger Fin du tour d'une frame à l'autre.
+      arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,RADIUS.bar); ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(74,90,134,.5)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.restore();
+      ctx.fillStyle='#7f8db0'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center';
+      ctx.fillText('ULTIME '+Math.floor(pr*100)+'%',state.LARGEUR/2,state.ULT.y+state.ULT.h/2+4); ctx.textAlign='left';
+    } else {
+      // prête : un vrai bouton jaune, juste au-dessus de Fin du tour.
+      arrondi(state.ULT.x,state.ULT.y,state.ULT.w,state.ULT.h,RADIUS.bar); ctx.fillStyle='rgba(255,210,61,'+(0.75+0.25*pulse)+')'; ctx.fill();
+      ctx.strokeStyle='#ffd23d'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#241a00'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center';
+      const txtUlt='FRAPPE ORBITALE', cyUlt=state.ULT.y+state.ULT.h/2+4, w=ctx.measureText(txtUlt).width;
+      dessinerIcone(imgEclairIco,state.LARGEUR/2-w/2-11,cyUlt-4,1);
+      ctx.fillText(txtUlt,state.LARGEUR/2,cyUlt); ctx.textAlign='left';
+    }
+  }
 
   // boutons d'action
   for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
-    arrondi(a.x,a.y,a.w,a.h,9); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
-    if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,9); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
+    arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
+    if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
     ctx.fillStyle=dispo||vise?'#e8eefc':'#5b6580'; ctx.textAlign='center';
     let lbl=a.lbl; if(a.id==='tourelle'&&state.tirsGratuits>0) lbl='TOUR.x'+(state.tirsGratuits+(state.actionFaite?0:1));
     const ico=a.id==='vaisseau'?imgIcoVaisseau:a.id==='tourelle'?imgIcoTourelle:imgIcoBouclier;
@@ -433,7 +462,7 @@ export function dessiner(t){
       ctx.restore(); }
     ctx.font='8px "Press Start 2P", monospace'; ctx.fillText(lbl,cx,a.y+a.h-7); ctx.textAlign='left'; }
 
-  const actif=state.phase==='joueur'; arrondi(state.BTN.x,state.BTN.y,state.BTN.w,state.BTN.h,12); ctx.fillStyle=actif?'#2fd6a0':'#26424a'; ctx.fill();
+  const actif=state.phase==='joueur'; arrondi(state.BTN.x,state.BTN.y,state.BTN.w,state.BTN.h,RADIUS.bar); ctx.fillStyle=actif?'#2fd6a0':'#26424a'; ctx.fill();
   ctx.fillStyle=actif?'#07240f':'#4b5f66'; ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('FIN DU TOUR ▶',state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
 
   // Transition phase
