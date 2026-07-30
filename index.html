@@ -223,6 +223,7 @@
       <button class="jouer" id="btnPauseRecommencer" style="background:#3b5aa0;border-bottom-color:#25396b;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="restart"></span><span data-i18n="pause_recommencer">Recommencer</span></button>
       <button class="jouer" id="btnPauseOptions" style="background:#243048;border-bottom-color:#141c2c;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
       <button class="jouer" id="btnPauseAccueil" style="background:#5a6dd6;border-bottom-color:#3a4aa0;font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+      <button class="jouer danger" id="btnPauseAbandonner" style="font-size:11px;padding:11px 18px;"><span class="ico-slot" data-ico="refuser"></span><span data-i18n="pause_abandonner">Abandonner</span></button>
       <p data-i18n="pause_hint">P = pause · Échap = annuler l'action</p></div>
     <div id="toast"></div>
     <div id="achieve"><div class="ach-title"><span class="ico-slot" data-ico="trophee"></span><span data-i18n="succes_titre">SUCCÈS</span></div><div id="achieveTxt"></div></div>
@@ -299,7 +300,10 @@
       <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:1.7;margin-top:4px;max-width:34ch"></div>
       <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:1.6"></p>
       <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
-      <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+        <button class="jouer secondaire" id="btnFinAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+      </div>
     </div>
   </div>
 </div>

@@ -74,6 +74,8 @@ const STRINGS = {
     pause_recommencer:'Recommencer',
     pause_options:'Options',
     pause_accueil:'Accueil',
+    pause_abandonner:'Abandonner',
+    pause_abandonner_confirm:'Abandonner la partie en cours ? Tu verras le bilan (score, succès, cristaux) puis tu pourras rejouer ou revenir à l\'accueil.',
     pause_hint:'P = pause · Échap = annuler l\'action',
     // Divers
     mission_continuer:'Continuer ▶',
@@ -457,6 +459,8 @@ const STRINGS = {
     pause_recommencer:'Restart',
     pause_options:'Options',
     pause_accueil:'Home',
+    pause_abandonner:'Abandon',
+    pause_abandonner_confirm:'Abandon the current run? You\'ll see the recap (score, achievements, crystals) then you can play again or go back home.',
     pause_hint:'P = pause · Esc = undo action',
     mission_continuer:'Continue ▶',
     fin_rejouer:'PLAY AGAIN',

@@ -379,6 +379,14 @@ export function retourAccueil(){
   document.getElementById('btnReprendre').style.display = sauvegardeExiste()?'':'none';
 }
 
+/* Abandon volontaire depuis le menu pause : ferme la pause puis affiche
+   le même écran de bilan (score, succès, cristaux) qu'une vraie défaite,
+   avant que le joueur ne retourne à l'accueil via le bouton dédié de #fin. */
+export function abandonnerPartie(){
+  state.paused=false; pauseDiv.classList.remove('visible');
+  finPartie();
+}
+
 /* =====================================================================
    INFOBULLE
    ===================================================================== */
