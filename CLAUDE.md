@@ -28,10 +28,34 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
   Ne jamais réintroduire de dépendance à un CDN externe (Google Fonts ou autre) pour
   l'identité visuelle du jeu — un chargement externe qui échoue silencieusement fait
   perdre le rendu pixel-art (déjà arrivé une fois).
-- **Design system** : réutiliser les variables CSS déjà définies dans `index.html`
-  (`--fs-display`, `--fs-titre`, `--fs-modale`, `--fs-souligne`, `--fs-corps`, `--fs-petit`)
-  et les classes de boutons (`button.jouer`, `.secondaire`, `.danger`) plutôt que d'inventer
-  de nouvelles tailles/couleurs ad hoc. Référence visuelle : `design-system.html`.
+- **Design system — toujours le consulter avant de styler quoi que ce soit** : la page
+  `design-system.html` (racine du repo, liée discrètement en bas des Paramètres du jeu) est
+  la référence visuelle vivante du projet. Avant d'ajouter un nouveau composant visuel
+  (bouton, carte, modale, badge…), y jeter un œil pour réutiliser l'existant plutôt
+  qu'inventer une taille/couleur ad hoc. Elle documente actuellement :
+  - la police (Press Start 2P, auto-hébergée) ;
+  - les couleurs de base (fond, texte, accent cyan, primaire vert, or, secondaire bleu,
+    danger rouge, texte atténué) ;
+  - les niveaux de rareté des éléments non jouables (commun/peu commun/rare/épique) ;
+  - l'échelle typographique complète : `--fs-display` / `--fs-titre` / `--fs-modale` /
+    `--fs-souligne` / `--fs-corps` / `--fs-petit` (variables CSS définies dans `index.html`,
+    dupliquées en dur dans `design-system.html` car les deux fichiers n'ont pas de style
+    partagé — **toute variable ajoutée ou modifiée dans `index.html` doit être répercutée
+    manuellement dans `design-system.html`**) ;
+  - les boutons (`button.jouer` primaire, `.secondaire`, `.danger`, état désactivé) ;
+  - les cartes de choix (améliorations/événements) et les cartes d'encyclopédie (avec/sans
+    badge de rareté, état verrouillé) ;
+  - les modales (fenêtre semi-plein écran type `.modal`, titre centré, texte
+    d'accompagnement, cartes, bouton de fermeture), la bannière de début d'étape ("wow
+    effect" : carte compacte + zoom d'apparition + `--fs-display`) et la modale de
+    confirmation à un seul bouton OK (résultat d'événement / mise à jour) ;
+  - les toasts (neutre/succès/avertissement/erreur/or).
+  **Quand ajouter/modifier une section de `design-system.html`** : dès qu'un nouveau
+  pattern visuel réutilisable apparaît dans `index.html` (nouvelle classe de composant,
+  nouvelle couleur sémantique, nouvel effet d'animation notable) — pas besoin que
+  l'utilisateur le redemande. La page est un aperçu statique autonome (elle ne charge pas
+  `index.html`) : toute démonstration doit être recréée avec des extraits de CSS/HTML
+  fidèles, pas un simple lien vers le vrai composant.
 - **Titres cohérents** : les titres de type "h1" (accueil, écrans de fin/mission, bannière
   de début d'étape) utilisent tous `--fs-display` et doivent rester centrés et sur une seule
   ligne quand c'est possible (voir `ajusterTitreAccueil()` dans `src/main.js` pour l'exemple

@@ -68,6 +68,26 @@
   .guide-card .nom{font-size:6.5px;color:#ffd23d;}
   .rarete{font-size:5.5px;border:1px solid;border-radius:4px;padding:1px 5px;margin-top:2px;}
 
+  /* ===== Modales (aperçu statique — la vraie .modal est position:absolute;inset:0 en jeu) ===== */
+  .modal-preview{background:rgba(7,11,24,.9);border-radius:10px;padding:28px 16px;display:flex;justify-content:center;}
+  .modal-inner{text-align:center;max-width:320px;width:100%;}
+  .modal-inner h3{font-family:var(--pixel);font-size:var(--fs-modale);color:#37e0ff;text-shadow:0 2px 0 #10406a;margin:0 0 6px;text-align:center;}
+  .modal-inner .m-hint{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-bottom:14px;}
+  .modal-inner .cards{justify-content:center;margin-bottom:14px;}
+
+  /* Bannière de début d'étape (combat/élite/boss) — carte compacte + zoom à l'apparition,
+     jamais pleine largeur. Le vrai composant est #etapeBanner dans index.html. */
+  .banner-preview{background:rgba(9,14,28,.92);border:3px solid #ffd23d;border-radius:14px;padding:20px 26px;
+    max-width:300px;margin:0 auto;text-align:center;box-shadow:0 0 44px rgba(255,210,61,.45);}
+  .banner-preview h1{font-family:var(--pixel);font-size:var(--fs-display);color:#ffd23d;text-shadow:0 3px 0 #6a4a10;margin:0;line-height:1.3;}
+  .banner-preview .sous-titre{font-family:var(--pixel);font-size:var(--fs-souligne);color:#7fd0b0;margin-top:10px;}
+  .banner-preview .secteur-info{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-top:4px;}
+
+  /* Petite modale de confirmation (résultat d'événement, mise à jour) — titre + texte + un seul bouton OK */
+  .confirm-preview{background:rgba(7,11,24,.9);border-radius:10px;padding:24px 16px;text-align:center;max-width:280px;margin:0 auto;}
+  .confirm-preview h3{font-family:var(--pixel);font-size:var(--fs-modale);color:#37e0ff;margin:0 0 8px;}
+  .confirm-preview p{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin:0 0 14px;}
+
   /* ===== Toast / log ===== */
   .toast-demo{font-family:var(--pixel);font-size:10px;color:#e8eefc;background:rgba(13,21,48,.96);
     border:3px solid #37e0ff;border-radius:9px;padding:9px 14px;display:inline-block;}
@@ -78,8 +98,9 @@
 <body>
   <h1>Design system — Croiseur</h1>
   <p class="sous">Référence visuelle des éléments réutilisés dans le jeu (police, échelle typographique,
-    boutons, cartes, rareté, toasts). Page indépendante, à tenir à jour manuellement si les tokens
-    d'<code>index.html</code> changent — il n'y a pas de build partagé entre les deux fichiers.</p>
+    boutons, cartes, rareté, modales, bannière de début d'étape, toasts). Page indépendante, à tenir à
+    jour manuellement si les tokens d'<code>index.html</code> changent — il n'y a pas de build partagé
+    entre les deux fichiers.</p>
 
   <section>
     <h2>Police</h2>
@@ -144,6 +165,45 @@
     <div class="cards">
       <div class="guide-card"><div class="nom">Découvert</div><div class="rarete" style="color:#37e0ff;border-color:#37e0ff;">Rare</div></div>
       <div class="guide-card verrouille"><div class="nom">???</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Modales</h2>
+    <p class="note" style="margin-bottom:16px;">Fenêtre semi-plein écran (fond assombri + flou, <code>.modal</code>),
+      titre centré en <code>--fs-modale</code> (largeur 100%, jamais laissé en <em>shrink-to-fit</em> pour rester
+      centré même sur plusieurs lignes), texte d'accompagnement, cartes de choix, un seul bouton de fermeture.</p>
+    <div class="modal-preview">
+      <div class="modal-inner">
+        <h3>Titre de modale</h3>
+        <div class="m-hint">Texte d'accompagnement sous le titre</div>
+        <div class="cards">
+          <div class="card"><div class="nom">Choix A</div><div class="desc">Effet du choix</div></div>
+          <div class="card"><div class="nom">Choix B</div><div class="desc">Effet du choix</div></div>
+        </div>
+        <button class="jouer secondaire">Fermer</button>
+      </div>
+    </div>
+
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Bannière de début d'étape ("wow effect")</h3>
+    <p class="note" style="margin-bottom:16px;">Carte compacte (pas pleine largeur) avec effet de zoom à l'apparition
+      (<code>transform:scale()</code> + <code>cubic-bezier</code> "spring"), titre en <code>--fs-display</code> —
+      exactement la même taille que les écrans de fin de combat et de défaite. Accompagnée d'explosions de
+      particules sur le canvas de jeu, derrière la carte (voir <code>map.js:annoncerEtape()</code>).</p>
+    <div class="banner-preview">
+      <h1>COMBAT<br>ENGAGÉ&nbsp;!</h1>
+      <div class="sous-titre">Ne perds aucun vaisseau</div>
+      <div class="secteur-info">Secteur 3</div>
+    </div>
+
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Modale de confirmation (résultat / mise à jour)</h3>
+    <p class="note" style="margin-bottom:16px;">Titre + texte + un seul bouton OK. Utilisée pour confirmer le
+      résultat d'un événement aléatoire ou d'un bonus de planète, et pour la notification de mise à jour
+      (bouton désactivé ~600ms à l'ouverture pour éviter un clic fantôme juste après un chargement de page).</p>
+    <div class="confirm-preview">
+      <h3>RÉSULTAT</h3>
+      <p>+10% PV au croiseur.</p>
+      <button class="jouer">OK</button>
     </div>
   </section>
 
