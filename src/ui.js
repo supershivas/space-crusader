@@ -12,9 +12,9 @@ import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRen
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
-import { noeudsAtteignables, posNoeud, entrerNoeud, EVENEMENTS, apresEvenement, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
+import { noeudsAtteignables, posNoeud, entrerNoeud, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
 import { iconCanvas, imgBonusPV, imgBonusTIR, imgBonusVAIS } from './sprites.js';
-import { t, L } from './i18n.js';
+import { t } from './i18n.js';
 
 /* icône pixel-art (clé de ICONS) suivie d'un libellé texte, pour un conteneur DOM */
 function icone(container,ico,px=18){ if(!ico) return; const cv=iconCanvas(ico,px); cv.className='pixel-ico'; container.appendChild(cv); }
@@ -31,7 +31,6 @@ const eventDiv=document.getElementById('event'), eventTitre=document.getElementB
 const carteDiv=document.getElementById('carte'), carteChoixDiv=document.getElementById('carteChoix');
 const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionStats=document.getElementById('missionStats');
 const metaDiv=document.getElementById('meta'), metaCristaux=document.getElementById('metaCristaux'), metaCards=document.getElementById('metaCards');
-const planeteDiv=document.getElementById('planete'), planeteTitre=document.getElementById('planeteTitre'), planeteCards=document.getElementById('planeteCards');
 const resultatDiv=document.getElementById('resultat'), resultatTexte=document.getElementById('resultatTexte');
 const majDiv=document.getElementById('maj'), majVersion=document.getElementById('majVersion');
 const guideDiv=document.getElementById('guide');
@@ -149,16 +148,6 @@ export function ouvrirBuild(){ state.choixBuild=true; tooltip.classList.remove('
 function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
 buildDiv.addEventListener('click',e=>{ if(e.target===buildDiv){ state.choixBuild=false; buildDiv.classList.remove('visible'); } });
 
-export function ouvrirEvenement(){ state.phase='evenement'; tooltip.classList.remove('visible');
-  const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
-  eventTitre.textContent='✦ '+L(ev.titre); eventDesc.textContent=L(ev.desc); eventCards.innerHTML='';
-  for(const ch of ev.choix){ const b=document.createElement('div'); b.className='card';
-    b.appendChild(divEmo(ch.ico));
-    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+L(ch.nom)+'</div><div class="desc">'+L(ch.desc)+'</div>'; b.appendChild(d);
-    b.onclick=()=>{ ch.effet(); eventDiv.classList.remove('visible'); apresEvenement(); }; eventCards.appendChild(b); }
-  eventDiv.classList.add('visible');
-}
-
 /* Exécute effet() et récupère le(s) message(s) de journal qu'il a produits pendant son exécution
    (logMsg ajoute une entrée dans #log) : ça donne le résultat RÉEL de l'effet (utile pour les
    effets à issue aléatoire) sans avoir à dupliquer cette logique dans chaque événement.
@@ -204,26 +193,34 @@ export function ouvrirResultat(texte,suite){
   resultatTexte.textContent=texte; resultatDiv.classList.add('visible');
   const fermer=()=>{ resultatDiv.classList.remove('visible'); resultatDiv.removeEventListener('click',surFond); btnResultatOk.removeEventListener('click',fermer); if(suite) suite(); };
   const surFond=(e)=>{ if(e.target===resultatDiv) fermer(); };
+  resultatDiv.addEventListener('click',surFond);
   const btnResultatOk=document.getElementById('btnResultatOk');
   btnResultatOk.addEventListener('click',fermer);
 }
 
-/* scène de planète sans combat : décor sur le canvas + choix en haut de l'écran (nom/desc déjà résolus par map.js) */
+/* scène de planète sans combat (repos, marché, événement…) : même modale propre que les
+   autres écrans de choix (.modal, cf. #upgrade/#build) — avant un bandeau DOM en haut
+   d'écran + décor sur le canvas, qui ne suivait pas le design system et laissait le joueur
+   chercher l'action sur son escadrille, purement décorative sur cette scène. Le canvas
+   derrière reste celui de la carte (state.phase n'est pas changé), comme les autres modales. */
+const ICONE_SCENE={station:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',marche:'point'};
 export function ouvrirScenePlanete(scene){
-  state.phase='planete'; state.scenePlanete={kind:scene.kind,titre:scene.titre}; state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
+  state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
   tooltip.classList.remove('visible');
-  planeteTitre.textContent=scene.titre; planeteCards.innerHTML='';
+  eventTitre.innerHTML=''; icone(eventTitre,ICONE_SCENE[scene.kind]||'alerte',16); eventTitre.appendChild(document.createTextNode(scene.titre));
+  eventDesc.style.display='none';
+  eventCards.innerHTML='';
   for(const ch of scene.choix){ const b=document.createElement('div'); b.className='card';
     b.appendChild(divEmo(ch.ico));
     const d=document.createElement('div'); d.innerHTML='<div class="nom">'+ch.nom+'</div><div class="desc">'+ch.desc+'</div>'; b.appendChild(d);
     b.onclick=()=>{
       const suite=scene.suite;
       const resultat=capturerResultat(ch.effet, ch.desc);
-      planeteDiv.classList.remove('visible'); state.scenePlanete=null;
+      eventDiv.classList.remove('visible');
       ouvrirResultat(resultat, suite);
     };
-    planeteCards.appendChild(b); }
-  planeteDiv.classList.add('visible');
+    eventCards.appendChild(b); }
+  eventDiv.classList.add('visible');
 }
 export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' '+t('meta_cristaux')+' : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;

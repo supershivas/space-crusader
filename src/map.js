@@ -7,7 +7,7 @@ import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
-import { logMsg, ouvrirEvenement, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner } from './ui.js';
+import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner } from './ui.js';
 import { t, L } from './i18n.js';
 
 export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon'};
@@ -268,4 +268,3 @@ export const EVENEMENTS=[
    {ico:'cle', nom:{fr:'Vérifier la coque',en:'Check the hull'}, desc:{fr:'+12% PV',en:'+12% HP'}, effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.12)); }},
    {ico:'eclair', nom:{fr:'Vérifier le réacteur',en:'Check the reactor'}, desc:{fr:'+25% ultime',en:'+25% ultimate'}, effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.25)); }} ]},
 ];
-export function apresEvenement(){ const suite=state.suiteEvenement||demarrerTourJoueur; state.suiteEvenement=null; suite(); }

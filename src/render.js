@@ -80,8 +80,10 @@ export function configurer(){
   state.CROISEUR_X=Math.round((state.LARGEUR-imgCroiseur.width)/2);
   const consX=state.CROISEUR_X+Math.round(imgCroiseur.width*0.06), consW=Math.round(imgCroiseur.width*0.88), cy0=state.cruiserY;
   state.PV={x:consX,w:consW,y:cy0+10,h:16};
-  state.ULT={x:consX,w:consW,y:cy0+34,h:16};
-  state.BTN={x:consX,w:consW,y:cy0+58,h:44};
+  // Barre d'ultime plus haute que la PV (26px vs 16) : c'est le bouton le plus important à
+  // toucher une fois prête (déclenche la frappe orbitale), elle mérite une cible plus large.
+  state.ULT={x:consX,w:consW,y:cy0+34,h:26};
+  state.BTN={x:consX,w:consW,y:cy0+68,h:44};
   state.HAUTEUR=Math.round(cy0+Math.max(BANDE,state.BTN.h+(state.BTN.y-cy0))+18);
   canvas.width=state.LARGEUR; canvas.height=state.HAUTEUR; ctx.imageSmoothingEnabled=false;
   // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille), pas une
@@ -137,16 +139,22 @@ function fond(){
    coin haut-gauche) se posent par-dessus son côté gauche, laissé vide.
    ===================================================================== */
 function dessinerCadreHUD(){
-  const marge=state.GX, fx=marge, fy=4, fw=state.LARGEUR-2*marge, fh=state.GY-10, txtX0=fx+160;
+  // Tout le contenu (hors boutons son/pause, en DOM par-dessus le coin haut-gauche) est
+  // centré sur la largeur du cadre — secteur/vague et score regroupés sur une seule ligne
+  // plutôt que collés chacun à un bord, pour un rendu plus propre et mieux équilibré.
+  const marge=state.GX, fx=marge, fy=4, fw=state.LARGEUR-2*marge, fh=state.GY-10, cx=fx+fw/2;
   arrondi(fx,fy,fw,fh,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
   ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
-  ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillStyle='#7fd0b0';
-  ctx.fillText('SECTEUR '+state.secteur+' · V'+state.vague,txtX0,fy+22);
-  ctx.fillStyle='#ffd23d'; ctx.font='10px "Press Start 2P", monospace'; ctx.textAlign='right';
-  ctx.fillText(String(state.score).padStart(3,'0'),fx+fw-8,fy+22);
+  ctx.textAlign='center';
+  ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='#7fd0b0';
+  const secTxt='SECTEUR '+state.secteur+' · V'+state.vague, secW=ctx.measureText(secTxt).width;
+  ctx.font='10px "Press Start 2P", monospace'; const scoreTxt=String(state.score).padStart(3,'0'), scoreW=ctx.measureText(scoreTxt).width;
+  const gap=16, demi=(secW+gap+scoreW)/2;
+  ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(secTxt,cx-demi,fy+22);
+  ctx.font='10px "Press Start 2P", monospace'; ctx.fillStyle='#ffd23d'; ctx.fillText(scoreTxt,cx-demi+secW+gap,fy+22);
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
-  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',fx+fw/2,fy+46);
-  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),fx+fw/2,fy+66); }
+  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',cx,fy+46);
+  if(state.objectifVague){ ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='rgba(127,208,176,.95)'; ctx.fillText('» '+texteObjectif(state.objectifVague),cx,fy+66); }
   ctx.textAlign='left';
 }
 
@@ -185,48 +193,6 @@ function dessinerMenaceBoss(pulse){
   else { for(let dc=0;dc<3;dc++) ligne(boss.c+dc); }
 }
 
-/* =====================================================================
-   SCÈNE DE PLANÈTE (nœud sans combat) — décor pixel-art + nos vaisseaux
-   ===================================================================== */
-function dessinerStructurePlanete(kind){
-  const cx=state.LARGEUR/2, cy=state.HAUTEUR*0.30, u=Math.max(4,Math.round(state.CELL*0.16));
-  const blk=(gx,gy,gw,gh,col)=>{ ctx.fillStyle=col; ctx.fillRect(Math.round(cx+gx*u),Math.round(cy+gy*u),gw*u,gh*u); };
-  if(kind==='hangar'){                       // baie de dock avec un vaisseau à l'intérieur
-    blk(-9,-5,18,10,'#2a3550'); blk(-8,-4,16,8,'#141d34');
-    blk(-8,-4,16,1,'#37e0ff');
-    blk(-1,-3,2,4,'#c3ccd8'); blk(-2,-2,1,3,'#8b95a3'); blk(1,-2,1,3,'#8b95a3');
-    for(let i=-8;i<8;i+=3) blk(i,5,2,1,'#4a5a86');
-  } else if(kind==='station'){               // plateforme de réparation + croix verte
-    blk(-8,3,16,3,'#3a4a6a'); blk(-8,2,16,1,'#4a5a86');
-    blk(-1,-4,2,6,'#2fd6a0'); blk(-3,-1,6,2,'#2fd6a0');
-  } else if(kind==='tresor'){                // coffre-fort
-    blk(-6,-1,12,6,'#8f6a1f'); blk(-6,-3,12,2,'#ffd23d'); blk(-6,1,12,1,'#e0a13d'); blk(-1,1,2,2,'#ffd23d');
-  } else if(kind==='forge'){                 // enclume / atelier
-    blk(-6,-2,12,2,'#8b95a3'); blk(-3,0,6,3,'#4a5262'); blk(-2,3,4,1,'#3a3f4a'); blk(4,-4,1,3,'#e0a13d');
-  } else {                                    // marché / événement : étal avec auvent
-    blk(-8,-4,16,2,'#c94257'); blk(-8,-2,16,1,'#ff8f6b'); blk(-7,-1,14,5,'#2a3550'); blk(-5,1,3,3,'#37e0ff'); blk(2,1,3,3,'#ffd23d');
-  }
-}
-function dessinerScenePlanete(t){
-  const pulse=.5+.5*Math.sin(t/300);
-  ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); fond();
-  // zone jouable (rappel du combat) en plus discret
-  ctx.fillStyle='rgba(18,28,55,.35)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
-  ctx.strokeStyle='rgba(95,135,215,.4)'; ctx.lineWidth=2; ctx.strokeRect(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2);
-  dessinerStructurePlanete(state.scenePlanete?state.scenePlanete.kind:'marche');
-  // rappel discret : le titre de l'événement est déjà affiché en haut de l'écran (#planeteTitre,
-  // DOM) — pas besoin de le redessiner ici en double. Juste une flèche + un rappel pointant
-  // vers les cartes de choix, pour éviter que le joueur ne cherche l'action sur ses vaisseaux
-  // (simplement décoratifs sur cette scène, comme le croiseur).
-  if(state.scenePlanete){ const al=0.6+0.4*pulse, cy=state.HAUTEUR*0.56;
-    ctx.fillStyle='rgba(159,176,216,'+al+')'; ctx.beginPath(); ctx.moveTo(state.LARGEUR/2,cy-8); ctx.lineTo(state.LARGEUR/2-7,cy+4); ctx.lineTo(state.LARGEUR/2+7,cy+4); ctx.closePath(); ctx.fill();
-    ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('Choisis en haut de l\'écran',state.LARGEUR/2,cy+20); ctx.textAlign='left'; }
-  // croiseur + nos vaisseaux (comme en combat)
-  ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
-  for(const f of state.fighters){ ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(f.y+flotte(f,t)-f.img.height/2)); }
-  ctx.restore();
-}
-
 /* barre de PV en petits carrés (pleins = couleur, vides = gris), centrée sur cx, sous l'unité — commune alliés/ennemis/obstacles */
 function dessinerPV(cx,by,hp,maxhp,coul){ const sq=5,gap=2,tot=maxhp*sq+(maxhp-1)*gap, bx=Math.round(cx-tot/2);
   for(let i=0;i<maxhp;i++){ ctx.fillStyle=i<hp?coul:'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq);
@@ -240,7 +206,6 @@ export function dessiner(t){
   // recouvrent entièrement ce canvas — inutile de dessiner la scène de jeu en dessous.
   if(state.phase==='accueil'||state.phase==='attente') return;
   if(state.phase==='carte'){ dessinerCarte(t); return; }
-  if(state.phase==='planete'){ dessinerScenePlanete(t); return; }
   const pulse=.5+.5*Math.sin(t/160);
   ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); if(state.secousse>0) ctx.translate((Math.random()-.5)*state.secousse,(Math.random()-.5)*state.secousse);
   fond();
@@ -483,8 +448,15 @@ export function dessiner(t){
       ctx.restore(); }
     ctx.font='8px "Press Start 2P", monospace'; ctx.fillText(lbl,cx,a.y+a.h-7); ctx.textAlign='left'; }
 
-  const actif=state.phase==='joueur'; arrondi(state.BTN.x,state.BTN.y,state.BTN.w,state.BTN.h,RADIUS.bar); ctx.fillStyle=actif?'#2fd6a0':'#26424a'; ctx.fill();
-  ctx.fillStyle=actif?'#07240f':'#4b5f66'; ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('FIN DU TOUR ▶',state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
+  // Une fois l'action du tour posée (vaisseau/tourelle/bouclier), plus rien d'autre à faire :
+  // le bouton scintille pour signaler qu'il n'y a plus qu'à valider (sans tirs gratuits restants,
+  // qui autorisent encore d'autres tirs de tourelle avant de finir le tour).
+  const actif=state.phase==='joueur', prete=actif&&state.actionFaite&&state.tirsGratuits<=0;
+  arrondi(state.BTN.x,state.BTN.y,state.BTN.w,state.BTN.h,RADIUS.bar);
+  ctx.fillStyle=prete?'rgba(255,210,61,'+(0.85+0.15*pulse)+')':(actif?'#2fd6a0':'#26424a'); ctx.fill();
+  if(prete){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,'+(0.12+0.18*pulse)+')'; arrondi(state.BTN.x+3,state.BTN.y+3,state.BTN.w-6,state.BTN.h-6,RADIUS.bar-2); ctx.fill(); }
+  ctx.fillStyle=prete?'#241a00':(actif?'#07240f':'#4b5f66'); ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('FIN DU TOUR ▶',state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
 
   // Transition phase
   if(state.phase==='ennemi'&&state.lockTimer>0.7){ ctx.fillStyle='rgba(229,72,77,'+(.2*(state.lockTimer-0.7)/0.2)+')'; ctx.fillRect(0,0,state.LARGEUR,state.HAUTEUR); }

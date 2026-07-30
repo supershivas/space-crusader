@@ -77,10 +77,13 @@
     border-bottom-color:#25396b;padding:11px 18px;box-shadow:none;}
   /* bouton d'action destructive (ex: effacer la progression) */
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
-  .coin{position:absolute;top:8px;z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
+  /* Posés dans le coin haut-gauche du cadre HUD dessiné sur le canvas (voir dessinerCadreHUD()
+     dans render.js) : même marge que le cadre lui-même (--space-sm) pour paraître intégrés au
+     cadre plutôt que flotter par-dessus, et même écart entre eux. */
+  .coin{position:absolute;top:var(--space-sm);z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:var(--radius-md);width:36px;height:36px;cursor:pointer;line-height:1;}
-  #son{left:8px;}
-  #pauseBtn{left:50px;display:none;z-index:16;}
+  #son{left:var(--space-sm);}
+  #pauseBtn{left:calc(36px + var(--space-sm) * 2);display:none;z-index:16;}
   .coin:active{transform:scale(.94);}
 
   /* Infobulle */
@@ -107,11 +110,13 @@
   #pause h2{color:#ffd23d;font-size:var(--fs-modale);margin:0 0 8px;display:flex;align-items:center;justify-content:center;gap:6px;}
   #pause p{font-size:var(--fs-petit);color:#9fb0d8;line-height:var(--lh-loose);margin:6px 0 0;}
 
-  /* Toasts (notifications temporaires) */
+  /* Toasts (notifications temporaires) — même épaisseur de cadre (2px) et mêmes crans
+     d'espacement/typo que le reste du jeu ; avant : cadre 3px, padding et taille de police
+     en dur, aucun des deux sur l'échelle commune. */
   #toast{position:absolute;left:50%;bottom:70px;transform:translateX(-50%);z-index:15;display:flex;flex-direction:column;
-    align-items:center;gap:6px;pointer-events:none;width:max-content;max-width:88%;}
-  .toast{font-family:var(--pixel);font-size:10px;line-height:var(--lh-normal);color:#e8eefc;background:rgba(13,21,48,.96);
-    border:3px solid #37e0ff;border-radius:var(--radius-md);padding:9px 14px;text-align:center;opacity:0;transform:translateY(10px);
+    align-items:center;gap:var(--space-sm);pointer-events:none;width:max-content;max-width:88%;}
+  .toast{font-family:var(--pixel);font-size:var(--fs-corps);line-height:var(--lh-normal);color:#e8eefc;background:rgba(13,21,48,.96);
+    border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);text-align:center;opacity:0;transform:translateY(10px);
     transition:opacity .25s,transform .25s;box-shadow:0 6px 18px rgba(0,0,0,.45);}
   .toast.show{opacity:1;transform:translateY(0);}
   .toast.t-ok{border-color:#2fd6a0;} .toast.t-warn{border-color:#ffb347;} .toast.t-bad{border-color:#e5484d;}
@@ -194,15 +199,6 @@
   .card .emo canvas{image-rendering:pixelated;}
   #achieve .ach-title{display:flex;align-items:center;justify-content:center;}
 
-  /* Barre de choix en haut de l'écran (planètes sans combat) : padding-top généreux pour
-     toujours passer sous les icônes son/pause (position:absolute, top:8px, ~44px de haut)
-     plutôt que sous leur titre centré — sinon le bouton pause cache le début du texte. */
-  #planete{position:absolute;top:0;left:0;right:0;z-index:14;display:none;flex-direction:column;align-items:center;gap:var(--space-sm);
-    padding:52px var(--space-md) var(--space-md);background:linear-gradient(180deg,rgba(7,11,24,.94),rgba(7,11,24,.7));border-bottom:2px solid #24406e;}
-  #planete.visible{display:flex;}
-  #planete h3{font-family:var(--pixel);color:#37e0ff;font-size:var(--fs-modale);margin:0;text-shadow:0 2px 0 #10406a;line-height:var(--lh-normal);text-align:center;}
-  #planete .card{width:100px;min-height:104px;}
-
   /* Tutoriel guidé */
   #tutoHalo{position:absolute;pointer-events:none;z-index:11;border:3px solid #ffd23d;border-radius:50%;
     box-shadow:0 0 14px rgba(255,210,61,.8);opacity:0;transition:opacity .2s;transform:translate(-50%,-50%);}
@@ -230,7 +226,6 @@
     <div id="tutoHalo"></div>
     <div id="tutoLine"></div>
     <div id="tutoBar"><p id="tutoTexte"></p><button id="tutoSkip" data-i18n="tuto_passer">Passer le tutoriel</button></div>
-    <div id="planete"><h3 id="planeteTitre"></h3><div class="cards" id="planeteCards"></div></div>
     <div id="pause" class="menu-vertical"><h2><span class="ico-slot" data-ico="pause"></span>PAUSE</h2>
       <button class="jouer" id="btnPauseReprendre"><span class="ico-slot" data-ico="play"></span><span data-i18n="pause_continuer">Continuer</span></button>
       <button class="jouer secondaire" id="btnPauseOptions"><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="pause_options">Options</span></button>
