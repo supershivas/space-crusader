@@ -4,9 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Croiseur — Bataille Spatiale</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<!-- Police pixel-art auto-hébergée (fonts/PressStart2P.woff2) : évite toute dépendance à un CDN
+     externe (Google Fonts) qui, s'il ne charge pas — réseau lent, bloqueur, hors-ligne — faisait
+     retomber tout le jeu sur la police monospace système, perdant le rendu pixel-art voulu. -->
+<style>
+  @font-face{ font-family:'Press Start 2P'; font-style:normal; font-weight:400; font-display:swap;
+    src:url('fonts/PressStart2P.woff2') format('woff2'); }
+</style>
 <!-- PWA -->
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#070b18">
