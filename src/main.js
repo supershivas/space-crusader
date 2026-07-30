@@ -140,7 +140,7 @@ function ouvrirInfos(){
 }
 document.getElementById('btnInfo').addEventListener('click',ouvrirParams);
 document.getElementById('btnParamsInfos').addEventListener('click',ouvrirInfos);
-document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); });
+document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); ajusterTitreAccueil(); });
 document.getElementById('btnParamsFermer').addEventListener('click',()=>{ document.getElementById('params').classList.remove('visible'); });
 /* Force un rechargement complet (déchargement des caches connus + reload) pour récupérer
    la dernière version du jeu sans que le joueur ait à vider manuellement le cache du navigateur. */
@@ -191,6 +191,22 @@ function genererFavicon(){
 /* remplace les emplacements <span class="ico-slot" data-ico="..."> par leur icône pixel-art */
 function poserIcones(){ document.querySelectorAll('[data-ico]').forEach(el=>{ el.innerHTML=''; el.appendChild(iconCanvas(el.dataset.ico,16)); }); }
 
+/* Garantit que le titre de l'accueil ne déborde ni ne se coupe jamais : la taille CSS (container
+   query) suffit dans l'immense majorité des cas, mais ne connaît pas le padding de l'écran ni les
+   valeurs exactes de rendu de la police — on mesure ici le rendu réel et on réduit encore la
+   taille si besoin, plutôt que de risquer un débordement ou une coupure. Une seule ligne, toujours. */
+function ajusterTitreAccueil(){
+  const h1=document.querySelector('#accueil h1'); if(!h1) return;
+  h1.style.fontSize='';
+  const disponible=h1.parentElement.clientWidth - 2*20 - 6;   // moins le padding de #accueil + marge de sécurité
+  if(h1.scrollWidth>disponible && disponible>0){
+    const taille=parseFloat(getComputedStyle(h1).fontSize);
+    h1.style.fontSize=Math.max(14, Math.floor(taille*disponible/h1.scrollWidth))+'px';
+  }
+}
+window.addEventListener('resize',ajusterTitreAccueil);
+if(window.visualViewport) window.visualViewport.addEventListener('resize',ajusterTitreAccueil);
+
 /* Signale au joueur qu'une mise à jour a été appliquée depuis sa dernière visite sur cet appareil
    (numéro de version différent de celui stocké) : modale d'info + numéro de version + bouton OK.
    Ne s'affiche jamais lors de la toute première visite (rien à comparer). */
@@ -206,6 +222,7 @@ loadData(); chargerDifficultePreferee(); chargerLangue(); configurer(); initEtoi
 genererFavicon();
 poserIcones();
 appliquerLangue();
+ajusterTitreAccueil();
 document.getElementById('paramsVersion').textContent='Version '+VERSION;
 if(sauvegardeExiste()) document.getElementById('btnReprendre').style.display='';
 // Au démarrage, on va directement à l'accueil : le tutoriel guidé (voir tuto.js) suffit à
