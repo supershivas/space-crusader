@@ -136,7 +136,7 @@ passer à la suivante — jamais tout d'un bloc) :
    proximité/destruction). Chaque mécanique testée isolément avant la
    suivante.
 
-6. **UI/HUD** (`ui.js`, `render.js`) : barre de PV de la base à la place de
+6. ✅ **UI/HUD** (`ui.js`, `render.js`) : barre de PV de la base à la place de
    la barre de PV croiseur, masquage des actions `tourelle`/`bouclier`,
    récap de fin de mission réutilisant `ouvrirMission`/le circuit de
    récompense `elite` (choix d'amélioration).
@@ -159,7 +159,7 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 6 (UI/HUD — barre de PV de la base à la place de
-celle du croiseur, masquage visuel propre des actions tourelle/bouclier,
-polish du récap de fin de mission). Les 4 biomes ont chacun leur mécanique
-de terrain fonctionnelle depuis l'étape 5.
+**Prochaine étape** : étape 7 (sauvegarde/reprise d'une mission planète en
+cours — aujourd'hui, quitter en pleine mission renvoie à la carte au
+rechargement, sans faire perdre la progression du secteur, mais sans non
+plus reprendre le siège où il en était).
