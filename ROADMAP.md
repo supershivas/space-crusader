@@ -119,7 +119,7 @@ passer à la suivante — jamais tout d'un bloc) :
    branche de percée finale qui suppose un croiseur — à remplacer par un
    arrêt en ligne de défense devant la base).
 
-4. **Boucle de tour dédiée** : `demarrerTourJoueurPlanete()` (identique au
+4. ✅ **Boucle de tour dédiée** : `demarrerTourJoueurPlanete()` (identique au
    combat spatial mais sans actions `tourelle`/`bouclier`) et
    `finDuTourPlanete()` (tirs des tourelles fixes + avance de la garnison +
    check victoire base à 0 PV / échec flotte à 0 vaisseau). Réutilise au
@@ -159,5 +159,6 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 4 (boucle de tour dédiée — checkpoint : un combat
-« boîte grise » jouable de bout en bout).
+**Prochaine étape** : étape 5 (mécaniques de biome, une à la fois : désert →
+grotte → glace → villes anciennes). Le combat « boîte grise » est jouable de
+bout en bout depuis l'étape 4, sans habillage ni effet de biome.
