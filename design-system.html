@@ -105,9 +105,12 @@
   /* ===== Toast / log =====
      Chaque variante teinte aussi le texte (pas seulement la bordure), y compris "Neutre"
      qui reprend le cyan d'accent plutôt qu'un blanc terne — sinon trop discret une fois
-     posé sur un écran de jeu déjà chargé. */
-  .toast-demo{font-family:var(--pixel);font-size:var(--fs-corps);color:#bfeeff;background:rgba(13,21,48,.96);
-    border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);display:inline-block;}
+     posé sur un écran de jeu déjà chargé. Contour de texte (--stroke) + fond opaque +
+     ombre portée marquée : un toast se pose souvent par-dessus la grille de combat
+     (étoiles, lasers, explosions), un fond translucide seul le rendait trop discret. */
+  .toast-demo{font-family:var(--pixel);font-size:var(--fs-corps);color:#bfeeff;background:#0d1530;text-shadow:var(--stroke);
+    border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);display:inline-block;
+    box-shadow:0 0 0 1px rgba(55,224,255,.4),0 6px 18px rgba(0,0,0,.7);}
   .toast-demo.t-ok{border-color:#2fd6a0;color:#baffe0;} .toast-demo.t-warn{border-color:#ffb347;color:#ffdcae;}
   .toast-demo.t-bad{border-color:#e5484d;color:#ffb8ba;} .toast-demo.t-gold{border-color:#ffd23d;color:#ffd23d;}
 </style>

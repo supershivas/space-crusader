@@ -45,4 +45,10 @@
   --lh-tight: 1.4;   /* libellés compacts sur une ligne ou deux (nom/desc de petite carte) */
   --lh-normal: 1.6;  /* texte courant : hints, tooltips, journal, la plupart des paragraphes */
   --lh-loose: 1.9;   /* paragraphes denses à bien aérer (règles du jeu, menu pause) */
+
+  /* ===== Contour de texte ("stroke") — un seul endroit pour ce motif de 4 ombres empilées,
+     réutilisé partout où un texte coloré doit rester lisible par-dessus un fond de jeu chargé
+     (étoiles, explosions, HUD) plutôt que de compter sur le seul contraste de couleur.
+     Utilisation : text-shadow: var(--stroke), <ombre portée existante s'il y en a une>; */
+  --stroke: -1px -1px 0 #05070f, 1px -1px 0 #05070f, -1px 1px 0 #05070f, 1px 1px 0 #05070f;
 }

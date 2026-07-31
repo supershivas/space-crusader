@@ -580,6 +580,13 @@ canvas.addEventListener('pointermove', ev=>{
   positionnerTooltip(ev.clientX,ev.clientY);
   const cell=caseDe(x,y); state.hoverCell=cell; state.hoverTime=performance.now();
 });
+/* Sur tactile, il n'y a pas de "pointermove" continu après avoir relâché le doigt (contrairement
+   à la souris) : sans ça, l'infobulle affichée au dernier point de contact restait affichée à
+   l'écran indéfiniment, jusqu'au prochain survol. On la cache donc explicitement dès que le
+   doigt/curseur quitte le canvas ou se relève. */
+canvas.addEventListener('pointerup', ()=>{ tooltip.classList.remove('visible'); state.hoverCell=null; });
+canvas.addEventListener('pointercancel', ()=>{ tooltip.classList.remove('visible'); state.hoverCell=null; });
+canvas.addEventListener('pointerleave', ()=>{ tooltip.classList.remove('visible'); state.hoverCell=null; });
 
 canvas.addEventListener('pointerdown', ev=>{
   initAudio(); if(state.paused) return;

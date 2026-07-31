@@ -121,17 +121,21 @@
      visuellement (bordure fine, texte terne, à peine visible sur un fond déjà chargé).
      Couleur : chaque variante teinte aussi le texte (pas seulement la bordure) pour
      ressortir davantage — même logique que "Or", généralisée à toutes les variantes,
-     y compris "Neutre" qui reprend le cyan d'accent du jeu plutôt qu'un blanc terne. */
+     y compris "Neutre" qui reprend le cyan d'accent du jeu plutôt qu'un blanc terne.
+     Contour de texte (--stroke, theme.css) + fond plus opaque + bordure/ombre portée
+     renforcées : en combat, un toast se pose souvent par-dessus la grille (étoiles,
+     lasers, explosions) où le fond translucide seul le rendait trop discret. */
   #toast{position:absolute;left:50%;top:118px;transform:translateX(-50%);z-index:15;display:flex;flex-direction:column;
     align-items:center;gap:var(--space-sm);pointer-events:none;width:max-content;max-width:88%;}
-  .toast{font-family:var(--pixel);font-size:var(--fs-corps);line-height:var(--lh-normal);color:#bfeeff;background:rgba(13,21,48,.96);
+  .toast{font-family:var(--pixel);font-size:var(--fs-corps);line-height:var(--lh-normal);color:#bfeeff;background:#0d1530;
+    text-shadow:var(--stroke);
     border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);text-align:center;opacity:0;transform:translateY(-10px);
-    transition:opacity .25s,transform .25s;box-shadow:0 0 0 1px rgba(55,224,255,.25),0 6px 18px rgba(0,0,0,.5);}
+    transition:opacity .25s,transform .25s;box-shadow:0 0 0 1px rgba(55,224,255,.4),0 6px 18px rgba(0,0,0,.7);}
   .toast.show{opacity:1;transform:translateY(0);}
-  .toast.t-ok{border-color:#2fd6a0;color:#baffe0;box-shadow:0 0 0 1px rgba(47,214,160,.25),0 6px 18px rgba(0,0,0,.5);}
-  .toast.t-warn{border-color:#ffb347;color:#ffdcae;box-shadow:0 0 0 1px rgba(255,179,71,.25),0 6px 18px rgba(0,0,0,.5);}
-  .toast.t-bad{border-color:#e5484d;color:#ffb8ba;box-shadow:0 0 0 1px rgba(229,72,77,.25),0 6px 18px rgba(0,0,0,.5);}
-  .toast.t-gold{border-color:#ffd23d;color:#ffd23d;box-shadow:0 0 0 1px rgba(255,210,61,.25),0 6px 18px rgba(0,0,0,.5);}
+  .toast.t-ok{border-color:#2fd6a0;color:#baffe0;box-shadow:0 0 0 1px rgba(47,214,160,.4),0 6px 18px rgba(0,0,0,.7);}
+  .toast.t-warn{border-color:#ffb347;color:#ffdcae;box-shadow:0 0 0 1px rgba(255,179,71,.4),0 6px 18px rgba(0,0,0,.7);}
+  .toast.t-bad{border-color:#e5484d;color:#ffb8ba;box-shadow:0 0 0 1px rgba(229,72,77,.4),0 6px 18px rgba(0,0,0,.7);}
+  .toast.t-gold{border-color:#ffd23d;color:#ffd23d;box-shadow:0 0 0 1px rgba(255,210,61,.4),0 6px 18px rgba(0,0,0,.7);}
 
   /* Achievements popup */
   #achieve{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);z-index:12;
