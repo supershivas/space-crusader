@@ -113,6 +113,28 @@
     box-shadow:0 0 0 1px rgba(55,224,255,.4),0 6px 18px rgba(0,0,0,.7);}
   .toast-demo.t-ok{border-color:#2fd6a0;color:#baffe0;} .toast-demo.t-warn{border-color:#ffb347;color:#ffdcae;}
   .toast-demo.t-bad{border-color:#e5484d;color:#ffb8ba;} .toast-demo.t-gold{border-color:#ffd23d;color:#ffd23d;}
+
+  /* ===== Backgrounds ===== */
+  .bg-swatch{width:150px;border-radius:var(--radius-md);overflow:hidden;border:2px solid rgba(255,255,255,.12);}
+  .bg-swatch .neb{height:44px;display:flex;}
+  .bg-swatch .neb div{flex:1;}
+  .bg-swatch .astre-row{height:26px;display:flex;align-items:center;justify-content:center;gap:6px;background:#070b18;}
+  .bg-swatch .astre-row div{width:14px;height:14px;border-radius:50%;}
+  .bg-swatch .star{height:10px;}
+  .bg-swatch .label{font-size:var(--fs-petit);color:#9fb0d8;text-align:center;padding:4px 0;background:#0d1530;}
+
+  /* ===== Catalogue de sprites (rendus en direct depuis sprites.js — voir le script en fin
+     de page) : contrairement aux autres composants recréés à la main en CSS, un catalogue de
+     40+ sprites pixel art serait ingérable à dupliquer manuellement et se désynchroniserait
+     du jeu réel au premier changement. sprites.js n'a aucune dépendance DOM au chargement du
+     module (seulement dans ses fonctions), donc l'importer ici pour de vrai reste sûr. */
+  .sprite-card{font-family:var(--pixel);width:88px;min-height:104px;background:#111a30;border:2px solid #2f4a86;
+    border-radius:var(--radius-md);padding:8px 6px;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;}
+  .sprite-card canvas{image-rendering:pixelated;}
+  .sprite-card .nom{font-size:6.5px;color:#ffd23d;line-height:var(--lh-tight);}
+  .sprite-card.elite{border-color:#ffd23d;}
+  .sprite-card.boss{border-color:#e5484d;width:104px;}
+  h3.sub{font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;}
 </style>
 </head>
 <body>
@@ -139,6 +161,52 @@
       <div class="swatch"><div class="puce" style="background:#3b5aa0"></div><div class="label">Secondaire</div><div class="hex">#3b5aa0</div></div>
       <div class="swatch"><div class="puce" style="background:#e5484d"></div><div class="label">Danger / alerte</div><div class="hex">#e5484d</div></div>
       <div class="swatch"><div class="puce" style="background:#9fb0d8"></div><div class="label">Texte atténué</div><div class="hex">#9fb0d8</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Backgrounds</h2>
+    <p class="note" style="margin-top:0;">Fond de base <code>#070b18</code> (<code>--espace</code>) partout. En combat, le secteur
+      cycle parmi 6 thèmes (nébuleuses en dégradé, astre pixel-art, couleur d'étoiles) — voir
+      <code>render.js:THEMES</code> / <code>themeSecteur()</code>. L'illustration d'accueil réutilise le même fond de base
+      avec un champ d'étoiles animé et une planète bleutée fixe (voir <code>dessinerIllustration()</code>).</p>
+    <div class="swatches">
+      <div class="bg-swatch">
+        <div class="neb"><div style="background:#1a1030"></div><div style="background:#0f1a30"></div></div>
+        <div class="astre-row"><div style="background:#7fb0e0"></div><div style="background:#3a5f9e"></div><div style="background:#22355e"></div></div>
+        <div class="star" style="background:#cdd8ff"></div>
+        <div class="label">1 · Bleu (planète)</div>
+      </div>
+      <div class="bg-swatch">
+        <div class="neb"><div style="background:#301c10"></div><div style="background:#30200a"></div></div>
+        <div class="astre-row"><div style="background:#ffe08a"></div><div style="background:#ff9a3d"></div><div style="background:#e0561f"></div></div>
+        <div class="star" style="background:#ffe6c8"></div>
+        <div class="label">2 · Soleil orange</div>
+      </div>
+      <div class="bg-swatch">
+        <div class="neb"><div style="background:#0e2418"></div><div style="background:#0c2028"></div></div>
+        <div class="astre-row"><div style="background:#8fe89a"></div><div style="background:#3f9e6a"></div><div style="background:#1f5540"></div></div>
+        <div class="star" style="background:#c8ffe0"></div>
+        <div class="label">3 · Vert (planète)</div>
+      </div>
+      <div class="bg-swatch">
+        <div class="neb"><div style="background:#241030"></div><div style="background:#1c1030"></div></div>
+        <div class="astre-row"><div style="background:#d0a0ff"></div><div style="background:#8a5fce"></div><div style="background:#4a2f7a"></div></div>
+        <div class="star" style="background:#ecd8ff"></div>
+        <div class="label">4 · Violet (planète)</div>
+      </div>
+      <div class="bg-swatch">
+        <div class="neb"><div style="background:#301018"></div><div style="background:#240c14"></div></div>
+        <div class="astre-row"><div style="background:#ffb0b0"></div><div style="background:#ff5a5a"></div><div style="background:#a01f2f"></div></div>
+        <div class="star" style="background:#ffd6d6"></div>
+        <div class="label">5 · Naine rouge</div>
+      </div>
+      <div class="bg-swatch">
+        <div class="neb"><div style="background:#0c2230"></div><div style="background:#141030"></div></div>
+        <div class="astre-row"><div style="background:#a0e8ff"></div><div style="background:#37a0d6"></div><div style="background:#215f8f"></div></div>
+        <div class="star" style="background:#d8f4ff"></div>
+        <div class="label">6 · Cyan glacé</div>
+      </div>
     </div>
   </section>
 
@@ -304,6 +372,33 @@
   </section>
 
   <section>
+    <h2>Catalogue des vaisseaux, navettes, croiseurs, ennemis, boss</h2>
+    <p class="note" style="margin-top:0;">Rendu en direct depuis <code>sprites.js</code> (import réel du module, pas une
+      recréation à la main) — toujours synchronisé avec le jeu. Bordure or = élite, bordure rouge = boss.</p>
+
+    <h3 class="sub">Croiseur (+ skins cosmétiques)</h3>
+    <div class="cards" id="cat-croiseur"></div>
+
+    <h3 class="sub">Vaisseaux alliés jouables</h3>
+    <div class="cards" id="cat-allies"></div>
+
+    <h3 class="sub">Navettes</h3>
+    <div class="cards" id="cat-navettes"></div>
+
+    <h3 class="sub">Ennemis (ailes)</h3>
+    <div class="cards" id="cat-ennemis"></div>
+
+    <h3 class="sub">Élites</h3>
+    <div class="cards" id="cat-elites"></div>
+
+    <h3 class="sub">Boss</h3>
+    <div class="cards" id="cat-boss"></div>
+
+    <h3 class="sub">Obstacles &amp; menaces</h3>
+    <div class="cards" id="cat-obstacles"></div>
+  </section>
+
+  <section>
     <h2>Toasts</h2>
     <div class="btn-row">
       <div class="toast-demo">Neutre</div>
@@ -313,5 +408,78 @@
       <div class="toast-demo t-gold">Or</div>
     </div>
   </section>
+
+<script type="module">
+import { cuireFit } from './src/sprites.js';
+import * as S from './src/sprites.js';
+import { SKINS_CROISEUR, SKINS_VAISSEAUX } from './src/config.js';
+
+/* taille de rendu uniforme (CELL fictif) quelle que soit la taille native de la grille —
+   même fonction que le jeu utilise pour caser un sprite dans une case (entities.js). */
+const TAILLE=64;
+function carte(container,grille,nom,opts){
+  opts=opts||{};
+  const div=document.createElement('div');
+  div.className='sprite-card'+(opts.elite?' elite':'')+(opts.boss?' boss':'');
+  const img=cuireFit(grille,opts.taille||TAILLE,opts.over);
+  const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
+  cv.getContext('2d').drawImage(img,0,0);
+  div.appendChild(cv);
+  const label=document.createElement('div'); label.className='nom'; label.textContent=nom;
+  div.appendChild(label);
+  document.getElementById(container).appendChild(div);
+}
+
+// Croiseur + skins cosmétiques
+carte('cat-croiseur',S.CROISEUR,'Croiseur',{taille:110});
+for(const skin of SKINS_CROISEUR) if(skin.id!=='defaut') carte('cat-croiseur',S.CROISEUR,'Skin '+skin.nom,{taille:110,over:skin.over});
+
+// Vaisseaux alliés jouables (construits au hangar)
+carte('cat-allies',S.JOUEUR,'Standard');
+carte('cat-allies',S.ROUGE,'Vaisseau Rouge');
+carte('cat-allies',S.JOUEUR_RAPIDE,'Intercepteur');
+carte('cat-allies',S.JOUEUR_BOMBER,'Bombardier');
+carte('cat-allies',S.JOUEUR_BOUCLIER,'Cuirassé');
+carte('cat-allies',S.JOUEUR_SNIPER,'Tireur');
+carte('cat-allies',S.JOUEUR_TRANSPORTEUR,'Transporteur');
+carte('cat-allies',S.JOUEUR_MEDIC,'Médic');
+for(const skin of SKINS_VAISSEAUX) if(skin.id!=='defaut') carte('cat-allies',S.JOUEUR,'Skin '+skin.nom,{over:skin.over});
+
+// Navettes
+carte('cat-navettes',S.MINI_NAVETTE_ALLIEE,'Mini-navette alliée');
+carte('cat-navettes',S.MINI_NAVETTE,'Mini-navette ennemie');
+
+// Ennemis (ailes) communs à rares
+carte('cat-ennemis',S.AILE,'Aile (normal)');
+carte('cat-ennemis',S.CHASSEUR,'Chasseur');
+carte('cat-ennemis',S.BOMBARDIER,'Bombardier');
+carte('cat-ennemis',S.ECLAIREUR,'Éclaireur');
+carte('cat-ennemis',S.AILE_LOURD,'Lourd');
+carte('cat-ennemis',S.REGENERATEUR,'Régénérateur');
+carte('cat-ennemis',S.MINI_SNIPER,'Mini-sniper');
+carte('cat-ennemis',S.DIAGONAL_D,'Diagonal (droite)');
+carte('cat-ennemis',S.DIAGONAL_G,'Diagonal (gauche)');
+carte('cat-ennemis',S.SABOTEUR,'Saboteur');
+carte('cat-ennemis',S.BRULEUR,'Brûleur');
+carte('cat-ennemis',S.STRONGHOLD,'Stronghold');
+carte('cat-ennemis',S.AILE_TRANSPORTEUR,'Transporteur ennemi');
+carte('cat-ennemis',S.VOID,'Faille (void)');
+carte('cat-ennemis',S.MIMIC,'Mimic (faux bonus)');
+
+// Élites (rares/épiques)
+carte('cat-elites',S.AILE_PORTEUR,'Porteur',{elite:true});
+carte('cat-elites',S.AILE_BROUILLEUR,'Brouilleur',{elite:true});
+carte('cat-elites',S.TITAN,'Titan',{elite:true});
+
+// Boss
+for(const type in S.BOSS_GRIDS) carte('cat-boss',S.BOSS_GRIDS[type],'Boss '+type,{boss:true,taille:96});
+
+// Obstacles & menaces
+carte('cat-obstacles',S.DEBRIS_1,'Débris');
+carte('cat-obstacles',S.DEBRIS_2,'Débris (variante)');
+carte('cat-obstacles',S.STATION_PIECE,'Épave de station');
+carte('cat-obstacles',S.BARRIERE,'Barrière');
+carte('cat-obstacles',S.ASTER,'Astéroïde');
+</script>
 </body>
 </html>
