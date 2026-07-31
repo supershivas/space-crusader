@@ -495,19 +495,48 @@ export function dessinerIllustration(t){
     const tt=cx+cy; c.fillStyle=tt<-R*0.35?'#7ea8e0':tt>R*0.45?'#1e2f55':'#4a6ea8'; c.fillRect(Math.round(px+gx),Math.round(py+gy),pas,pas); }
   const draw=(g,ox,oy,sc)=>{ for(let y=0;y<g.length;y++){ const row=g[y]; for(let x=0;x<row.length;x++){ const col=PAL[row[x]]; if(!col) continue; c.fillStyle=col; c.fillRect(Math.round(ox+x*sc),Math.round(oy+y*sc),sc,sc); } } };
   const sc=Math.max(3,Math.round(W/95)), bob=ph=>Math.sin(t/480+ph)*3;
-  // tout le monde reste dans les bandes hautes et basses de l'écran : la bande médiane
-  // (titre + boutons, en DOM par-dessus) ne doit jamais être traversée par l'illustration.
-  // ennemis + escadrille joueur, groupés dans la bande haute (au-dessus du titre)
-  draw(AILE, W*0.14, H*0.05+bob(1.1), sc*0.8);
-  draw(AILE, W*0.74, H*0.04+bob(3.4), sc*0.8);
-  const scJ=sc*1.05;
-  draw(JOUEUR, W*0.16, H*0.15+bob(0), scJ);
-  draw(ROUGE,  W*0.5-ROUGE[0].length*scJ/2, H*0.12+bob(2.2), scJ);
-  draw(JOUEUR, W*0.84-JOUEUR[0].length*scJ, H*0.15+bob(4.6), scJ);
-  // lasers décoratifs
-  c.strokeStyle='rgba(55,224,255,.7)'; c.lineWidth=2; c.beginPath();
-  c.moveTo(W*0.16+scJ*1.5,H*0.15); c.lineTo(W*0.19,H*0.05);
-  c.moveTo(W*0.84-scJ*1.5,H*0.15); c.lineTo(W*0.80,H*0.04); c.stroke();
-  // croiseur, tout en bas (bande basse, sous les boutons)
-  draw(CROISEUR, Math.round((W-CROISEUR[0].length*sc)/2), H*0.90, sc);
+  // Tout se joue dans la bande basse de l'écran : le croiseur (pleine largeur, collé au bord
+  // bas) et les deux vaisseaux alliés qui veillent juste au-dessus. La bande médiane (titre +
+  // boutons, en DOM par-dessus) reste entièrement vide — jamais traversée par l'illustration.
+  const scC=W/CROISEUR[0].length, croiseurH=CROISEUR.length*scC, croiseurY=H-croiseurH;
+  draw(CROISEUR, 0, croiseurY, scC);
+
+  const scJ=sc*1.05, alliesY=croiseurY-JOUEUR.length*scJ-H*0.025;
+  const xGauche=W*0.20, xDroite=W*0.80-ROUGE[0].length*scJ;
+  const posGauche={x:xGauche+JOUEUR[0].length*scJ/2, y:alliesY+JOUEUR.length*scJ/2};
+  const posDroite={x:xDroite+ROUGE[0].length*scJ/2, y:alliesY+ROUGE.length*scJ/2};
+  draw(JOUEUR, xGauche, alliesY+bob(0), scJ);
+  draw(ROUGE,  xDroite, alliesY+bob(2.4), scJ);
+
+  // Un chasseur ennemi (Aile) survient de temps en temps entre les deux alliés, puis l'un des
+  // deux — au hasard, cycle après cycle — le détruit dans une grande explosion. Cycle rejoué
+  // en boucle sans état à mémoriser : tout dérive de t, comme le reste de l'illustration ;
+  // hash() en tire un pseudo-aléatoire stable par cycle (lequel allié tire, où l'ennemi se
+  // pose, d'où il entre) sans jamais appeler Math.random() à chaque frame (ça scintillerait).
+  const CYCLE=6500, T_ENTREE=1200, T_ATTENTE=2200, T_TIR=250, T_BOOM=300;
+  const hash=n=>{ const x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x); };
+  const cycleIdx=Math.floor(t/CYCLE), tc=t%CYCLE;
+  const attaquant=hash(cycleIdx)<0.5?posGauche:posDroite;
+  const laserCol=attaquant===posGauche?'55,224,255':'229,72,77';
+  // reste centré à bonne distance des deux alliés (jamais assez large pour les chevaucher,
+  // même dans le cas le plus défavorable — vérifié en Chromium headless).
+  const restX=W*(0.40+0.20*hash(cycleIdx+7.7)), restY=posGauche.y+H*0.015*(hash(cycleIdx+3.3)-0.5);
+  const startX=hash(cycleIdx+9.1)<0.5?W*1.15:-W*0.15;
+  const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
+
+  if(tc<T_ENTREE){
+    const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3), ex=startX+(restX-startX)*ease;
+    c.globalAlpha=Math.min(1,p*1.5); draw(AILE, ex-eW/2, restY-eH/2, eSc); c.globalAlpha=1;
+  } else if(tc<T_ENTREE+T_ATTENTE){
+    draw(AILE, restX-eW/2, restY-eH/2+bob(1.1), eSc);
+  } else if(tc<T_ENTREE+T_ATTENTE+T_TIR){
+    draw(AILE, restX-eW/2, restY-eH/2, eSc);
+    c.strokeStyle='rgba('+laserCol+',.85)'; c.lineWidth=2;
+    c.beginPath(); c.moveTo(attaquant.x,attaquant.y); c.lineTo(restX,restY); c.stroke();
+  } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
+    const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.34, dh=dw;
+    const glow=c.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.35*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
+    c.fillStyle=glow; c.fillRect(restX-dw,restY-dh,dw*2,dh*2);
+    c.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);
+  }
 }
