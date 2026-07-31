@@ -306,15 +306,18 @@ export function dessiner(t){
     if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_brouille'),state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
   if(state.modeTourelle){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=3; for(const a of state.ailes){ if(a.r<0) continue; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); } if(state.boss){ ctx.strokeRect(state.GX+state.boss.c*state.CELL+4,state.GY+state.boss.r*state.CELL+4,3*state.CELL-8,2*state.CELL-8); } }
 
-  // croiseur (endommagé visuel)
-  const dmgRatio=1-Math.max(0,state.hpCruiser/state.HP_MAX);
-  ctx.save(); ctx.shadowColor='rgba(74,163,255,.35)'; ctx.shadowBlur=16;
-  ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
-  ctx.restore();
-  if(dmgRatio>0.3){ ctx.globalAlpha=dmgRatio*.6; ctx.fillStyle='#e5484d'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
-  if(dmgRatio>0.6){ ctx.globalAlpha=.4+.2*Math.sin(t/100); ctx.fillStyle='#3a1515'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
-  if(state.flashCroiseur>0){ ctx.fillStyle='rgba(229,72,77,'+(state.flashCroiseur*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
-  if(state.flashRecharge>0){ ctx.fillStyle='rgba(47,214,160,'+(state.flashRecharge*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
+  // croiseur (endommagé visuel) — absent en mission planète (pas de croiseur à l'écran, le
+  // joueur attaque au lieu de défendre) ; la console d'action reste affichée à sa place fixe.
+  if(!state.planete){
+    const dmgRatio=1-Math.max(0,state.hpCruiser/state.HP_MAX);
+    ctx.save(); ctx.shadowColor='rgba(74,163,255,.35)'; ctx.shadowBlur=16;
+    ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
+    ctx.restore();
+    if(dmgRatio>0.3){ ctx.globalAlpha=dmgRatio*.6; ctx.fillStyle='#e5484d'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
+    if(dmgRatio>0.6){ ctx.globalAlpha=.4+.2*Math.sin(t/100); ctx.fillStyle='#3a1515'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
+    if(state.flashCroiseur>0){ ctx.fillStyle='rgba(229,72,77,'+(state.flashCroiseur*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
+    if(state.flashRecharge>0){ ctx.fillStyle='rgba(47,214,160,'+(state.flashRecharge*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
+  }
   // aperçu du vaisseau en construction : au-dessus de la console (pas dessus, elle l'aurait
   // sinon recouvert), dans la zone des tourelles en haut de la coque.
   if(state.hangar){ const him=imgVaisseau(state.hangar.type), hy=state.cruiserY-him.height-4; ctx.globalAlpha=.5; ctx.drawImage(him,Math.round(state.LARGEUR/2-him.width/2),Math.round(hy)); ctx.globalAlpha=1; ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('⏳'+(state.hangar.tours>1?' '+state.hangar.tours:''),state.LARGEUR/2,hy-4); ctx.textAlign='left'; }
@@ -456,7 +459,23 @@ export function dessiner(t){
   // la couleur de remplissage change : vert/jaune/rouge selon les PV, violet→jaune pour
   // l'ultime (qui devient un vrai bouton une fois prête). Secteur/score/statut/objectif sont
   // dans le cadre HUD au-dessus de la grille (voir dessinerCadreHUD()), pas sur le croiseur.
-  { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
+  if(state.planete){
+    // même barre, même position : PV de la base au lieu du croiseur. Tant qu'elle est endormie
+    // (biome Grotte, avant réveil), ses PV restent cachés — juste le cadre et un « ??? ».
+    const base=state.planete.base, pv=state.PV;
+    arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
+    if(base.reveillee===false){
+      arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#5b6580'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center';
+      ctx.fillText('???',pv.x+pv.w/2,pv.y+pv.h/2+3); ctx.textAlign='left';
+    } else {
+      const ratio=Math.max(0,base.hp/base.maxhp);
+      const coul=ratio>.5?'#a355e0':(ratio>.25?'#ffd23d':'#e5484d');
+      ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
+      arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(trad('hud_base'),pv.x+8,pv.y+pv.h/2+3);
+    }
+  } else { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
     arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
     let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
     ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
@@ -484,7 +503,8 @@ export function dessiner(t){
   }
 
   // boutons d'action
-  for(const a of state.ACT){ const masquee=state.planete&&(a.id==='tourelle'||a.id==='bouclier'); const dispo=masquee?false:state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
+  for(const a of state.ACT){ if(state.planete&&(a.id==='tourelle'||a.id==='bouclier')) continue;   // pas de sens sans croiseur à l'écran (masquées, pas juste grisées)
+    const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
     arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
     if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
     ctx.fillStyle=dispo||vise?'#e8eefc':'#5b6580'; ctx.textAlign='center';
