@@ -508,29 +508,27 @@ export function dessinerIllustration(t){
   draw(JOUEUR, xGauche, alliesY+bob(0), scJ);
   draw(ROUGE,  xDroite, alliesY+bob(2.4), scJ);
 
-  // Un chasseur ennemi (Aile) descend du haut de l'écran de temps en temps, se pose entre
-  // les deux alliés (au niveau du croiseur), puis l'un des deux — au hasard, cycle après
-  // cycle — le détruit dans une grande explosion. Cycle rejoué en boucle sans état à
-  // mémoriser : tout dérive de t, comme le reste de l'illustration ; hash() en tire un
-  // pseudo-aléatoire stable par cycle (lequel allié tire, où l'ennemi se pose, par où il
+  // Un chasseur ennemi (Aile) descend du haut de l'écran, s'arrête au niveau du titre
+  // "CROISEUR" (en DOM par-dessus, donc l'ennemi passe visuellement derrière pendant sa
+  // descente) et s'y fait détruire par l'un des deux alliés au sol — au hasard, cycle après
+  // cycle. Le suivant arrive presque aussitôt (~1s après l'explosion précédente), jamais au
+  // même endroit : plusieurs vagues rapprochées plutôt qu'un seul assaut isolé, pour donner
+  // une impression de guerre totale. Cycle rejoué en boucle sans état à mémoriser côté
+  // dessin : tout dérive de t comme le reste de l'illustration ; hash() en tire un
+  // pseudo-aléatoire stable par cycle (lequel allié tire, où l'ennemi s'arrête, par où il
   // entre en haut) sans jamais appeler Math.random() à chaque frame (ça scintillerait).
-  // La descente traverse forcément la bande médiane (titre + boutons, en DOM par-dessus,
-  // donc l'ennemi passe visuellement derrière) : seule cette entrée y déroge, l'ennemi au
-  // repos/tir/explosion reste toujours dans la bande basse comme les alliés et le croiseur.
-  const CYCLE=6500, T_ENTREE=1200, T_ATTENTE=2200, T_TIR=250, T_BOOM=300;
+  // Seule la secousse du titre (DOM) a besoin d'un vrai état : voir déclencherSecousseTitre().
+  const CYCLE=2900, T_ENTREE=900, T_ATTENTE=500, T_TIR=200, T_BOOM=300;
   const hash=n=>{ const x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x); };
   const cycleIdx=Math.floor(t/CYCLE), tc=t%CYCLE;
   const attaquant=hash(cycleIdx)<0.5?posGauche:posDroite;
   const laserCol=attaquant===posGauche?'55,224,255':'229,72,77';
-  // reste centré à bonne distance des deux alliés (jamais assez large pour les chevaucher,
-  // même dans le cas le plus défavorable — vérifié en Chromium headless).
-  const restX=W*(0.40+0.20*hash(cycleIdx+7.7));
-  // Le point de pose/impact est décalé vers le croiseur (pas juste au niveau du centre des
-  // alliés) : avec le grand rayon de l'explosion (dw plus bas), rester pile au centre des
-  // alliés faisait déborder le haut du souffle bien au-dessus d'eux, donnant l'impression
-  // que l'ennemi était détruit "avant" de vraiment arriver à leur hauteur.
-  const restY=posGauche.y+(croiseurY-posGauche.y)*0.45+H*0.015*(hash(cycleIdx+3.3)-0.5);
-  const startXHaut=W*(0.15+0.7*hash(cycleIdx+5.5));
+  // Le point d'arrêt/impact suit le titre : ~36% de la hauteur de l'écran, là où
+  // #accueil-contenu place "CROISEUR" (même boîte #scene que le canvas, donc la fraction
+  // reste valable quelle que soit la résolution réelle). Large éventail en X (au lieu d'une
+  // zone étroite) : un nouvel impact à chaque fois "pas au même endroit" le long du titre.
+  const restX=W*(0.15+0.7*hash(cycleIdx+7.7)), restY=H*0.36+H*0.02*(hash(cycleIdx+3.3)-0.5);
+  const startXHaut=W*(0.1+0.8*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
   if(tc<T_ENTREE){
@@ -544,9 +542,31 @@ export function dessinerIllustration(t){
     c.strokeStyle='rgba('+laserCol+',.85)'; c.lineWidth=2;
     c.beginPath(); c.moveTo(attaquant.x,attaquant.y); c.lineTo(restX,restY); c.stroke();
   } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
-    const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.26, dh=dw;
+    const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
+    declencherSecousseTitre(cycleIdx);
     const glow=c.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.35*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
     c.fillStyle=glow; c.fillRect(restX-dw,restY-dh,dw*2,dh*2);
     c.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);
+    // étincelles qui jaillissent en éventail vers le haut, au-dessus du point d'impact —
+    // le souffle rond seul ne "lisait" pas assez comme une explosion au niveau du titre.
+    const prog=tb/T_BOOM;
+    for(let i=0;i<6;i++){
+      const ang=-Math.PI/2+(hash(cycleIdx+20+i)-0.5)*Math.PI*0.9, spd=W*(0.05+0.06*hash(cycleIdx+30+i));
+      const px=restX+Math.cos(ang)*spd*prog, py=restY+Math.sin(ang)*spd*prog;
+      c.globalAlpha=Math.max(0,1-prog); c.fillStyle=i%2?'#ffd23d':'#ff8a3d';
+      c.fillRect(Math.round(px-1.5),Math.round(py-1.5),3,3);
+    }
+    c.globalAlpha=1;
   }
+}
+/* secoue le titre de l'accueil (DOM) à l'instant précis où l'ennemi explose à sa hauteur —
+   un seul état mutable de tout le module (dernierCycleSecoue), pour ne déclencher la
+   secousse qu'une fois par explosion malgré dessinerIllustration() rappelée à 60 fps :
+   sans lui, la classe serait réappliquée à chaque frame du souffle (~18 fois de suite). */
+let dernierCycleSecoue=-1;
+function declencherSecousseTitre(cycleIdx){
+  if(cycleIdx===dernierCycleSecoue) return; dernierCycleSecoue=cycleIdx;
+  const h1=document.querySelector('#accueil h1'); if(!h1) return;
+  h1.classList.remove('secousse'); void h1.offsetWidth; h1.classList.add('secousse');
+  setTimeout(()=>h1.classList.remove('secousse'),400);
 }

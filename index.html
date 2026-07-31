@@ -58,6 +58,16 @@
      Le premier réglage (vmin) sert de repli pour les navigateurs sans container queries. */
   #accueil h1{font-size:clamp(28px,9vmin,48px);max-width:100%;white-space:nowrap;text-align:center;width:100%;margin:var(--space-sm) 0;}
   @container (min-width:1px){ #accueil h1{font-size:clamp(28px,13cqw,72px);} }
+  /* secousse du titre au moment où l'ennemi de l'illustration d'accueil explose à sa hauteur
+     (voir déclencherSecousseTitre() dans render.js) — courte et amortie, jamais assez forte
+     pour faire déborder le titre de sa boîte (déjà réduit au pixel près par
+     ajusterTitreAccueil() dans main.js). */
+  #accueil h1.secousse{animation:secousseTitre .4s ease-out;}
+  @keyframes secousseTitre{
+    0%{transform:translate(0,0);} 15%{transform:translate(-3px,2px);} 30%{transform:translate(3px,-2px);}
+    45%{transform:translate(-2px,1px);} 60%{transform:translate(2px,-1px);} 75%{transform:translate(-1px,1px);}
+    100%{transform:translate(0,0);}
+  }
   .sous{font-size:var(--fs-souligne);line-height:var(--lh-loose);opacity:.92;max-width:36ch;}
   .score-fin{font-size:clamp(11px,3.2vmin,18px);color:#ffd23d;}
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
