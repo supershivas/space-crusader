@@ -524,7 +524,12 @@ export function dessinerIllustration(t){
   const laserCol=attaquant===posGauche?'55,224,255':'229,72,77';
   // reste centré à bonne distance des deux alliés (jamais assez large pour les chevaucher,
   // même dans le cas le plus défavorable — vérifié en Chromium headless).
-  const restX=W*(0.40+0.20*hash(cycleIdx+7.7)), restY=posGauche.y+H*0.015*(hash(cycleIdx+3.3)-0.5);
+  const restX=W*(0.40+0.20*hash(cycleIdx+7.7));
+  // Le point de pose/impact est décalé vers le croiseur (pas juste au niveau du centre des
+  // alliés) : avec le grand rayon de l'explosion (dw plus bas), rester pile au centre des
+  // alliés faisait déborder le haut du souffle bien au-dessus d'eux, donnant l'impression
+  // que l'ennemi était détruit "avant" de vraiment arriver à leur hauteur.
+  const restY=posGauche.y+(croiseurY-posGauche.y)*0.45+H*0.015*(hash(cycleIdx+3.3)-0.5);
   const startXHaut=W*(0.15+0.7*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
@@ -539,7 +544,7 @@ export function dessinerIllustration(t){
     c.strokeStyle='rgba('+laserCol+',.85)'; c.lineWidth=2;
     c.beginPath(); c.moveTo(attaquant.x,attaquant.y); c.lineTo(restX,restY); c.stroke();
   } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
-    const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.34, dh=dw;
+    const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.26, dh=dw;
     const glow=c.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.35*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
     c.fillStyle=glow; c.fillRect(restX-dw,restY-dh,dw*2,dh*2);
     c.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);
