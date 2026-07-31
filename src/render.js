@@ -243,9 +243,10 @@ export function dessiner(t){
   ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); if(state.secousse>0) ctx.translate((Math.random()-.5)*state.secousse,(Math.random()-.5)*state.secousse);
   fond();
   dessinerCadreHUD();
-  // fond du champ de bataille (délimite clairement la zone jouable)
-  ctx.fillStyle='rgba(18,28,55,.5)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
-  ctx.strokeStyle='rgba(95,135,215,.55)'; ctx.lineWidth=2; ctx.strokeRect(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2);
+  // fond du champ de bataille (délimite clairement la zone jouable) — même radius que les
+  // cadres HUD haut/bas (RADIUS.bar), pas des coins vifs qui détonnaient avec le reste du HUD.
+  arrondi(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL,RADIUS.bar); ctx.fillStyle='rgba(18,28,55,.5)'; ctx.fill();
+  arrondi(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2,RADIUS.bar); ctx.strokeStyle='rgba(95,135,215,.55)'; ctx.lineWidth=2; ctx.stroke();
   // grille
   ctx.strokeStyle='rgba(120,150,220,.14)'; ctx.lineWidth=1;
   for(let c=0;c<=state.COLS;c++){ ctx.beginPath(); ctx.moveTo(state.GX+c*state.CELL,state.GY); ctx.lineTo(state.GX+c*state.CELL,state.GRID_BAS); ctx.stroke(); }
@@ -485,6 +486,9 @@ export function dessiner(t){
   // boutons d'action
   for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
     arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
+    // génération d'un vaisseau en cours : le bouton se remplit progressivement (tours écoulés / tours nécessaires)
+    if(a.id==='vaisseau'&&state.hangar){ const ratio=Math.max(0,Math.min(1,1-state.hangar.tours/(state.hangar.toursInitial||2)));
+      ctx.save(); arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.clip(); ctx.fillStyle='rgba(47,214,160,.55)'; ctx.fillRect(a.x,a.y,a.w*ratio,a.h); ctx.restore(); }
     if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
     ctx.fillStyle=dispo||vise?'#e8eefc':'#5b6580'; ctx.textAlign='center';
     let lbl=trad(a.lblKey); if(a.id==='tourelle'&&state.tirsGratuits>0) lbl=trad('hud_tourelle_x',{n:state.tirsGratuits+(state.actionFaite?0:1)});
@@ -517,6 +521,19 @@ function arrondi(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y
    rejoué en continu (boucle() l'appelle à chaque frame tant que phase
    est 'accueil' ou 'attente'), pas un décor statique dessiné une fois.
    ===================================================================== */
+/* Tire un nouveau fond (thème de couleur + motif) pour l'illustration d'accueil — à appeler à
+   chaque arrivée sur l'accueil (etatVide() au démarrage, retourAccueil() depuis la pause),
+   jamais à chaque frame (sinon le fond changerait sans arrêt au lieu d'une fois par visite). */
+export function randomiserAccueil(){ state.accueilThemeIdx=Math.floor(Math.random()*THEMES.length); state.accueilPatternIdx=Math.floor(Math.random()*4); }
+/* astre pixel-art pour l'illustration d'accueil (variante de dessinerAstrePixel() ci-dessus,
+   paramétrée par un contexte de canvas arbitraire — celui de l'illustration, pas celui du jeu). */
+function astreIllustration(cc,px,py,R,a){
+  const pas=Math.max(3,Math.round(R/7)); px=Math.round(px); py=Math.round(py);
+  if(a.kind==='soleil'){ cc.fillStyle=a.c1; const ray=pas;
+    for(let k=0;k<8;k++){ const aa=k*Math.PI/4, rx=px+Math.cos(aa)*(R+pas*1.6), ry=py+Math.sin(aa)*(R+pas*1.6); cc.globalAlpha=.6; cc.fillRect(Math.round(rx-ray/2),Math.round(ry-ray/2),ray,ray); } cc.globalAlpha=1; }
+  for(let gx=-R;gx<=R;gx+=pas) for(let gy=-R;gy<=R;gy+=pas){ const cx=gx+pas/2, cy=gy+pas/2; if(Math.hypot(cx,cy)>R) continue;
+    const s=(cx+cy)/R; cc.fillStyle = s<-0.4?a.c1 : (s>0.5?a.c3:a.c2); cc.fillRect(px+gx,py+gy,pas,pas); }
+}
 let illusEtoiles=null;
 function initIllusEtoiles(W,H){
   illusEtoiles=[];
@@ -538,10 +555,22 @@ export function dessinerIllustration(t){
   c.clearRect(0,0,W,H); c.fillStyle='#070b18'; c.fillRect(0,0,W,H);
   // étoiles qui défilent doucement vers le bas, en boucle (position dérivée de t, pas d'état à faire évoluer)
   for(const s of illusEtoiles){ const y=(s.baseY+t*s.v/1000)%H; c.globalAlpha=s.a; c.fillStyle=s.col; c.fillRect(Math.round(s.x),Math.round(y),s.sz,s.sz); } c.globalAlpha=1;
-  // planète en pixel art (coin haut droit)
-  const R=Math.round(W*0.16), px=W-R*0.9, py=H*0.13, pas=Math.max(3,Math.round(R/6));
-  for(let gx=-R;gx<=R;gx+=pas) for(let gy=-R;gy<=R;gy+=pas){ const cx=gx+pas/2,cy=gy+pas/2; if(Math.hypot(cx,cy)>R) continue;
-    const tt=cx+cy; c.fillStyle=tt<-R*0.35?'#7ea8e0':tt>R*0.45?'#1e2f55':'#4a6ea8'; c.fillRect(Math.round(px+gx),Math.round(py+gy),pas,pas); }
+  // Fond (astre/nébuleuse/amas) tiré au hasard à CHAQUE arrivée sur l'accueil (voir
+  // randomiserAccueil(), appelée par etatVide() et retourAccueil()) — jamais le même fond que
+  // la fois précédente. Réutilise la palette des thèmes de secteur (THEMES) pour rester cohérent
+  // avec le reste du jeu plutôt qu'une couleur ad hoc propre à l'accueil.
+  const thAccueil=THEMES[(state.accueilThemeIdx||0)%THEMES.length], patAccueil=state.accueilPatternIdx||0;
+  if(patAccueil===0){
+    for(let i=0;i<2;i++){ const nx=W*(i===0?0.28:0.78), ny=H*(i===0?0.16:0.24), nr=W*0.5;
+      const g=c.createRadialGradient(nx,ny,0,nx,ny,nr); g.addColorStop(0,thAccueil.neb[i%thAccueil.neb.length]); g.addColorStop(1,'rgba(7,11,24,0)');
+      c.fillStyle=g; c.fillRect(nx-nr,ny-nr,nr*2,nr*2); }
+  } else if(patAccueil===2){
+    let seedA=1234567+(state.accueilThemeIdx||0)*777; const rndA=()=>((seedA=seedA*16807%2147483647)/2147483647);
+    const cxA=W*0.5, cyA=H*0.22, RA=W*0.5;
+    for(let k=0;k<90;k++){ const aa=rndA()*7, rr=Math.pow(rndA(),0.6)*RA, x=cxA+Math.cos(aa)*rr, y=cyA+Math.sin(aa)*rr*0.6;
+      c.globalAlpha=0.3+rndA()*0.6; c.fillStyle=rndA()<0.35?thAccueil.star:'#cdd8ff'; c.fillRect(Math.round(x),Math.round(y),1,1); } c.globalAlpha=1;
+  } else if(patAccueil===3){ astreIllustration(c, W*0.82, H*0.15, Math.round(W*0.22), thAccueil.astre);
+  } else { astreIllustration(c, W-Math.round(W*0.16)*0.9, H*0.13, Math.round(W*0.16), thAccueil.astre); }
   // +1px sur chaque case : avec une échelle non entière (le croiseur/les alliés/l'ennemi de
   // l'illustration d'accueil sont volontairement à une échelle fractionnaire — scC pour
   // remplir exactement la largeur, scJ/eSc pour des proportions précises), le point de départ
@@ -586,15 +615,21 @@ export function dessinerIllustration(t){
   if(ci) for(let i=0;i<N_VAGUE;i++){
     const tv=t-i*STAGGER; if(tv<0) continue;
     const cycleIdx=Math.floor(tv/CYCLE), tc=tv-cycleIdx*CYCLE, seed=cycleIdx*17+i*101;
-    const attaquant=hash(seed)<0.5?posGauche:posDroite;
-    // Tir allié : toujours bleu (même convention que le laser en jeu — rouge = tir ennemi,
-    // bleu = tir allié), jamais dépendant de l'allié qui tire.
+    // Tir allié (ou croiseur, voir plus bas) : toujours bleu (même convention que le laser en
+    // jeu — rouge = tir ennemi, bleu = tir allié).
     // Le point d'impact suit le titre : ~36% de la hauteur de l'écran, là où #accueil-contenu
     // place "CROISEUR" (même boîte #scene que le canvas, donc la fraction reste valable quelle
     // que soit la résolution réelle). Large éventail en X (au lieu d'une zone étroite) : un
     // nouvel impact à chaque fois "pas au même endroit" le long du titre.
-    const restX=W*(0.15+0.7*hash(seed+7.7)), restY=H*0.36+H*0.02*(hash(seed+3.3)-0.5);
+    // startXHaut varie largement (entrée en haut d'écran, pas au même endroit à chaque vague) ;
+    // restX ne s'en écarte plus que de quelques pixels (léger cap "diagonal") au lieu d'un tirage
+    // indépendant qui pouvait faire dériver le chasseur en grand travers de l'écran.
     const startXHaut=W*(0.1+0.8*hash(seed+5.5));
+    const restX=Math.max(W*0.06,Math.min(W*0.94,startXHaut+(hash(seed+7.7)-0.5)*28)), restY=H*0.36+H*0.02*(hash(seed+3.3)-0.5);
+    // De temps en temps, c'est le croiseur lui-même qui tire (tir plus gros/plus puissant)
+    // plutôt qu'un des deux alliés — casse la régularité "toujours les mêmes tireurs".
+    const croiseurTire=hash(seed+50.5)<0.22;
+    const attaquant=croiseurTire?{x:W*0.5,y:croiseurY+2}:(hash(seed)<0.5?posGauche:posDroite);
 
     if(tc<T_ENTREE){
       // vitesse constante (p linéaire, pas d'ease-out) : le chasseur file jusqu'au point
@@ -605,12 +640,13 @@ export function dessinerIllustration(t){
       ci.globalAlpha=Math.min(1,p*4); drawSur(ci,AILE, ex-eW/2, ey-eH/2, eSc); ci.globalAlpha=1;
       if(tc>T_ENTREE-T_TIR){
         // tir bref (façon sabre/blaster) qui parcourt la distance plutôt qu'une longue ligne
-        // statique, double trait parallèle comme tous les autres lasers du jeu.
-        const [tx,ty,hx,hy,pb]=traitBref(attaquant.x,attaquant.y,ex,ey,(tc-(T_ENTREE-T_TIR))/1000,36);
-        if(pb<1){ ci.lineWidth=2;
-          for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,2)){
-            ci.strokeStyle='rgba(80,170,255,.85)'; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke();
-            ci.strokeStyle='rgba(55,224,255,1)'; ci.lineWidth=1; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke(); ci.lineWidth=2;
+        // statique, double trait parallèle comme tous les autres lasers du jeu. Tir du croiseur :
+        // trait plus large/plus lumineux (même convention que "gros" en jeu).
+        const [tx,ty,hx,hy,pb]=traitBref(attaquant.x,attaquant.y,ex,ey,(tc-(T_ENTREE-T_TIR))/1000,croiseurTire?52:36);
+        if(pb<1){ const decal=croiseurTire?4:2, lw=croiseurTire?4:2;
+          for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,decal)){
+            ci.lineWidth=lw; ci.strokeStyle='rgba(80,170,255,.85)'; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke();
+            ci.strokeStyle='rgba(55,224,255,1)'; ci.lineWidth=croiseurTire?2:1; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke();
           }
         }
       }
@@ -632,7 +668,10 @@ export function dessinerIllustration(t){
       ci.globalAlpha=1;
     }
   }
+  // brillance dorée occasionnelle du titre, cycle indépendant des vagues de chasseurs
+  declencherBrillanceTitre(Math.floor(t/BRILLANCE_CYCLE));
 }
+const BRILLANCE_CYCLE=7000;
 /* secoue le titre de l'accueil (DOM) à l'instant précis où l'ennemi explose à sa hauteur —
    un seul état mutable de tout le module (dernierCycleSecoue), pour ne déclencher la
    secousse qu'une fois par explosion malgré dessinerIllustration() rappelée à 60 fps :
@@ -643,4 +682,14 @@ function declencherSecousseTitre(cycleIdx){
   const h1=document.querySelector('#accueil h1'); if(!h1) return;
   h1.classList.remove('secousse'); void h1.offsetWidth; h1.classList.add('secousse');
   setTimeout(()=>h1.classList.remove('secousse'),400);
+}
+/* brillance dorée périodique du titre (voir @keyframes brillanceTitre dans index.html) — même
+   pattern de dédoublonnage que déclencherSecousseTitre(), sur son propre cycle (BRILLANCE_CYCLE,
+   indépendant de celui des vagues de chasseurs). */
+let dernierCycleBrille=-1;
+function declencherBrillanceTitre(cycleIdx){
+  if(cycleIdx===dernierCycleBrille) return; dernierCycleBrille=cycleIdx;
+  const h1=document.querySelector('#accueil h1'); if(!h1) return;
+  h1.classList.remove('brille'); void h1.offsetWidth; h1.classList.add('brille');
+  setTimeout(()=>h1.classList.remove('brille'),1600);
 }

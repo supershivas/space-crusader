@@ -45,8 +45,12 @@
   .ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
          gap:var(--space-md);padding:var(--space-lg);text-align:center;background:rgba(7,11,24,.87);backdrop-filter:blur(2px);border-radius:var(--radius-md);}
   /* L'accueil n'est pas une pause sur la partie en cours : il ne doit jamais laisser voir le
-     canvas de jeu (étoiles/vaisseaux animés en fond) à travers — fond opaque, sans flou. */
-  #accueil{background:var(--espace);backdrop-filter:none;}
+     canvas de jeu (étoiles/vaisseaux animés en fond) à travers — fond opaque, sans flou.
+     Titre + menu remontés (justify-content:flex-start + un padding-top mesuré) plutôt que
+     centrés verticalement : ça laisse plus de champ libre en bas de l'écran pour l'illustration
+     (croiseur + alliés + chasseurs abattus), qui se sentait à l'étroit collée juste sous les
+     boutons quand tout le bloc était centré. */
+  #accueil{background:var(--espace);backdrop-filter:none;justify-content:flex-start;padding-top:8vh;}
   .cache{display:none;}
   h1{font-size:var(--fs-titre);line-height:var(--lh-normal);margin:0;color:#37e0ff;text-shadow:0 3px 0 #10406a;}
   /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que
@@ -72,6 +76,14 @@
     0%{transform:translate(0,0);} 15%{transform:translate(-3px,2px);} 30%{transform:translate(3px,-2px);}
     45%{transform:translate(-2px,1px);} 60%{transform:translate(2px,-1px);} 75%{transform:translate(-1px,1px);}
     100%{transform:translate(0,0);}
+  }
+  /* brillance dorée périodique du titre (voir déclencherBrillanceTitre() dans render.js) : un
+     effet "vivant" et occasionnel plutôt qu'un titre figé — le cyan de base cède un instant la
+     place à une teinte or avec halo, puis revient. */
+  #accueil h1.brille{animation:brillanceTitre 1.6s ease-in-out;}
+  @keyframes brillanceTitre{
+    0%,100%{color:#37e0ff;text-shadow:0 3px 0 #10406a;}
+    50%{color:#ffd23d;text-shadow:0 3px 0 #10406a,0 0 14px rgba(255,210,61,.85),0 0 30px rgba(255,210,61,.5);}
   }
   .sous{font-size:var(--fs-souligne);line-height:var(--lh-loose);opacity:.92;max-width:36ch;}
   .score-fin{font-size:clamp(11px,3.2vmin,18px);color:#ffd23d;}
@@ -101,7 +113,10 @@
   .coin{position:absolute;top:calc(env(safe-area-inset-top, 0px) + var(--space-sm));z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:var(--radius-md);width:42px;height:42px;cursor:pointer;line-height:1;}
   #son{left:calc(env(safe-area-inset-left, 0px) + var(--space-sm));}
-  #pauseBtn{left:calc(env(safe-area-inset-left, 0px) + 42px + var(--space-sm) * 2);display:none;z-index:16;}
+  /* Léger décalage supplémentaire vers la droite : trop proche du cadre HUD sinon (le bouton
+     son touche déjà sa marge gauche, le bouton pause juste après avait l'air de mordre sur le
+     cadre). */
+  #pauseBtn{left:calc(env(safe-area-inset-left, 0px) + 42px + var(--space-sm) * 2 + 6px);display:none;z-index:16;}
   .coin:active{transform:scale(.94);}
 
   /* Infobulle */
@@ -121,8 +136,10 @@
   @keyframes fadein{to{opacity:1;}}
   #log .log-red{color:#e5484d;} #log .log-grn{color:#2fd6a0;} #log .log-ylw{color:#ffd23d;}
 
-  /* Pause overlay (menu) */
-  #pause{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  /* Pause overlay (menu) — z-index au-dessus des modales (.modal, 14) : sinon la pause,
+     déclenchée pendant un écran de choix (ex. sélection du vaisseau à construire), restait
+     invisible sous la modale ouverte alors que le jeu était bien mis en pause côté état. */
+  #pause{position:absolute;inset:0;z-index:15;display:flex;flex-direction:column;align-items:center;justify-content:center;
     background:rgba(7,11,24,.78);backdrop-filter:blur(3px);border-radius:var(--radius-md);pointer-events:none;opacity:0;transition:opacity .2s;}
   #pause.visible{opacity:1;pointer-events:auto;}
   #pause h2{color:#ffd23d;font-size:var(--fs-modale);margin:0 0 8px;display:flex;align-items:center;justify-content:center;gap:6px;}
@@ -198,6 +215,10 @@
   .card .emo{font-size:26px;line-height:1;}
   .card .nom{font-size:var(--fs-corps);color:#ffd23d;line-height:var(--lh-tight);}
   .card .desc{font-size:var(--fs-petit);color:#9fb0d8;line-height:var(--lh-normal);}
+  /* Nombre de tours nécessaires avant la sortie du hangar (carte de construction d'un
+     vaisseau) : mis en valeur à part du reste de la description (cadre + couleur dédiés),
+     information décisive pour le choix plutôt qu'une mention noyée dans le texte. */
+  .card-tours{font-size:var(--fs-petit);color:#ffd23d;border:1px solid #ffd23d;border-radius:var(--radius-sm);padding:1px 6px;margin-top:2px;}
   .card canvas{image-rendering:pixelated;border-radius:var(--radius-sm);}
   /* Difficulté : toujours les 3 cartes sur une seule ligne (jamais 2+1 qui déséquilibre la
      modale) — largeur flexible plutôt que fixe, le texte se réenroule si l'écran est étroit. */
@@ -368,6 +389,7 @@
       <div id="finStats" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:2px"></div>
       <table id="highscores"></table>
       <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
+      <div id="finDecouvertes" style="font-size:7px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
       <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
       <div class="menu-vertical">
         <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>

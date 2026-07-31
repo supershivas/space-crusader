@@ -15,6 +15,9 @@ export const state = {
   BTN:undefined, ACT:undefined, ULT:undefined,
   nebuleuses:undefined,
   grandChamp:false,
+  // fond (thème/motif) de l'illustration d'accueil, retiré au hasard à chaque arrivée sur
+  // l'accueil — voir randomiserAccueil() dans render.js.
+  accueilThemeIdx:undefined, accueilPatternIdx:undefined,
 
   // entités
   fighters:undefined, ailes:undefined, asteroides:undefined, bonus:undefined, boss:undefined,
@@ -23,7 +26,7 @@ export const state = {
   obstacles:undefined, dmgTexts:undefined,
 
   // progression de la partie en cours
-  ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined, scoreAvantVague:undefined,
+  ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined, scoreAvantVague:undefined, bestComboThisWave:undefined,
   bossKilledThisWave:undefined, pendingUpgrade:undefined, choixBuild:undefined, pendingEvent:undefined,
   suiteAmelioration:undefined, suiteEvenement:undefined, suiteMission:null,
   carte:undefined, noeudActuel:undefined, secteur:undefined, enCombat:undefined,

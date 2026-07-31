@@ -117,7 +117,7 @@ export function caseLargageAllie(){
 }
 export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) return; const forme=Math.random()<0.5?'ligne':'V', taille=2+Math.floor(Math.random()*2), dep=Math.floor(Math.random()*state.COLS);
   if(forme==='ligne'){ for(let k=0;k<taille;k++){ const c=(dep+k)%state.COLS; if(!aileEn(c,0)&&!(state.boss&&bossEn(c,0))&&state.ailes.length<state.AILES_MAX) faireAile(c,0,typeAile()); } }
-  else { const ce=dep; if(!aileEn(ce,0)&&state.ailes.length<state.AILES_MAX) faireAile(ce,0,typeAile());
+  else { const ce=dep; if(!aileEn(ce,0)&&!(state.boss&&bossEn(ce,0))&&state.ailes.length<state.AILES_MAX) faireAile(ce,0,typeAile());
     // aux positions hors grille (rr<0) : jamais de type 'void' (vitesse 0) qui resterait bloqué à jamais
     // hors de portée, invisible et immunisé contre l'ultime — il lui faut une vitesse pour rejoindre la grille.
     const typeAileHorsGrille=()=>{ let t=typeAile(); return t==='void'?'normal':t; };
@@ -127,10 +127,13 @@ export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) 
 export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state.score++; state.killsThisWave++; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+1);
   if(a.type==='stronghold'){ // se scinde en 2 mini-navettes sur les cases adjacentes libres
     let poses=0; for(const [dc,dr] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,1]]){ if(poses>=2) break; const c=a.c+dc, r=a.r+dr; if(c>=0&&c<state.COLS&&r>=0&&r<state.RANGS-1&&!aileEn(c,r)&&!occupe(c,r)){ faireAile(c,r,'mini_navette'); poses++; } } }
-  if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r));
+  // Bonus et débris sont mutuellement exclusifs (une épave qui reste sur le terrain n'a pas
+  // aussi lâché un bonus au même endroit) : on ne tente le débris que si aucun bonus n'est tombé.
+  const bonusLargue = Math.random()<0.18+0.08*state.ups.bonusPlus;
+  if(bonusLargue) larguerBonus(a.c,Math.max(0,a.r));
   // parfois, l'épave laisse un débris (obstacle destructible 1 PV) sur sa case si elle reste
   // libre — jamais garanti, juste une chance résiduelle après la destruction.
-  if(a.r>=0 && !occupe(a.c,a.r) && !asterEn(a.c,a.r) && !obstacleEn(a.c,a.r) && Math.random()<0.12){
+  else if(a.r>=0 && !occupe(a.c,a.r) && !asterEn(a.c,a.r) && !obstacleEn(a.c,a.r) && Math.random()<0.12){
     const p=centreCase(a.c,a.r);
     state.obstacles.push({c:a.c,r:a.r,type:'debris',hp:OBSTACLES.debris.hp,maxhp:OBSTACLES.debris.hp,x:p.x,y:p.y,variante:Math.random()<0.5,ang:0});
   } }

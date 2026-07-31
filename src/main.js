@@ -9,7 +9,7 @@ import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImg
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
 import { initAudio, startMusic } from './audio.js';
-import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
+import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
@@ -25,6 +25,7 @@ function etatVide(){
   state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
   state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.enFeu=0;state.rerollsRestants=0;
   state.comboCount=0;state.comboTimer=0;state.bestCombo=0;state.undoStack=[];state.paused=false;
+  randomiserAccueil();
 }
 
 function nouvellePartie(){
