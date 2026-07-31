@@ -395,13 +395,13 @@ export function dessiner(t){
     if(o.maxhp>1){ const n=o.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(o.x-tot/2), by=Math.round(o.y+o.img.height*sc/2+1); for(let i=0;i<n;i++){ ctx.fillStyle=i<o.hp?'#ff2a5a':'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq); } } }
 
   // trails (traînée floue derrière le tir) — court segment mobile, double trait parallèle
-  for(const l of state.trails){ const [tx,ty,hx,hy,p]=traitBref(l.x1,l.y1,l.x2,l.y2,l.t,l.gros?34:22); if(p>=1) continue;
+  for(const l of state.trails){ const [tx,ty,hx,hy,p]=traitBref(l.x1,l.y1,l.x2,l.y2,l.t,l.gros?60:40); if(p>=1) continue;
     ctx.globalAlpha=.35; const lw=l.gros?4:2; ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw;
     for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,l.gros?3:2)){ ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); }
     ctx.globalAlpha=1; }
 
   // lasers — court trait lumineux qui parcourt la distance (façon sabre/blaster), double trait parallèle
-  for(const l of state.lasers){ const [tx,ty,hx,hy,p]=traitBref(l.x1,l.y1,l.x2,l.y2,l.t,l.gros?26:16); if(p>=1) continue;
+  for(const l of state.lasers){ const [tx,ty,hx,hy,p]=traitBref(l.x1,l.y1,l.x2,l.y2,l.t,l.gros?46:30); if(p>=1) continue;
     ctx.globalAlpha=1; const lw=l.gros?5:3;
     for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,l.gros?3:2)){
       ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
@@ -598,7 +598,7 @@ export function dessinerIllustration(t){
       if(tc>T_ENTREE-T_TIR){
         // tir bref (façon sabre/blaster) qui parcourt la distance plutôt qu'une longue ligne
         // statique, double trait parallèle comme tous les autres lasers du jeu.
-        const [tx,ty,hx,hy,pb]=traitBref(attaquant.x,attaquant.y,ex,ey,(tc-(T_ENTREE-T_TIR))/1000,20);
+        const [tx,ty,hx,hy,pb]=traitBref(attaquant.x,attaquant.y,ex,ey,(tc-(T_ENTREE-T_TIR))/1000,36);
         if(pb<1){ ci.lineWidth=2;
           for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,2)){
             ci.strokeStyle='rgba(80,170,255,.85)'; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke();
