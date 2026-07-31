@@ -94,7 +94,7 @@ la progression de l'escadrille.
 **Plan d'implémentation** (chaque étape doit rester jouable/testable avant de
 passer à la suivante — jamais tout d'un bloc) :
 
-1. **Données de base** (`config.js`, `state.js`) : catalogue `BIOMES` (id V1 :
+1. ✅ **Données de base** (`config.js`, `state.js`) : catalogue `BIOMES` (id V1 :
    `desert`/`glace`/`grotte`/`villes_anciennes`, avec sa mécanique associée),
    catalogue `TOURELLES` (types PV/portée/dégâts, sur le modèle des
    archétypes de boss), formule de PV de la base par secteur/difficulté,
@@ -104,7 +104,7 @@ passer à la suivante — jamais tout d'un bloc) :
    `state.planete` (base, tourelles, biome courant, compteurs propres à
    chaque mécanique). Pas d'écran atteignable encore, juste les fondations.
 
-2. **Intégration carte** (`map.js`) : nouveau type de nœud `planete` dans
+2. ✅ **Intégration carte** (`map.js`) : nouveau type de nœud `planete` dans
    `NOEUD_TYPES`/`ICONE`/`COUL_NOEUD`/`NOM_NOEUD`/`DESC_NOEUD`, tirage au
    même titre que `elite` mais plafonné à 1/secteur et jamais au nœud de
    colonne 0. `entrerNoeud` aiguille vers une nouvelle fonction
@@ -159,4 +159,4 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : démarrer l'étape 1 (données de base) dès feu vert.
+**Prochaine étape** : étape 3 (entités planète — base, tourelles, garnison).
