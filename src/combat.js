@@ -82,17 +82,19 @@ export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0
    (aile/boss = cible ; allié/menace = bloqué). */
 export function analyseTir(f){
   if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),asteroidesOk:new Set(),mimicsOk:new Set(),tourellesOk:new Set(),base:false,boss:false,beams:[],jam:true};
-  const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); const tourellesOk=new Set(); let bossOk=false; let baseOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
+  const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); const tourellesOk=new Set(); let bossOk=false; let baseOk=false; const beams=[];
+  // biome Grotte (mission planète) : obscurité, portée réduite de 1 (jamais négative)
+  const p=Math.max(0,1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0)-(state.planete&&state.planete.biome==='grotte'?1:0));
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
     for(let rr=start; rr>=0; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
-      const tr=state.planete&&tourelleEn(c,rr); if(tr){ tourellesOk.add(tr); kind='ennemi'; r1=rr; break; }   // tourelle fixe (mission planète) : destructible comme un obstacle
+      const tr=state.planete&&tourelleEn(c,rr); if(tr){ if(tr.reveillee===false){ kind='menace'; r1=rr; break; } tourellesOk.add(tr); kind='ennemi'; r1=rr; break; }   // tourelle fixe (mission planète) : destructible comme un obstacle ; invisible/inactive tant que non révélée (camouflage, obscurité)
       const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }   // le mimic est ciblable comme un ennemi
       if(bossEn(c,rr)){ bossOk=true; kind='ennemi'; r1=rr; break; }
-      if(state.planete&&baseEn(c,rr)){ baseOk=true; kind='ennemi'; r1=rr; break; }   // base ennemie (mission planète)
+      if(state.planete&&baseEn(c,rr)){ if(state.planete.base.reveillee===false){ kind='menace'; r1=rr; break; } baseOk=true; kind='ennemi'; r1=rr; break; }   // base ennemie (mission planète)
       if(fighterEn(c,rr)){ kind='allie'; r1=rr; break; }
       const as=asterEn(c,rr); if(as){ asteroidesOk.add(as); kind='ennemi'; r1=rr; break; }   // les astéroïdes sont destructibles
       if(trouNoirEn(c,rr)){ kind='menace'; r1=rr; break; }
@@ -136,6 +138,9 @@ export function frapperObstacle(o){
       for(let dc=-1;dc<=1;dc++) for(let dr=-1;dr<=1;dr++){ if(dc===0&&dr===0) continue; const c=o.c+dc,r=o.r+dr;
         const a=aileEn(c,r); if(a){ a.hp-=2; exploser(a.x,a.y,true); if(a.hp<=0) tuerAile(a); }
         const f=fighterEn(c,r); if(f){ f.hp=(f.hp||1)-2; exploser(f.x,f.y,true); if(f.hp<=0) tuerFighter(f); } } }
+    // biome Villes anciennes (mission planète) : la destruction d'une ruine peut révéler une
+    // tourelle camouflée dessous — callback posé par planete.js, même idiome que suiteMission.
+    if(state.onObstacleDetruit) state.onObstacleDetruit(o);
   }
 }
 

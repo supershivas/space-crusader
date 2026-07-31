@@ -12,7 +12,7 @@ import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRen
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
-import { finDuTourPlanete } from './planete.js';
+import { finDuTourPlanete, appliquerGlissade, verifierCamouflage } from './planete.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
 import { iconCanvas, imgBonusPV, imgBonusTIR, imgBonusVAIS } from './sprites.js';
 import { t } from './i18n.js';
@@ -641,7 +641,13 @@ canvas.addEventListener('pointerdown', ev=>{
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
   const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
   const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
-  if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return; }
+  if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){
+    const dc=Math.sign(c-f.c), dr=Math.sign(r-f.r);
+    f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++;
+    if(state.planete) appliquerGlissade(f,dc,dr);   // biome Glace : glisse d'une case de plus si la case d'arrivée est du verglas
+    if(state.planete) verifierCamouflage();          // biome Villes anciennes : révèle une tourelle camouflée si approchée
+    const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return;
+  }
   state.selection=null;
 });
 

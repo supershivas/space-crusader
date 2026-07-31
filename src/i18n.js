@@ -297,6 +297,8 @@ const STRINGS = {
     toast_frappe_orbitale:'Frappe orbitale !',
     toast_forteresse_detruite:'Forteresse détruite !',
     toast_secteur:'Secteur {n}',
+    toast_tempete_sable:'Tempête de sable !',
+    toast_tourelle_reveleee:'Tourelle repérée !',
     hangar_prep:'Hangar :',
 
     // ===== Infobulles unités (ailes ennemies) =====
@@ -698,6 +700,8 @@ const STRINGS = {
     toast_frappe_orbitale:'Orbital strike!',
     toast_forteresse_detruite:'Fortress destroyed!',
     toast_secteur:'Sector {n}',
+    toast_tempete_sable:'Sandstorm!',
+    toast_tourelle_reveleee:'Turret spotted!',
     hangar_prep:'Hangar:',
 
     ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',

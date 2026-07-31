@@ -327,6 +327,10 @@ export function dessiner(t){
       ctx.strokeStyle='rgba(120,180,255,'+(.5+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,state.CELL*0.3*(0.6+0.4*Math.sin(t/300)),0,7); ctx.stroke(); }
     else if(o.type==='mines'){ ctx.fillStyle='rgba(229,72,77,'+(.10+.08*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
       for(const[dx,dy]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22],[0,0]]){ ctx.fillStyle='#e5484d'; ctx.beginPath(); ctx.arc(cx+dx*state.CELL,cy+dy*state.CELL,3,0,7); ctx.fill(); ctx.strokeStyle='#8f2b2f'; ctx.lineWidth=1; for(let a=0;a<4;a++){ ctx.beginPath(); ctx.moveTo(cx+dx*state.CELL,cy+dy*state.CELL); ctx.lineTo(cx+dx*state.CELL+Math.cos(a*1.57)*5,cy+dy*state.CELL+Math.sin(a*1.57)*5); ctx.stroke(); } } }
+    else if(o.type==='glace'){ ctx.fillStyle='rgba(191,233,255,'+(.20+.10*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
+      ctx.strokeStyle='rgba(191,233,255,.7)'; ctx.lineWidth=1; ctx.strokeRect(state.GX+o.c*state.CELL+2,state.GY+o.r*state.CELL+2,state.CELL-4,state.CELL-4); }
+    else if(o.type==='ruine'){ ctx.fillStyle='#6a5a42'; const s=state.CELL*0.66; ctx.fillRect(Math.round(cx-s/2),Math.round(cy-s/2),Math.round(s),Math.round(s));
+      ctx.strokeStyle='#c9a97a'; ctx.lineWidth=2; ctx.strokeRect(Math.round(cx-s/2),Math.round(cy-s/2),Math.round(s),Math.round(s)); }
     else if(im){ ctx.drawImage(im,Math.round(cx-im.width/2),Math.round(cy-im.height/2)); }
     // PV des obstacles destructibles à plusieurs PV (station)
     if(def.destructible && (o.maxhp||def.hp)>1) dessinerPV(cx,Math.round(cy+state.CELL*0.32),o.hp,o.maxhp||def.hp,'#ff2a5a');
@@ -375,15 +379,19 @@ export function dessiner(t){
   // mission planète : base ennemie + tourelles fixes — rendu simple (rectangle teinté + barre
   // de PV), sur le même principe que le boss ci-dessus ; sprites dédiés à l'étape 8 (habillage).
   if(state.planete){ const pl=state.planete, base=pl.base;
-    const bx0=state.GX+base.c*state.CELL+3, by0=state.GY+base.r*state.CELL+3, bw0=base.w*state.CELL-6, bh0=base.h*state.CELL-6;
-    ctx.fillStyle='#4a1f6a'; ctx.fillRect(bx0,by0,bw0,bh0);
-    ctx.strokeStyle='#a355e0'; ctx.lineWidth=2; ctx.strokeRect(bx0,by0,bw0,bh0);
-    const bbw=bw0-8, bbx=bx0+4, bby=by0-8; ctx.fillStyle='#2a1040'; ctx.fillRect(bbx,bby,bbw,6);
-    ctx.fillStyle='#a355e0'; ctx.fillRect(bbx,bby,bbw*Math.max(0,base.hp/base.maxhp),6);
-    ctx.fillStyle='#a355e0'; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
-    ctx.fillText(trad('planete_base_label'),base.x,bby-4); ctx.textAlign='left';
+    // endormie (biome Grotte) : invisible tant qu'aucun vaisseau n'est à 2 cases ou moins
+    if(base.reveillee!==false){
+      const bx0=state.GX+base.c*state.CELL+3, by0=state.GY+base.r*state.CELL+3, bw0=base.w*state.CELL-6, bh0=base.h*state.CELL-6;
+      ctx.fillStyle='#4a1f6a'; ctx.fillRect(bx0,by0,bw0,bh0);
+      ctx.strokeStyle='#a355e0'; ctx.lineWidth=2; ctx.strokeRect(bx0,by0,bw0,bh0);
+      const bbw=bw0-8, bbx=bx0+4, bby=by0-8; ctx.fillStyle='#2a1040'; ctx.fillRect(bbx,bby,bbw,6);
+      ctx.fillStyle='#a355e0'; ctx.fillRect(bbx,bby,bbw*Math.max(0,base.hp/base.maxhp),6);
+      ctx.fillStyle='#a355e0'; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
+      ctx.fillText(trad('planete_base_label'),base.x,bby-4); ctx.textAlign='left';
+    }
 
-    for(const tr of pl.tourelles){
+    // tourelles endormies (Grotte) ou camouflées (Villes anciennes) : invisibles tant que non révélées
+    for(const tr of pl.tourelles){ if(!tr.reveillee) continue;
       const tx0=state.GX+tr.c*state.CELL+6, ty0=state.GY+tr.r*state.CELL+6, tw0=state.CELL-12;
       ctx.fillStyle='#6a4a2f'; ctx.fillRect(tx0,ty0,tw0,tw0);
       ctx.strokeStyle='#c9a97a'; ctx.lineWidth=2; ctx.strokeRect(tx0,ty0,tw0,tw0);

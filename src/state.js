@@ -29,6 +29,9 @@ export const state = {
   // callbacks utilisés uniquement pendant une mission planète (planete.js), pour éviter un
   // import circulaire depuis combat.js : voir animer() dans combat.js.
   suiteDemarrerTour:null, suiteFinPlanete:null,
+  // callback optionnel (mécanique de biome villes anciennes) appelé par frapperObstacle()
+  // (combat.js) quand un obstacle est détruit, pour révéler une tourelle camouflée dessous.
+  onObstacleDetruit:null,
   carte:undefined, noeudActuel:undefined, secteur:undefined, enCombat:undefined,
   scenePlanete:null,
 
