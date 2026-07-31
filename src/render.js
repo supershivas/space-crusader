@@ -525,52 +525,45 @@ export function dessinerIllustration(t){
   draw(JOUEUR, xGauche, alliesY+bob(0), scJ);
   draw(ROUGE,  xDroite, alliesY+bob(2.4), scJ);
 
-  // Un chasseur ennemi (Aile) descend du haut de l'écran, s'arrête au niveau du titre
-  // "CROISEUR" (en DOM par-dessus, donc l'ennemi passe visuellement derrière pendant sa
-  // descente) et s'y fait détruire par l'un des deux alliés au sol — au hasard, cycle après
-  // cycle. Le suivant arrive presque aussitôt (~1s après l'explosion précédente), jamais au
-  // même endroit : plusieurs vagues rapprochées plutôt qu'un seul assaut isolé, pour donner
-  // une impression de guerre totale. Cycle rejoué en boucle sans état à mémoriser côté
-  // dessin : tout dérive de t comme le reste de l'illustration ; hash() en tire un
-  // pseudo-aléatoire stable par cycle (lequel allié tire, où l'ennemi s'arrête, par où il
-  // entre en haut) sans jamais appeler Math.random() à chaque frame (ça scintillerait).
-  // Seule la secousse du titre (DOM) a besoin d'un vrai état : voir déclencherSecousseTitre().
-  const CYCLE=2900, T_ENTREE=900, T_ATTENTE=500, T_TIR=200, T_BOOM=300;
+  // Un chasseur ennemi (Aile) descend du haut de l'écran, en vol continu, en passant devant le
+  // titre "CROISEUR" (calque de devant ci, au-dessus du DOM) — jamais un temps d'arrêt/pause :
+  // il est abattu EN PLEIN VOL par l'un des deux alliés au sol, au niveau du titre, sans jamais
+  // décélérer jusqu'à s'immobiliser (vitesse constante — voir p ci-dessous, pas d'ease-out qui
+  // ralentirait artificiellement l'arrivée et donnerait l'impression qu'il "s'arrête" avant
+  // d'exploser). Le suivant arrive presque aussitôt (~1s après l'explosion précédente), jamais
+  // au même endroit : plusieurs vagues rapprochées plutôt qu'un seul assaut isolé, pour donner
+  // une impression de guerre totale. Cycle rejoué en boucle sans état à mémoriser côté dessin :
+  // tout dérive de t comme le reste de l'illustration ; hash() en tire un pseudo-aléatoire
+  // stable par cycle (lequel allié tire, où l'impact tombe, par où il entre en haut) sans
+  // jamais appeler Math.random() à chaque frame (ça scintillerait). Seule la secousse du titre
+  // (DOM) a besoin d'un vrai état : voir déclencherSecousseTitre().
+  const CYCLE=2300, T_ENTREE=1000, T_TIR=200, T_BOOM=300;
   const hash=n=>{ const x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x); };
   const cycleIdx=Math.floor(t/CYCLE), tc=t%CYCLE;
   const attaquant=hash(cycleIdx)<0.5?posGauche:posDroite;
   const laserCol=attaquant===posGauche?'55,224,255':'229,72,77';
-  // Le point d'arrêt/impact suit le titre : ~36% de la hauteur de l'écran, là où
-  // #accueil-contenu place "CROISEUR" (même boîte #scene que le canvas, donc la fraction
-  // reste valable quelle que soit la résolution réelle). Large éventail en X (au lieu d'une
-  // zone étroite) : un nouvel impact à chaque fois "pas au même endroit" le long du titre.
+  // Le point d'impact suit le titre : ~36% de la hauteur de l'écran, là où #accueil-contenu
+  // place "CROISEUR" (même boîte #scene que le canvas, donc la fraction reste valable quelle
+  // que soit la résolution réelle). Large éventail en X (au lieu d'une zone étroite) : un
+  // nouvel impact à chaque fois "pas au même endroit" le long du titre.
   const restX=W*(0.15+0.7*hash(cycleIdx+7.7)), restY=H*0.36+H*0.02*(hash(cycleIdx+3.3)-0.5);
   const startXHaut=W*(0.1+0.8*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
-  // La descente (entree) reste sur le calque arrière (c), derrière le titre/les boutons : le
-  // chasseur approche encore, il ne doit pas sembler survoler le titre par-dessus. Une fois
-  // arrivé et immobile (attente/tir/boom), il bascule sur le calque de devant (ci) : dessiné
-  // sur le calque arrière comme avant, il restait caché derrière les lettres opaques pendant
-  // toute sa pause avant le tir — invisible, puis l'explosion apparaissait "de nulle part" une
-  // fois passée devant (voir plus bas), donnant l'impression qu'il était détruit avant même de
-  // s'être arrêté. Le passage d'un calque à l'autre se fait pile à son arrivée (fin de
-  // l'entrée), pas pendant qu'il est encore visiblement en mouvement. Son trajet reste
-  // entièrement au-dessus des boutons (restY < leur position), donc rien ne vient jamais les
-  // recouvrir.
-  if(tc<T_ENTREE){
-    const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3);
-    const ex=startXHaut+(restX-startXHaut)*ease, ey=-eH+(restY-(-eH))*ease;
-    c.globalAlpha=Math.min(1,p*1.5); draw(AILE, ex-eW/2, ey-eH/2, eSc); c.globalAlpha=1;
-  } else if(ci){
-    if(tc<T_ENTREE+T_ATTENTE){
-      drawSur(ci,AILE, restX-eW/2, restY-eH/2+bob(1.1), eSc);
-    } else if(tc<T_ENTREE+T_ATTENTE+T_TIR){
-      drawSur(ci,AILE, restX-eW/2, restY-eH/2, eSc);
-      ci.strokeStyle='rgba('+laserCol+',.85)'; ci.lineWidth=2;
-      ci.beginPath(); ci.moveTo(attaquant.x,attaquant.y); ci.lineTo(restX,restY); ci.stroke();
-    } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
-      const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
+  if(ci){
+    if(tc<T_ENTREE){
+      // vitesse constante (p linéaire, pas d'ease-out) : le chasseur file jusqu'au point
+      // d'impact sans jamais ralentir ni se figer — il n'y a pas de "case" arrêtée à viser,
+      // le laser des 200 dernières ms converge sur sa position réelle, toujours en mouvement.
+      const p=tc/T_ENTREE;
+      const ex=startXHaut+(restX-startXHaut)*p, ey=-eH+(restY-(-eH))*p;
+      ci.globalAlpha=Math.min(1,p*4); drawSur(ci,AILE, ex-eW/2, ey-eH/2, eSc); ci.globalAlpha=1;
+      if(tc>T_ENTREE-T_TIR){
+        ci.strokeStyle='rgba('+laserCol+',.85)'; ci.lineWidth=2;
+        ci.beginPath(); ci.moveTo(attaquant.x,attaquant.y); ci.lineTo(ex,ey); ci.stroke();
+      }
+    } else if(tc<T_ENTREE+T_BOOM){
+      const tb=tc-T_ENTREE, idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
       declencherSecousseTitre(cycleIdx);
       const glow=ci.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.5*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
       ci.fillStyle=glow; ci.fillRect(restX-dw,restY-dh,dw*2,dh*2);
