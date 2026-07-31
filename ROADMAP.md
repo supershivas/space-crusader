@@ -146,7 +146,7 @@ passer à la suivante — jamais tout d'un bloc) :
    (base, tourelles, biome, compteurs de mécanique) sur le modèle de ce qui
    existe pour un combat spatial en cours.
 
-8. **Habillage** : sprites de base/tourelles/ruines, décor par biome
+8. ✅ **Habillage** : sprites de base/tourelles/ruines, décor par biome
    (`render.js`, `sprites.js`), nouvelle section `design-system.html`,
    traduction FR/EN complète (`i18n.js`), entrées d'encyclopédie (base,
    tourelles par type, biomes), éventuels nouveaux achievements.
@@ -159,7 +159,6 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 8 (habillage — sprites base/tourelles/ruines,
-décor par biome, section design-system.html, i18n complet, encyclopédie,
-éventuels achievements). Le mode est fonctionnellement complet et jouable
-de bout en bout, y compris la reprise de partie, depuis l'étape 7.
+**Prochaine étape** : étape 9, la dernière — vérifications transverses avant
+fusion (non-régression du tutoriel et du combat spatial, tests Playwright
+dédiés par biome, incrément de `VERSION`, puis fusion sur `main`).
