@@ -8,13 +8,13 @@ une section "Fait" ou simplement supprimée une fois fusionnée sur `main`).
 
 ### Missions sur planète — "tower attack" (jeu inversé)
 
-**Statut** : conception validée avec l'utilisateur le 2026-07-31, implémentation
-non démarrée.
+**Statut** : conception intégralement verrouillée avec l'utilisateur le
+2026-07-31 (toutes les décisions ci-dessous tranchées), implémentation non
+démarrée.
 
 **Pitch** : sur certains nœuds de la carte de secteur, au lieu d'un combat spatial
 classique (défendre le croiseur contre des vagues d'ailes), le joueur atterrit
-sur une planète (désert, jungle, glace, lacs, villes anciennes, grotte, et
-d'autres biomes à définir) et doit **détruire une base ennemie** située en haut
+sur une planète et doit **détruire une base ennemie** située en haut
 du champ de bataille. Le croiseur n'apparaît pas à l'écran : le joueur ne
 défend plus, il **attaque**. Des tourelles ennemies fixes défendent le
 terrain, et la base produit régulièrement des vaisseaux ennemis pour freiner
@@ -55,6 +55,12 @@ la progression de l'escadrille.
   section à y ajouter une fois le premier biome posé.
 - Bilingue FR/EN dès la première ligne de texte (noms de biomes, tourelles,
   base, textes de mission) via `src/i18n.js`.
+- Biomes (tranché) : V1 limitée à 4 — désert, glace, grotte, villes anciennes
+  — pour limiter le travail d'art/i18n avant de valider que le mode est
+  amusant. Jungle et lacs restent en réserve pour une vague suivante.
+- Récompense de fin de mission (tranché) : traitée comme un nœud `elite`
+  (choix d'amélioration garanti après victoire), cohérent avec la durée/
+  l'enjeu d'un siège multi-tours.
 - Sauvegarde/reprise de partie (`sauvegarderPartie`/`chargerSauvegarde`) à
   étendre pour une mission planète en cours, sur le modèle de ce qui existe
   déjà pour un combat spatial en cours.
@@ -65,7 +71,6 @@ la progression de l'escadrille.
   (nouvelles entrées tourelle/base/biome), équilibrage par difficulté
   (`DIFFICULTES`).
 
-**Prochaine étape** : détailler chaque biome (mécaniques de terrain propres,
-pas seulement un habillage visuel), fixer la liste finale des biomes et la
-structure de récompense de fin de mission, avant de commencer
+**Prochaine étape** : détailler la mécanique de terrain propre à chacun des
+4 biomes de la V1 (pas seulement un habillage visuel), puis commencer
 l'implémentation.
