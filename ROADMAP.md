@@ -32,17 +32,29 @@ la progression de l'escadrille.
   cadence de production), tourelles (PV, portée, dégâts — variantes par
   biome ou par palier de difficulté, sur le modèle des archétypes de boss
   existants).
-- Condition de victoire : PV de la base à 0. Condition d'échec à définir
-  (flotte entièrement détruite ? limite de tours ?) — pas de PV de croiseur
-  à surveiller puisqu'il est absent de la scène.
+- Condition de victoire : PV de la base à 0. Condition d'échec (tranchée) :
+  flotte entièrement détruite → mission ratée, retour à la carte sans perte
+  de progression du secteur (pas de limite de tours, cohérent avec le reste
+  du jeu qui ne punit jamais par un chrono).
+- Progression (tranchée) : siège multi-tours — l'escadrille démarre en bas
+  de la grille et avance tour après tour (même système de déplacement que
+  le combat spatial actuel) jusqu'à portée des tourelles puis de la base.
+  Pas d'engagement immédiat.
+- Tourelles (tranché) : destructibles, comme les obstacles actuels (PV,
+  détruites par un tir allié) — choix tactique entre dégager le passage et
+  foncer sur la base.
+- Placement sur la carte (tranché) : ajoutée au tirage des nœuds
+  intermédiaires comme `elite`, mais plafonnée à 1 occurrence par secteur
+  et jamais en position de tout premier nœud (tutoriel).
+- Actions du croiseur `tourelle`/`bouclier` (à repenser plus tard) :
+  masquées pour la première version faute de sens sans croiseur à l'écran ;
+  on y reviendra si le mode manque de profondeur d'action une fois testé.
+  L'ultime (frappe orbitale) reste disponible et garde son thème.
 - Décors par biome (fond, palette, obstacles thématiques) en cohérence avec
   le design system existant (`design-system.html`, `theme.css`) : nouvelle
   section à y ajouter une fois le premier biome posé.
 - Bilingue FR/EN dès la première ligne de texte (noms de biomes, tourelles,
   base, textes de mission) via `src/i18n.js`.
-- Actions du croiseur (`tourelle`, `bouclier`) à repenser pour ce mode : sans
-  croiseur à l'écran, leur sens actuel ne s'applique plus (l'ultime — frappe
-  orbitale — reste en revanche thématiquement cohérent en mode attaque).
 - Sauvegarde/reprise de partie (`sauvegarderPartie`/`chargerSauvegarde`) à
   étendre pour une mission planète en cours, sur le modèle de ce qui existe
   déjà pour un combat spatial en cours.
@@ -54,5 +66,6 @@ la progression de l'escadrille.
   (`DIFFICULTES`).
 
 **Prochaine étape** : détailler chaque biome (mécaniques de terrain propres,
-pas seulement un habillage visuel) et trancher la condition d'échec avant de
-commencer l'implémentation.
+pas seulement un habillage visuel), fixer la liste finale des biomes et la
+structure de récompense de fin de mission, avant de commencer
+l'implémentation.
