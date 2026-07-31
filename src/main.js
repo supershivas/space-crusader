@@ -18,7 +18,7 @@ import { VERSION } from './version.js';
 
 /* ===== ÉTAT VIDE / NOUVELLE PARTIE / REPRISE ===== */
 function etatVide(){
-  state.fighters=[];state.ailes=[];state.asteroides=[];state.bonus=[];state.boss=null;state.explosions=[];state.particules=[];state.lasers=[];state.trails=[];
+  state.fighters=[];state.ailes=[];state.asteroides=[];state.bonus=[];state.boss=null;state.explosions=[];state.particules=[];state.lasers=[];state.trails=[];state.dmgTexts=[];
   state.trousNoirs=[];state.champs=[];state.menacesWarn=[];state.obstacles=[];state.bossVaincus=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.scoreAvantVague=0;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;state.scenePlanete=null;
@@ -36,7 +36,7 @@ function nouvellePartie(){
   const special=speciaux[Math.floor(Math.random()*speciaux.length)].id;
   const [cN,cS,cR]=spread(3);
   state.fighters=[nouveauVaisseau(cN,state.RANGS-1,'normal',false), nouveauVaisseau(cS,state.RANGS-1,special,false), nouveauVaisseau(cR,state.RANGS-1,'rouge',false)];
-  state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.explosions=[]; state.particules=[]; state.lasers=[]; state.trails=[];
+  state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.explosions=[]; state.particules=[]; state.lasers=[]; state.trails=[]; state.dmgTexts=[];
   state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.obstacles=[]; state.bossVaincus=0; state.enFeu=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false; state.choixBuild=false; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false; state.scoreAvantVague=0;

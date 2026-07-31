@@ -435,6 +435,14 @@ export function dessiner(t){
     ctx.drawImage(im,e.x-dw/2,e.y-dh/2,dw,dh); }
   for(const p of state.particules){ ctx.globalAlpha=Math.max(0,1-p.t/p.vie); ctx.fillStyle=p.c; ctx.fillRect(p.x,p.y,p.taille,p.taille); } ctx.globalAlpha=1;
 
+  // dégâts : "-N" rouge qui monte et s'efface à l'endroit précis du coup, à côté de l'explosion
+  for(const d of state.dmgTexts){ const p=Math.min(1,d.t/.8); ctx.globalAlpha=Math.max(0,1-p*p);
+    ctx.save(); ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=2;
+    ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillStyle='#ff4a4a';
+    ctx.fillText(d.txt,d.x,d.y-10-p*22);
+    ctx.restore(); }
+  ctx.globalAlpha=1;
+
   // Combo display
   if(state.comboCount>1){ ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_combo',{n:state.comboCount}),state.LARGEUR/2,state.GY-12); ctx.textAlign='left'; }
 
