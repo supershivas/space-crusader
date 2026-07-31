@@ -4,14 +4,15 @@
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert } from './state.js';
 import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE } from './config.js';
-import { fighterEn, aileEn, asterEn, bonusEn, bossEn, trouNoirEn, champEn, occupe,
+import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
 import { rafraichirSkinCroiseur, imgBossGuide } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
-import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss,
+import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
+import { finDuTourPlanete } from './planete.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
 import { iconCanvas, imgBonusPV, imgBonusTIR, imgBonusVAIS } from './sprites.js';
 import { t } from './i18n.js';
@@ -400,7 +401,7 @@ function animerDecompteScore(el,de,vers,duree=700){
    d'étape), puis décompte le score animé jusqu'au nouveau total. recap = {avant,apres,lignes}
    fourni par gagnerCombat() dans map.js. */
 export function ouvrirMission(type,reussi,recap){ state.phase='mission'; tooltip.classList.remove('visible');
-  missionTitre.textContent = type==='boss'?t('mission_boss_titre'):(type==='elite'?t('mission_elite_titre'):t('mission_normal_titre'));
+  missionTitre.textContent = type==='boss'?t('mission_boss_titre'):type==='elite'?t('mission_elite_titre'):type==='planete'?(reussi?t('mission_planete_titre'):t('mission_planete_echec_titre')):t('mission_normal_titre');
   missionObjectif.textContent = state.objectifVague ? ((reussi?'✅ ':'✗ ')+t('objectif_secondaire')+' : '+texteObjectif(state.objectifVague)) : '';
   missionRecap.innerHTML='';
   const lignes=(recap&&recap.lignes)||[];
@@ -610,7 +611,7 @@ canvas.addEventListener('pointerdown', ev=>{
   if(state.phase!=='joueur') return;
   saveState();
   if(ultimePret()&&dansRect(x,y,state.ULT)){ declencheUltime(); return; }
-  if(dansRect(x,y,state.BTN)){ finDuTour(); return; }
+  if(dansRect(x,y,state.BTN)){ if(state.planete) finDuTourPlanete(); else finDuTour(); return; }
   for(const a of state.ACT){ if(dansRect(x,y,a)){ a.anim=1; choisirAction(a.id); return; } }
   const cell=caseDe(x,y); if(!cell){ state.selection=null; state.modeTourelle=false; state.modeCapacite=null; return; } const {c,r}=cell;
   if(state.modeTourelle){ if(bossEn(c,r)){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); state.trails.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); sonTir(); finirTourelle(); const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(2,px,py); },120); } else { const t=aileEn(c,r); if(t){ tirerTourelle(t); } else state.modeTourelle=false; } return; }
@@ -634,6 +635,8 @@ canvas.addEventListener('pointerdown', ev=>{
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(deg,px,py); },130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
+  if(state.planete && baseEn(c,r)){ if(an.base){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBase(deg,px,py); },130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
+  if(state.planete){ const tourCible=tourelleEn(c,r); if(tourCible){ if(an.tourellesOk.has(tourCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperTourelle(tourCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; } }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(raisonTirBloque(an,c,cible),'log-red'); return; }
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
   const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
@@ -657,7 +660,7 @@ export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.to
 
 document.addEventListener('keydown', ev=>{
   if(ev.key==='Escape'){ undo(); ev.preventDefault(); }
-  else if(ev.key===' '||ev.key==='Enter'){ if(state.phase==='joueur'&&!state.paused&&!state.choixBuild){ finDuTour(); } ev.preventDefault(); }
+  else if(ev.key===' '||ev.key==='Enter'){ if(state.phase==='joueur'&&!state.paused&&!state.choixBuild){ if(state.planete) finDuTourPlanete(); else finDuTour(); } ev.preventDefault(); }
   else if(ev.key==='p'||ev.key==='P'){ togglePause(); ev.preventDefault(); }
   else if(ev.key==='1'){ if(state.phase==='joueur'&&!state.choixBuild) choisirAction('vaisseau'); }
   else if(ev.key==='2'){ if(state.phase==='joueur'&&!state.choixBuild) choisirAction('tourelle'); }

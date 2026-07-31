@@ -3,11 +3,12 @@
    événements aléatoires entre les vagues
    ===================================================================== */
 import { state, centreCase, sauvegarderPartie } from './state.js';
-import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX, BIOMES } from './config.js';
+import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
 import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner } from './ui.js';
+import { demarrerMissionPlanete } from './planete.js';
 import { t, L } from './i18n.js';
 
 export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon',planete:'globe'};
@@ -73,19 +74,6 @@ export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const typ
   if(type==='combat'||type==='elite'||type==='boss'){ demarrerCombat(type); }
   else if(type==='planete'){ demarrerMissionPlanete(); }
   else { ouvrirScenePlanete(construireScene(type)); } }
-
-/* ===== MISSION PLANÈTE =====
-   Étape 2/9 de la roadmap (intégration carte) : le nœud existe, se tire correctement et se
-   navigue, mais la mission elle-même (base, tourelles, boucle de tour dédiée) arrive aux
-   étapes suivantes — pour l'instant on tire juste le biome et on revient à la carte, pour que
-   ce nœud reste jouable de bout en bout sans rien casser en attendant. */
-export function demarrerMissionPlanete(){
-  const biome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
-  state.planete={biome:biome.id};
-  montrerToast(t('toast_planete_bientot'),'ok');
-  state.planete=null;
-  ouvrirCarte();
-}
 
 /* construit le contenu d'une planète sans combat : décor + choix en haut d'écran */
 function construireScene(type){

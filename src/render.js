@@ -372,6 +372,26 @@ export function dessiner(t){
     if(state.boss.type==='rayon'&&state.boss.charge) dessinerIcone(imgEclairIco,state.boss.x+ctx.measureText(txtBoss).width/2+8,by-6,1);
     ctx.textAlign='left'; }
 
+  // mission planète : base ennemie + tourelles fixes — rendu simple (rectangle teinté + barre
+  // de PV), sur le même principe que le boss ci-dessus ; sprites dédiés à l'étape 8 (habillage).
+  if(state.planete){ const pl=state.planete, base=pl.base;
+    const bx0=state.GX+base.c*state.CELL+3, by0=state.GY+base.r*state.CELL+3, bw0=base.w*state.CELL-6, bh0=base.h*state.CELL-6;
+    ctx.fillStyle='#4a1f6a'; ctx.fillRect(bx0,by0,bw0,bh0);
+    ctx.strokeStyle='#a355e0'; ctx.lineWidth=2; ctx.strokeRect(bx0,by0,bw0,bh0);
+    const bbw=bw0-8, bbx=bx0+4, bby=by0-8; ctx.fillStyle='#2a1040'; ctx.fillRect(bbx,bby,bbw,6);
+    ctx.fillStyle='#a355e0'; ctx.fillRect(bbx,bby,bbw*Math.max(0,base.hp/base.maxhp),6);
+    ctx.fillStyle='#a355e0'; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
+    ctx.fillText(trad('planete_base_label'),base.x,bby-4); ctx.textAlign='left';
+
+    for(const tr of pl.tourelles){
+      const tx0=state.GX+tr.c*state.CELL+6, ty0=state.GY+tr.r*state.CELL+6, tw0=state.CELL-12;
+      ctx.fillStyle='#6a4a2f'; ctx.fillRect(tx0,ty0,tw0,tw0);
+      ctx.strokeStyle='#c9a97a'; ctx.lineWidth=2; ctx.strokeRect(tx0,ty0,tw0,tw0);
+      if(tr.maxhp>1){ const n=tr.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, hbx=Math.round(tr.x-tot/2), hby=Math.round(ty0-6);
+        for(let i=0;i<n;i++){ ctx.fillStyle=i<tr.hp?'#e5484d':'#4a5262'; ctx.fillRect(hbx+i*(sq+gap),hby,sq,sq); } }
+    }
+  }
+
   // astéroïdes (le gros est plus grand ; PV affichés s'il est blindé)
   for(const o of state.asteroides){ const sc=o.type==='gros'?1.4:o.type==='essaim'?0.7:1;
     ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.ang); ctx.drawImage(o.img,-o.img.width*sc/2,-o.img.height*sc/2,o.img.width*sc,o.img.height*sc); ctx.restore();
@@ -456,7 +476,7 @@ export function dessiner(t){
   }
 
   // boutons d'action
-  for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
+  for(const a of state.ACT){ const masquee=state.planete&&(a.id==='tourelle'||a.id==='bouclier'); const dispo=masquee?false:state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
     arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
     if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
     ctx.fillStyle=dispo||vise?'#e8eefc':'#5b6580'; ctx.textAlign='center';

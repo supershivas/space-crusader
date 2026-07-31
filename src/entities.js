@@ -63,7 +63,10 @@ export function bossEn(c,r){ return state.boss&&c>=state.boss.c&&c<=state.boss.c
 export function obstacleEn(c,r){ return state.obstacles?state.obstacles.find(o=>o.c===c&&o.r===r):undefined; }
 export function obstacleBloquant(c,r){ const o=obstacleEn(c,r); return (o && OBSTACLES[o.type].bloque)?o:undefined; }
 export function champObstacleEn(c,r){ const o=obstacleEn(c,r); return (o && OBSTACLES[o.type].champ)?OBSTACLES[o.type].champ:null; }
-export function occupe(c,r){ return fighterEn(c,r)||aileEn(c,r)||bossEn(c,r)||obstacleBloquant(c,r); }
+/* mission planète (state.planete) : tourelle fixe / base ennemie sur une case donnée */
+export function tourelleEn(c,r){ return state.planete&&state.planete.tourelles.find(tr=>tr.c===c&&tr.r===r); }
+export function baseEn(c,r){ if(!state.planete) return false; const b=state.planete.base; return c>=b.c&&c<b.c+b.w&&r>=b.r&&r<b.r+b.h; }
+export function occupe(c,r){ return fighterEn(c,r)||aileEn(c,r)||bossEn(c,r)||obstacleBloquant(c,r)||!!tourelleEn(c,r)||baseEn(c,r); }
 export function dansGrille(c,r){ return c>=0&&c<state.COLS&&r>=0&&r<state.RANGS; }
 export function trouNoirEn(c,r){ return state.trousNoirs.find(t=>t.c===c&&t.r===r); }
 export function champEn(c){ return state.champs.some(ch=>c>=ch.c0&&c<=ch.c1); }

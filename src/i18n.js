@@ -226,13 +226,17 @@ const STRINGS = {
     mission_boss_titre:'FORTERESSE DÉTRUITE !',
     mission_elite_titre:'ÉLITES ANÉANTIS !',
     mission_normal_titre:'ZONE SÉCURISÉE',
+    mission_planete_titre:'BASE DÉTRUITE !',
+    mission_planete_echec_titre:'ESCADRILLE DÉTRUITE',
     mission_secteur:'Secteur',
     mission_score:'Score',
     mission_croiseur:'Croiseur',
     mission_pv:'PV',
     mission_recap_kills:'{n} ennemis détruits',
     mission_recap_boss:'Boss vaincu',
+    mission_recap_base:'Base détruite',
     mission_recap_objectif:'Objectif secondaire réussi',
+    planete_base_label:'BASE ENNEMIE',
 
     // ===== Tooltips (survol) =====
     tt_pv:'PV',
@@ -293,7 +297,6 @@ const STRINGS = {
     toast_frappe_orbitale:'Frappe orbitale !',
     toast_forteresse_detruite:'Forteresse détruite !',
     toast_secteur:'Secteur {n}',
-    toast_planete_bientot:'Mission planète : bientôt disponible',
     hangar_prep:'Hangar :',
 
     // ===== Infobulles unités (ailes ennemies) =====
@@ -628,13 +631,17 @@ const STRINGS = {
     mission_boss_titre:'FORTRESS DESTROYED!',
     mission_elite_titre:'ELITES WIPED OUT!',
     mission_normal_titre:'ZONE SECURED',
+    mission_planete_titre:'BASE DESTROYED!',
+    mission_planete_echec_titre:'SQUADRON WIPED OUT',
     mission_secteur:'Sector',
     mission_score:'Score',
     mission_croiseur:'Cruiser',
     mission_pv:'HP',
     mission_recap_kills:'{n} enemies destroyed',
     mission_recap_boss:'Boss defeated',
+    mission_recap_base:'Base destroyed',
     mission_recap_objectif:'Secondary objective completed',
+    planete_base_label:'ENEMY BASE',
 
     tt_pv:'HP',
     tt_deplacement:'Move',
@@ -691,7 +698,6 @@ const STRINGS = {
     toast_frappe_orbitale:'Orbital strike!',
     toast_forteresse_detruite:'Fortress destroyed!',
     toast_secteur:'Sector {n}',
-    toast_planete_bientot:'Planet mission: coming soon',
     hangar_prep:'Hangar:',
 
     ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',
