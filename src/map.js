@@ -3,15 +3,15 @@
    événements aléatoires entre les vagues
    ===================================================================== */
 import { state, centreCase, sauvegarderPartie } from './state.js';
-import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
+import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX, BIOMES } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
 import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner } from './ui.js';
 import { t, L } from './i18n.js';
 
-export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon'};
-const NOEUD_TYPES=['combat','elite','event','rest','tresor','hangar','forge','boss'];
+export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon',planete:'globe'};
+const NOEUD_TYPES=['combat','elite','event','rest','tresor','hangar','forge','boss','planete'];
 /* getters : le nom/la description affichés dépendent de la langue courante, donc résolus à chaque accès */
 export const NOM_NOEUD=Object.fromEntries(NOEUD_TYPES.map(k=>[k,'']));
 export const DESC_NOEUD=Object.fromEntries(NOEUD_TYPES.map(k=>[k,'']));
@@ -21,6 +21,10 @@ Object.defineProperties(DESC_NOEUD, Object.fromEntries(NOEUD_TYPES.map(k=>[k,{ge
    afin de garantir globalement au moins 3 combats (départ inclus) et au plus 2 bonus (relais/trésor/
    hangar/atelier) sur l'ensemble de la carte — un tirage indépendant par noeud ne le garantissait pas. */
 const BONUS_TYPES=['rest','tresor','hangar','forge'];
+// probabilité qu'un secteur contienne une mission planète (au plus 1, jamais garantie) : le
+// nœud de colonne 0 est toujours 'combat' (voir genererCarte), donc une mission planète ne
+// peut structurellement jamais tomber sur le tout premier nœud du secteur.
+const PROBA_PLANETE=0.5;
 function construireTypesIntermediaires(total){
   const pool=[];
   // au moins 2 combats/élites en plus du départ (qui est déjà un combat garanti) => 3 au total
@@ -28,12 +32,14 @@ function construireTypesIntermediaires(total){
   // au plus 2 bonus sur tout le secteur
   const nbBonus=Math.min(2,Math.max(0,total-pool.length),1+Math.floor(Math.random()*2));
   for(let i=0;i<nbBonus;i++) pool.push(BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)]);
-  // le reste : mélange combat/élite/événement, toujours pas de bonus supplémentaire
+  // au plus 1 mission planète sur tout le secteur, glissée parmi les nœuds restants
+  if(pool.length<total && Math.random()<PROBA_PLANETE) pool.push('planete');
+  // le reste : mélange combat/élite/événement, toujours pas de bonus ni de planète supplémentaire
   while(pool.length<total){ const r=Math.random(); pool.push(r<0.55?'combat':r<0.7?'elite':'event'); }
   for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
   return pool;
 }
-export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},hangar:{c1:'#bfe9ff',c2:'#5a8fd6',d:'#2f4a86'},forge:{c1:'#ffe08a',c2:'#e0a13d',d:'#8f6a1f'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'}};
+export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},hangar:{c1:'#bfe9ff',c2:'#5a8fd6',d:'#2f4a86'},forge:{c1:'#ffe08a',c2:'#e0a13d',d:'#8f6a1f'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'},planete:{c1:'#e0b0ff',c2:'#a355e0',d:'#4a1f6a'}};
 export function genererCarte(){ const NB=6, cols=[];
   const tailles=[]; for(let c=0;c<NB;c++) tailles.push((c===0||c===NB-1)?1:(2+Math.floor(Math.random()*2)));
   const totalIntermediaire=tailles.slice(1,NB-1).reduce((a,b)=>a+b,0);
@@ -65,7 +71,21 @@ export function deserialiserCarte(d){ if(!d) { state.carte=null; state.noeudActu
 export function ouvrirCarte(){ state.phase='carte'; state.scenePlanete=null; sauvegarderPartie(serialiserCarte); }
 export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const type=nd.type;
   if(type==='combat'||type==='elite'||type==='boss'){ demarrerCombat(type); }
+  else if(type==='planete'){ demarrerMissionPlanete(); }
   else { ouvrirScenePlanete(construireScene(type)); } }
+
+/* ===== MISSION PLANÈTE =====
+   Étape 2/9 de la roadmap (intégration carte) : le nœud existe, se tire correctement et se
+   navigue, mais la mission elle-même (base, tourelles, boucle de tour dédiée) arrive aux
+   étapes suivantes — pour l'instant on tire juste le biome et on revient à la carte, pour que
+   ce nœud reste jouable de bout en bout sans rien casser en attendant. */
+export function demarrerMissionPlanete(){
+  const biome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
+  state.planete={biome:biome.id};
+  montrerToast(t('toast_planete_bientot'),'ok');
+  state.planete=null;
+  ouvrirCarte();
+}
 
 /* construit le contenu d'une planète sans combat : décor + choix en haut d'écran */
 function construireScene(type){

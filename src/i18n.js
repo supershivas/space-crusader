@@ -172,6 +172,7 @@ const STRINGS = {
     node_hangar_nom:'Hangar', node_hangar_desc:'Renfort : +1 vaisseau au choix',
     node_forge_nom:'Atelier', node_forge_desc:'Atelier : amélioration ou ultime',
     node_boss_nom:'BOSS', node_boss_desc:"Un boss t'attend !",
+    node_planete_nom:'Assaut planétaire', node_planete_desc:'Détruis la base ennemie',
     carte_titre:'CHOISIS TA DESTINATION',
     carte_hint:'Planètes en vue — trace ta route',
     carte_secteur:'SECTEUR',
@@ -292,6 +293,7 @@ const STRINGS = {
     toast_frappe_orbitale:'Frappe orbitale !',
     toast_forteresse_detruite:'Forteresse détruite !',
     toast_secteur:'Secteur {n}',
+    toast_planete_bientot:'Mission planète : bientôt disponible',
     hangar_prep:'Hangar :',
 
     // ===== Infobulles unités (ailes ennemies) =====
@@ -577,6 +579,7 @@ const STRINGS = {
     node_hangar_nom:'Hangar', node_hangar_desc:'Reinforcement: +1 ship of your choice',
     node_forge_nom:'Workshop', node_forge_desc:'Workshop: upgrade or ultimate',
     node_boss_nom:'BOSS', node_boss_desc:'A boss awaits!',
+    node_planete_nom:'Planetary assault', node_planete_desc:'Destroy the enemy base',
     carte_titre:'CHOOSE YOUR DESTINATION',
     carte_hint:'Planets in sight — plot your route',
     carte_secteur:'SECTOR',
@@ -688,6 +691,7 @@ const STRINGS = {
     toast_frappe_orbitale:'Orbital strike!',
     toast_forteresse_detruite:'Fortress destroyed!',
     toast_secteur:'Sector {n}',
+    toast_planete_bientot:'Planet mission: coming soon',
     hangar_prep:'Hangar:',
 
     ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',
