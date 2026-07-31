@@ -209,6 +209,23 @@ function segmentsParalleles(x1,y1,x2,y2,decal){
   return [[x1+ox,y1+oy,x2+ox,y2+oy],[x1-ox,y1-oy,x2-ox,y2-oy]];
 }
 
+/* Durée du "vol" d'un tir laser, indépendante de la distance parcourue : au-delà, le tir a
+   atteint sa cible et disparaît — voir traitBref() ci-dessous. Un vrai trait continu de la
+   source à la cible ne se lit pas comme un tir (juste une ligne qui apparaît puis s'efface) ;
+   un court segment qui parcourt la distance en un temps fixe, façon sabre/blaster, se lit
+   bien mieux comme un projectile même si la portée varie beaucoup d'un tir à l'autre. */
+const VOL_LASER=0.085;
+/* [tx,ty,hx,hy,p] : tête (hx,hy) et queue (tx,ty) du court segment visible d'un tir dont la
+   progression `p` (0→1) va de (x1,y1) à (x2,y2) ; `p` dépasse 1 une fois le tir arrivé (plus
+   rien à dessiner). `longueur` est la longueur fixe du segment en pixels, jamais plus long
+   que le trajet lui-même. */
+function traitBref(x1,y1,x2,y2,tAnim,longueur){
+  const p=tAnim/VOL_LASER;
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1, ux=dx/len, uy=dy/len;
+  const headDist=Math.min(len,p*len), tailDist=Math.max(0,headDist-longueur);
+  return [x1+ux*tailDist,y1+uy*tailDist,x1+ux*headDist,y1+uy*headDist,p];
+}
+
 /* barre de PV en petits carrés (pleins = couleur, vides = gris), centrée sur cx, sous l'unité — commune alliés/ennemis/obstacles */
 function dessinerPV(cx,by,hp,maxhp,coul){ const sq=5,gap=2,tot=maxhp*sq+(maxhp-1)*gap, bx=Math.round(cx-tot/2);
   for(let i=0;i<maxhp;i++){ ctx.fillStyle=i<hp?coul:'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq);
@@ -377,14 +394,16 @@ export function dessiner(t){
     ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.ang); ctx.drawImage(o.img,-o.img.width*sc/2,-o.img.height*sc/2,o.img.width*sc,o.img.height*sc); ctx.restore();
     if(o.maxhp>1){ const n=o.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(o.x-tot/2), by=Math.round(o.y+o.img.height*sc/2+1); for(let i=0;i<n;i++){ ctx.fillStyle=i<o.hp?'#ff2a5a':'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq); } } }
 
-  // trails (traînées lasers) — double trait parallèle
-  for(const l of state.trails){ ctx.globalAlpha=Math.max(0,.35-l.t/.35); const lw=l.gros?4:2; ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw;
-    for(const [ax,ay,bx,by] of segmentsParalleles(l.x1,l.y1,l.x2,l.y2,l.gros?3:2)){ ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); }
+  // trails (traînée floue derrière le tir) — court segment mobile, double trait parallèle
+  for(const l of state.trails){ const [tx,ty,hx,hy,p]=traitBref(l.x1,l.y1,l.x2,l.y2,l.t,l.gros?34:22); if(p>=1) continue;
+    ctx.globalAlpha=.35; const lw=l.gros?4:2; ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw;
+    for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,l.gros?3:2)){ ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); }
     ctx.globalAlpha=1; }
 
-  // lasers — double trait parallèle, chacun avec son cœur lumineux
-  for(const l of state.lasers){ ctx.globalAlpha=1-l.t/.16; const lw=l.gros?5:3;
-    for(const [ax,ay,bx,by] of segmentsParalleles(l.x1,l.y1,l.x2,l.y2,l.gros?3:2)){
+  // lasers — court trait lumineux qui parcourt la distance (façon sabre/blaster), double trait parallèle
+  for(const l of state.lasers){ const [tx,ty,hx,hy,p]=traitBref(l.x1,l.y1,l.x2,l.y2,l.t,l.gros?26:16); if(p>=1) continue;
+    ctx.globalAlpha=1; const lw=l.gros?5:3;
+    for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,l.gros?3:2)){
       ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
       ctx.strokeStyle=l.ennemi?'#e5484d':'#37e0ff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
     }
@@ -540,56 +559,66 @@ export function dessinerIllustration(t){
   draw(JOUEUR, xGauche, alliesY+bob(0), scJ);
   draw(ROUGE,  xDroite, alliesY+bob(2.4), scJ);
 
-  // Un chasseur ennemi (Aile) descend du haut de l'écran, en vol continu, en passant devant le
-  // titre "CROISEUR" (calque de devant ci, au-dessus du DOM) — jamais un temps d'arrêt/pause :
-  // il est abattu EN PLEIN VOL par l'un des deux alliés au sol, au niveau du titre, sans jamais
-  // décélérer jusqu'à s'immobiliser (vitesse constante — voir p ci-dessous, pas d'ease-out qui
-  // ralentirait artificiellement l'arrivée et donnerait l'impression qu'il "s'arrête" avant
-  // d'exploser). Le suivant arrive presque aussitôt (~1s après l'explosion précédente), jamais
-  // au même endroit : plusieurs vagues rapprochées plutôt qu'un seul assaut isolé, pour donner
-  // une impression de guerre totale. Cycle rejoué en boucle sans état à mémoriser côté dessin :
-  // tout dérive de t comme le reste de l'illustration ; hash() en tire un pseudo-aléatoire
-  // stable par cycle (lequel allié tire, où l'impact tombe, par où il entre en haut) sans
+  // Des chasseurs ennemis (Ailes) descendent du haut de l'écran, en vol continu, en passant
+  // devant le titre "CROISEUR" (calque de devant ci, au-dessus du DOM) — jamais un temps
+  // d'arrêt/pause : chacun est abattu EN PLEIN VOL par l'un des deux alliés au sol, au niveau
+  // du titre, sans jamais décélérer jusqu'à s'immobiliser (vitesse constante — voir p ci-dessous,
+  // pas d'ease-out qui ralentirait artificiellement l'arrivée). N_VAGUE chasseurs sont
+  // entrelacés (leur horloge propre est décalée de STAGGER) : à tout instant, plusieurs sont
+  // visibles à des stades différents (arrivée/explosion), pour une impression de vague massive
+  // plutôt qu'un assaut isolé toutes les 2.3s. Cycle rejoué en boucle sans état à mémoriser côté
+  // dessin : tout dérive de t comme le reste de l'illustration ; hash() en tire un pseudo-aléatoire
+  // stable par vague (quel allié tire, où l'impact tombe, par où le chasseur entre en haut) sans
   // jamais appeler Math.random() à chaque frame (ça scintillerait). Seule la secousse du titre
   // (DOM) a besoin d'un vrai état : voir déclencherSecousseTitre().
-  const CYCLE=2300, T_ENTREE=1000, T_TIR=200, T_BOOM=300;
+  const CYCLE=2300, T_ENTREE=850, T_TIR=180, T_BOOM=300, N_VAGUE=3, STAGGER=CYCLE/N_VAGUE;
   const hash=n=>{ const x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x); };
-  const cycleIdx=Math.floor(t/CYCLE), tc=t%CYCLE;
-  const attaquant=hash(cycleIdx)<0.5?posGauche:posDroite;
-  const laserCol=attaquant===posGauche?'55,224,255':'229,72,77';
-  // Le point d'impact suit le titre : ~36% de la hauteur de l'écran, là où #accueil-contenu
-  // place "CROISEUR" (même boîte #scene que le canvas, donc la fraction reste valable quelle
-  // que soit la résolution réelle). Large éventail en X (au lieu d'une zone étroite) : un
-  // nouvel impact à chaque fois "pas au même endroit" le long du titre.
-  const restX=W*(0.15+0.7*hash(cycleIdx+7.7)), restY=H*0.36+H*0.02*(hash(cycleIdx+3.3)-0.5);
-  const startXHaut=W*(0.1+0.8*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
-  if(ci){
+  if(ci) for(let i=0;i<N_VAGUE;i++){
+    const tv=t-i*STAGGER; if(tv<0) continue;
+    const cycleIdx=Math.floor(tv/CYCLE), tc=tv-cycleIdx*CYCLE, seed=cycleIdx*17+i*101;
+    const attaquant=hash(seed)<0.5?posGauche:posDroite;
+    // Tir allié : toujours bleu (même convention que le laser en jeu — rouge = tir ennemi,
+    // bleu = tir allié), jamais dépendant de l'allié qui tire.
+    // Le point d'impact suit le titre : ~36% de la hauteur de l'écran, là où #accueil-contenu
+    // place "CROISEUR" (même boîte #scene que le canvas, donc la fraction reste valable quelle
+    // que soit la résolution réelle). Large éventail en X (au lieu d'une zone étroite) : un
+    // nouvel impact à chaque fois "pas au même endroit" le long du titre.
+    const restX=W*(0.15+0.7*hash(seed+7.7)), restY=H*0.36+H*0.02*(hash(seed+3.3)-0.5);
+    const startXHaut=W*(0.1+0.8*hash(seed+5.5));
+
     if(tc<T_ENTREE){
       // vitesse constante (p linéaire, pas d'ease-out) : le chasseur file jusqu'au point
       // d'impact sans jamais ralentir ni se figer — il n'y a pas de "case" arrêtée à viser,
-      // le laser des 200 dernières ms converge sur sa position réelle, toujours en mouvement.
+      // le laser des dernières ms converge sur sa position réelle, toujours en mouvement.
       const p=tc/T_ENTREE;
       const ex=startXHaut+(restX-startXHaut)*p, ey=-eH+(restY-(-eH))*p;
       ci.globalAlpha=Math.min(1,p*4); drawSur(ci,AILE, ex-eW/2, ey-eH/2, eSc); ci.globalAlpha=1;
       if(tc>T_ENTREE-T_TIR){
-        ci.strokeStyle='rgba('+laserCol+',.85)'; ci.lineWidth=2;
-        ci.beginPath(); ci.moveTo(attaquant.x,attaquant.y); ci.lineTo(ex,ey); ci.stroke();
+        // tir bref (façon sabre/blaster) qui parcourt la distance plutôt qu'une longue ligne
+        // statique, double trait parallèle comme tous les autres lasers du jeu.
+        const [tx,ty,hx,hy,pb]=traitBref(attaquant.x,attaquant.y,ex,ey,(tc-(T_ENTREE-T_TIR))/1000,20);
+        if(pb<1){ ci.lineWidth=2;
+          for(const [ax,ay,bx,by] of segmentsParalleles(tx,ty,hx,hy,2)){
+            ci.strokeStyle='rgba(80,170,255,.85)'; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke();
+            ci.strokeStyle='rgba(55,224,255,1)'; ci.lineWidth=1; ci.beginPath(); ci.moveTo(ax,ay); ci.lineTo(bx,by); ci.stroke(); ci.lineWidth=2;
+          }
+        }
       }
     } else if(tc<T_ENTREE+T_BOOM){
       const tb=tc-T_ENTREE, idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
-      declencherSecousseTitre(cycleIdx);
+      declencherSecousseTitre(seed);
       const glow=ci.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.5*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
       ci.fillStyle=glow; ci.fillRect(restX-dw,restY-dh,dw*2,dh*2);
       ci.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);
       // étincelles qui jaillissent en éventail vers le haut, au-dessus du point d'impact —
       // le souffle rond seul ne "lisait" pas assez comme une explosion au niveau du titre.
       const prog=tb/T_BOOM;
-      for(let i=0;i<6;i++){
-        const ang=-Math.PI/2+(hash(cycleIdx+20+i)-0.5)*Math.PI*0.9, spd=W*(0.05+0.06*hash(cycleIdx+30+i));
+      for(let k=0;k<6;k++){
+        const ang=-Math.PI/2+(hash(seed+20+k)-0.5)*Math.PI*0.9, spd=W*(0.05+0.06*hash(seed+30+k));
         const px=restX+Math.cos(ang)*spd*prog, py=restY+Math.sin(ang)*spd*prog;
-        ci.globalAlpha=Math.max(0,1-prog); ci.fillStyle=i%2?'#ffd23d':'#ff8a3d';
+        ci.globalAlpha=Math.max(0,1-prog); ci.fillStyle=k%2?'#ffd23d':'#ff8a3d';
         ci.fillRect(Math.round(px-1.5),Math.round(py-1.5),3,3);
       }
       ci.globalAlpha=1;
