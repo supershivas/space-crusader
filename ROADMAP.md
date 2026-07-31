@@ -141,7 +141,7 @@ passer à la suivante — jamais tout d'un bloc) :
    récap de fin de mission réutilisant `ouvrirMission`/le circuit de
    récompense `elite` (choix d'amélioration).
 
-7. **Sauvegarde/reprise** (`state.js` `sauvegarderPartie`/`chargerSauvegarde`,
+7. ✅ **Sauvegarde/reprise** (`state.js` `sauvegarderPartie`/`chargerSauvegarde`,
    `main.js` `reprendrePartie`) : sérialiser une mission planète en cours
    (base, tourelles, biome, compteurs de mécanique) sur le modèle de ce qui
    existe pour un combat spatial en cours.
@@ -159,7 +159,7 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 7 (sauvegarde/reprise d'une mission planète en
-cours — aujourd'hui, quitter en pleine mission renvoie à la carte au
-rechargement, sans faire perdre la progression du secteur, mais sans non
-plus reprendre le siège où il en était).
+**Prochaine étape** : étape 8 (habillage — sprites base/tourelles/ruines,
+décor par biome, section design-system.html, i18n complet, encyclopédie,
+éventuels achievements). Le mode est fonctionnellement complet et jouable
+de bout en bout, y compris la reprise de partie, depuis l'étape 7.
