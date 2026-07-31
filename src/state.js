@@ -94,6 +94,7 @@ export const ACHIEVEMENTS_DEF = {
   'no_turret': {name:'Sans Tourelle', desc:'Tuer un boss sans tourelle', check:()=>state.achievements.no_turret},
   'perfect_wave': {name:'Vague Parfaite', desc:'Vague sans dégât', check:()=>state.achievements.perfect_wave},
   'asteroid_dodge': {name:'Esquive', desc:'Survivre à 5 astéroïdes', check:()=>state.achievements.asteroid_dodge>=5},
+  'base_slayer': {name:'Preneur de Bastion', desc:'Détruire une base ennemie (mission planète)', check:()=>state.achievements.base_slayer},
 };
 
 export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; const d=localStorage.getItem('dc_decouvertes'); if(d) state.decouvertes=JSON.parse(d); }catch(e){} }

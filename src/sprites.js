@@ -92,6 +92,31 @@ export const DEBRIS_1=[".nNNn.","NmWmmN","NmmmWn","nWmmmN","NmmWmN",".nNNn."];
 export const DEBRIS_2=["..NNn.",".NmWmN","NmWmmn","nmmWmN","NmWmN.","nNNn.."];
 export const STATION_PIECE=["bBBBBBBBb","BSWssWSB.","BsCiiCsBB","BSiOOOiSB","BsCiiCsB.","BSWssWSBb","bBB..BBb.",".b..bB..."];
 export const BARRIERE=["WDDDDDW","DCiCiCD","DiCiCiD","DCiCiCD","DiCiCiD","DCiCiCD","WDDDDDW"];
+/* ruine (mission planète, biome Villes anciennes) : pierre ancienne effritée — palette T/t
+   dédiée (tons terre cuite), distincte des débris métalliques (N/n/m) */
+export const RUINE_1=[".TTTT.","TtTTtT","TTttTT","TtTTtT","TTTTTT",".TTTT."];
+export const RUINE_2=["TTTTTT",".TtTt.","TTTTTT",".tTTt.","TTTTTT",".TTTT."];
+
+/* ---- MISSION PLANÈTE : base ennemie + tourelles fixes ---- */
+/* base ennemie : bastion fortifié (3×2 cases, même gabarit qu'un boss), noyau d'énergie violet
+   au centre — cohérent avec la teinte de rendu déjà utilisée (#a355e0) avant l'habillage. */
+export const ENEMY_BASE=[
+"XXXXXXXXXXXXXXX",
+"XGGGGGGGGGGGGGX",
+"XGkkkkkkkkkkkGX",
+"XGkUUUUUUUUUkGX",
+"XGkUuPPPPuUUkGX",
+"XGkUuPuuPuUUkGX",
+"XGkUUUUUUUUUkGX",
+"XGkkkokkkokkkGX",
+"XXXXXXXXXXXXXXX"];
+/* tourelle canon : tourelle standard, canon rouge court */
+export const TOURELLE_CANON=["...RRR...","..RrrrR..",".RrRRRrR.","RrRRRRRrR","RrRRKRRrR",".RrRRRrR.","..RrrrR..","...RRR...","....K...."];
+/* tourelle sniper : canon long, teinte violette (portée étendue) */
+export const TOURELLE_SNIPER=["....U....","....U....","...UUU...","..UuuuU..",".UuUUUuU.","UuUUUUUuU",".UuUUUuU.","..UuuuU..","...UUU..."];
+/* tourelle lourde : blindage acier + noyau rouge (plus de PV/dégâts) */
+export const TOURELLE_LOURDE=["ZZZZZZZZZ","ZSSSSSSSZ","ZSsSSSsSZ","ZSsSKSsSZ","ZSsKRKsSZ","ZSsSKSsSZ","ZSsSSSsSZ","ZSSSSSSSZ","ZZZZZZZZZ"];
+export const TOURELLE_GRIDS={canon:TOURELLE_CANON,sniper:TOURELLE_SNIPER,lourde:TOURELLE_LOURDE};
 
 /* ailes d'élite : porteur (doré, renforce) et brouilleur (violet, protège) */
 export const AILE_PORTEUR=["....e....",".e.eMe.e.","eMeMeMeMe","eMeeeeeMe","eMeMeMeMe",".e.eMe.e.","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","..eMeMe..","...eMe...","...eMe...","...eMe...","...eMe...","....e....","....e....","....e...."];

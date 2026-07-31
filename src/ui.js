@@ -3,11 +3,11 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
-import { rafraichirSkinCroiseur, imgBossGuide } from './render.js';
+import { rafraichirSkinCroiseur, imgBossGuide, imgBaseGuide, imgTourelleGuide } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
@@ -180,7 +180,7 @@ export function ouvrirMaj(version){
 let etapeBannerTimeout=null;
 export function ouvrirEtapeBanner(titre,sousTitre,secteurTexte){
   const banniere=document.getElementById('etapeBanner');
-  document.getElementById('etapeBannerTitre').textContent=titre;
+  const titreEl=document.getElementById('etapeBannerTitre'); titreEl.textContent=titre; ajusterTitreModale(titreEl);
   const sousEl=document.getElementById('etapeBannerSous'); sousEl.textContent=sousTitre||''; sousEl.style.display=sousTitre?'':'none';
   document.getElementById('etapeBannerSecteur').textContent=secteurTexte||'';
   // top:30% fixe (CSS) ne centre la bannière que par hasard : la grille ne commence pas à 30%
@@ -282,6 +282,10 @@ const GUIDE_MENACES=[
   {type:'trounoir',  nomKey:'tt_trounoir_nom',   descKey:'tt_trounoir_desc',   ico:'demon'},
   {type:'champ',     nomKey:'tt_champ_nom',      descKey:'tt_champ_desc',      ico:'aimant'},
 ];
+/* mission planète : tourelles + biomes — icônes de rappel génériques (pas de sprite pour un
+   biome, c'est un terrain, pas une entité) */
+const GUIDE_TOURELLES=['canon','sniper','lourde'];
+const GUIDE_BIOMES=[{type:'desert',ico:'alerte'},{type:'glace',ico:'gel'},{type:'grotte',ico:'demon'},{type:'villes_anciennes',ico:'carte'}];
 function badgeRarete(tier){
   if(!tier) return '';
   const coul={commun:'#9fb0d8',peu_commun:'#2fd6a0',rare:'#37e0ff',epique:'#ffd23d'}[tier]||'#9fb0d8';
@@ -355,6 +359,17 @@ export function ouvrirGuide(){
       if(m.type.startsWith('aster')) stats.push([t('guide_pv'), m.type==='aster_gros'?2:1],[t('guide_degats'),DEG_ASTEROIDE]);
       ouvrirGuideDetail(img,m.ico,m.nomKey,m.descKey,tier,stats);
     })); }
+  const zonePlanete=document.getElementById('guidePlanete'); zonePlanete.innerHTML='';
+  { const dec=estDecouvert('planete_base','base'), nomKey='planete_base_guide_nom', descKey='planete_base_guide_desc', img=imgBaseGuide();
+    zonePlanete.appendChild(carteGuide(img,null,nomKey,descKey,dec,null,()=>ouvrirGuideDetail(img,null,nomKey,descKey,null,[]))); }
+  for(const type of GUIDE_TOURELLES){ const dec=estDecouvert('planete_tourelle',type), img=imgTourelleGuide(type), modele=TOURELLES.find(m=>m.id===type);
+    const nomKey='tourelle_'+type+'_nom', descKey='tourelle_'+type+'_desc';
+    zonePlanete.appendChild(carteGuide(img,null,nomKey,descKey,dec,null,()=>{
+      const stats=modele?[[t('guide_pv'),modele.hp],[t('guide_portee'),modele.portee],[t('guide_degats'),modele.degats]]:[];
+      ouvrirGuideDetail(img,null,nomKey,descKey,null,stats);
+    })); }
+  for(const b of GUIDE_BIOMES){ const dec=estDecouvert('planete_biome',b.type), nomKey='biome_'+b.type+'_nom', descKey='biome_'+b.type+'_desc';
+    zonePlanete.appendChild(carteGuide(null,b.ico,nomKey,descKey,dec,null,()=>ouvrirGuideDetail(null,b.ico,nomKey,descKey,null,[]))); }
   guideDiv.classList.add('visible');
 }
 

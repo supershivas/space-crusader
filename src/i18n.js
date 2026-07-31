@@ -31,6 +31,7 @@ const STRINGS = {
     guide_boss:'Boss',
     guide_bonus:'Bonus',
     guide_menaces:'Menaces',
+    guide_planete:'Missions planète',
     guide_inconnu:'???',
     guide_fermer:'Fermer',
     guide_rarete:'Rareté',
@@ -41,6 +42,7 @@ const STRINGS = {
     guide_pv:'PV',
     guide_vitesse:'Vitesse',
     guide_degats:'Dégâts',
+    guide_portee:'Portée',
     guide_indestructible:'Indestructible',
     guide_case_tour:'case/tour',
     guide_cases_tour:'cases/tour',
@@ -201,6 +203,17 @@ const STRINGS = {
     etape_combat_titre:'COMBAT ENGAGÉ',
     etape_elite_titre:'ÉLITE ENGAGÉ',
     etape_boss_titre:'BOSS ENGAGÉ',
+    etape_planete_titre:'ASSAUT PLANÉTAIRE',
+
+    // ===== Missions planète : biomes et tourelles =====
+    biome_desert_nom:'Désert', biome_desert_desc:'Tempêtes de sable périodiques : bloquent le tir (joueur et tourelles) sur les colonnes touchées.',
+    biome_glace_nom:'Glace', biome_glace_desc:'Plaques de verglas : glisse d\'une case de plus dans le sens du déplacement.',
+    biome_grotte_nom:'Grotte', biome_grotte_desc:'Obscurité : portée de tir réduite de 1 ; tourelles et base endormies jusqu\'à approche à 2 cases.',
+    biome_villes_anciennes_nom:'Villes anciennes', biome_villes_anciennes_desc:'Ruines denses ; certaines tourelles sont camouflées jusqu\'à approche à 1 case ou destruction de leur cachette.',
+    tourelle_canon_nom:'Tourelle canon', tourelle_canon_desc:'Tourelle fixe standard, portée courte.',
+    tourelle_sniper_nom:'Tourelle sniper', tourelle_sniper_desc:'Tourelle fixe à longue portée, peu de PV.',
+    tourelle_lourde_nom:'Tourelle lourde', tourelle_lourde_desc:'Tourelle fixe blindée, dégâts élevés.',
+    planete_base_guide_nom:'Base ennemie', planete_base_guide_desc:'Objectif des missions planète : la détruire remporte la mission.',
 
     // ===== Objectifs de vague =====
     objectif_secondaire:'Objectif secondaire',
@@ -277,6 +290,7 @@ const STRINGS = {
     ach_no_turret_nom:'Sans Tourelle', ach_no_turret_desc:'Tuer un boss sans tourelle',
     ach_perfect_wave_nom:'Vague Parfaite', ach_perfect_wave_desc:'Vague sans dégât',
     ach_asteroid_dodge_nom:'Esquive', ach_asteroid_dodge_desc:'Survivre à 5 astéroïdes',
+    ach_base_slayer_nom:'Preneur de Bastion', ach_base_slayer_desc:'Détruire une base ennemie',
     succes_titre:'SUCCÈS',
     succes_meilleurs_scores:'MEILLEURS SCORES',
 
@@ -456,6 +470,7 @@ const STRINGS = {
     guide_boss:'Bosses',
     guide_bonus:'Bonuses',
     guide_menaces:'Threats',
+    guide_planete:'Planet missions',
     guide_inconnu:'???',
     guide_fermer:'Close',
     guide_rarete:'Rarity',
@@ -466,6 +481,7 @@ const STRINGS = {
     guide_pv:'HP',
     guide_vitesse:'Speed',
     guide_degats:'Damage',
+    guide_portee:'Range',
     guide_indestructible:'Indestructible',
     guide_case_tour:'cell/turn',
     guide_cases_tour:'cells/turn',
@@ -612,6 +628,17 @@ const STRINGS = {
     etape_combat_titre:'COMBAT ENGAGED',
     etape_elite_titre:'ELITE ENGAGED',
     etape_boss_titre:'BOSS ENGAGED',
+    etape_planete_titre:'PLANETARY ASSAULT',
+
+    // ===== Planet missions: biomes and turrets =====
+    biome_desert_nom:'Desert', biome_desert_desc:'Periodic sandstorms: block fire (player and turrets) on the affected columns.',
+    biome_glace_nom:'Ice', biome_glace_desc:'Ice patches: slide one extra cell in the direction of movement.',
+    biome_grotte_nom:'Cave', biome_grotte_desc:'Darkness: firing range reduced by 1; turrets and base are asleep until approached within 2 cells.',
+    biome_villes_anciennes_nom:'Ancient ruins', biome_villes_anciennes_desc:'Dense ruins; some turrets are camouflaged until approached within 1 cell or their hiding spot is destroyed.',
+    tourelle_canon_nom:'Cannon turret', tourelle_canon_desc:'Standard fixed turret, short range.',
+    tourelle_sniper_nom:'Sniper turret', tourelle_sniper_desc:'Long-range fixed turret, low HP.',
+    tourelle_lourde_nom:'Heavy turret', tourelle_lourde_desc:'Armored fixed turret, high damage.',
+    planete_base_guide_nom:'Enemy base', planete_base_guide_desc:'Planet mission objective: destroy it to win the mission.',
 
     objectif_secondaire:'Secondary objective',
     obj_sansdegat:'No damage to the cruiser',
@@ -683,6 +710,7 @@ const STRINGS = {
     ach_no_turret_nom:'No Turret', ach_no_turret_desc:'Kill a boss without the turret',
     ach_perfect_wave_nom:'Perfect Wave', ach_perfect_wave_desc:'Wave with no damage taken',
     ach_asteroid_dodge_nom:'Dodge', ach_asteroid_dodge_desc:'Survive 5 asteroids',
+    ach_base_slayer_nom:'Bastion Breaker', ach_base_slayer_desc:'Destroy an enemy base',
     succes_titre:'ACHIEVEMENTS',
     succes_meilleurs_scores:'HIGH SCORES',
 

@@ -1,13 +1,13 @@
 /* =====================================================================
    MISSIONS PLANÈTE — entités, boucle de tour dédiée, victoire/échec
    ===================================================================== */
-import { state, centreCase, sauvegarderPartie } from './state.js';
+import { state, centreCase, sauvegarderPartie, decouvrir } from './state.js';
 import { DIFFICULTES, TOURELLES, BIOMES, OBSTACLES, basePvMax } from './config.js';
 import { faireAile, aileEn, tourelleEn, fighterEn, blesser, tuerFighter,
          champObstacleEn, champEn, obstacleEn, dansGrille, occupe } from './entities.js';
 import { exploser } from './combat.js';
 import { sonBoom, sonTirEnnemi, setMusicPhase } from './audio.js';
-import { ouvrirMission, ouvrirAmelioration, montrerToast } from './ui.js';
+import { ouvrirMission, ouvrirAmelioration, montrerToast, ouvrirEtapeBanner, checkAchievements } from './ui.js';
 import { ouvrirCarte, reorganiserVaisseaux, serialiserCarte } from './map.js';
 import { t } from './i18n.js';
 
@@ -39,6 +39,7 @@ export function creerTourelles(biome,secteur,difficulte){
     if(tourelles.some(t=>t.c===c&&t.r===r)) continue;
     const modele=TOURELLES[Math.floor(Math.random()*TOURELLES.length)];
     const camouflee=biome==='villes_anciennes'&&Math.random()<0.5;
+    decouvrir('planete_tourelle',modele.id);
     const p=centreCase(c,r);
     tourelles.push({id:modele.id,ico:modele.ico,c,r,hp:modele.hp,maxhp:modele.hp,portee:modele.portee,
       degats:Math.round(modele.degats*d.tourelleDmgMult),camouflee,reveillee:!camouflee,x:p.x,y:p.y});
@@ -178,6 +179,7 @@ export function demarrerMissionPlanete(){
   const biome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   const base=creerBase(state.secteur,state.difficulte); base.reveillee=true;
+  decouvrir('planete_biome',biome.id); decouvrir('planete_base','base');
   state.planete={
     biome:biome.id,
     base,
@@ -191,9 +193,19 @@ export function demarrerMissionPlanete(){
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; f.gele=0; }
   reorganiserVaisseaux();
   appliquerMecaniqueBiome(biome.id);
+  annoncerMissionPlanete(biome.id);
   state.suiteDemarrerTour=demarrerTourJoueurPlanete;
   state.suiteFinPlanete=finMissionPlanete;
   demarrerTourJoueurPlanete();
+}
+/* bannière de début de mission (carte compacte + explosions), même principe que
+   annoncerEtape() pour le combat spatial (map.js) mais avec le biome en sous-titre plutôt
+   qu'un objectif secondaire — les missions planète n'en ont pas. */
+function annoncerMissionPlanete(biomeId){
+  ouvrirEtapeBanner(t('etape_planete_titre'), t('biome_'+biomeId+'_nom'), t('mission_secteur')+' '+state.secteur);
+  const by=state.HAUTEUR*0.3;
+  for(let i=0;i<3;i++) exploser(state.LARGEUR*(0.25+0.25*i),by,true);
+  setTimeout(()=>{ for(let i=0;i<2;i++) exploser(state.LARGEUR*(0.38+0.24*i),by+18,true); },160);
 }
 
 /* équivalent de demarrerTourJoueur() (combat.js) mais sans les réglages propres au croiseur
@@ -268,7 +280,7 @@ export function finMissionPlanete(victoire){
   setMusicPhase('calme');
   const lignes=[];
   if(state.killsThisWave>0) lignes.push({label:t('mission_recap_kills',{n:state.killsThisWave}), points:state.killsThisWave});
-  if(victoire){ state.score+=5; lignes.push({label:t('mission_recap_base'), points:5}); }
+  if(victoire){ state.score+=5; lignes.push({label:t('mission_recap_base'), points:5}); state.achievements.base_slayer=true; checkAchievements(); }
   const recap={avant:state.scoreAvantVague, apres:state.score, lignes};
   state.suiteMission = victoire
     ? ()=>{ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); }

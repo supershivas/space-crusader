@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase } from './state.js';
 import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES, SKINS_CROISEUR } from './config.js';
-import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
+import { cuire, cuireFit, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS, ENEMY_BASE, TOURELLE_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom, iconImage } from './sprites.js';
 import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
@@ -32,11 +32,15 @@ function dessinerIcone(img,cx,cy,alpha=1){ ctx.globalAlpha=alpha; ctx.drawImage(
 export function flotte(o,t){ if(o.__bob===undefined) o.__bob=Math.random()*Math.PI*2; return Math.sin(t/480+o.__bob)*1.3; }
 
 let imgCroiseur, imgBossMap, croiseurSC;
+let imgBaseMap, imgTourelleMap;
 let nebuleuses, planete;
 /* ré-applique la teinte cosmétique du croiseur en cours (après un changement de skin dans le menu méta) */
 export function rafraichirSkinCroiseur(){ if(croiseurSC) imgCroiseur=cuire(CROISEUR,croiseurSC,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); }
 /* accès en lecture seule au sprite d'un boss par type, pour le guide (bestiaire) */
 export function imgBossGuide(type){ return imgBossMap && (imgBossMap[type]||imgBossMap.canon); }
+/* idem, base ennemie et tourelles des missions planète (guide) */
+export function imgBaseGuide(){ return imgBaseMap; }
+export function imgTourelleGuide(type){ return imgTourelleMap && (imgTourelleMap[type]||imgTourelleMap.canon); }
 const etoiles=[];
 
 /* =====================================================================
@@ -75,6 +79,8 @@ export function configurer(){
   const sc=Math.max(3,Math.round((state.LARGEUR-2*MARGE)/CROISEUR[0].length)); croiseurSC=sc;
   imgCroiseur=cuire(CROISEUR,sc,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); const BANDE=CROISEUR.length*sc;
   imgBossMap={}; for(const kk in BOSS_GRIDS){ const g=BOSS_GRIDS[kk]; imgBossMap[kk]=cuire(g,Math.max(4,Math.round(3*state.CELL/g[0].length))); }
+  imgBaseMap=cuire(ENEMY_BASE,Math.max(4,Math.round(3*state.CELL/ENEMY_BASE[0].length)));
+  imgTourelleMap={}; for(const kk in TOURELLE_GRIDS){ imgTourelleMap[kk]=cuireFit(TOURELLE_GRIDS[kk],state.CELL); }
   cuireUnites(state.CELL);
   const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6; state.BANDE=BANDE;
   state.CROISEUR_X=Math.round((state.LARGEUR-imgCroiseur.width)/2);
@@ -226,8 +232,10 @@ export function dessiner(t){
   ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); ctx.save(); if(state.secousse>0) ctx.translate((Math.random()-.5)*state.secousse,(Math.random()-.5)*state.secousse);
   fond();
   dessinerCadreHUD();
-  // fond du champ de bataille (délimite clairement la zone jouable)
-  ctx.fillStyle='rgba(18,28,55,.5)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
+  // fond du champ de bataille (délimite clairement la zone jouable) — teinté par biome en
+  // mission planète (désert/glace/grotte/villes anciennes), sinon le bleu spatial habituel
+  const teinteBiome={desert:'rgba(150,110,55,.4)',glace:'rgba(120,180,210,.35)',grotte:'rgba(10,6,16,.7)',villes_anciennes:'rgba(110,90,55,.38)'};
+  ctx.fillStyle=(state.planete&&teinteBiome[state.planete.biome])||'rgba(18,28,55,.5)'; ctx.fillRect(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL);
   ctx.strokeStyle='rgba(95,135,215,.55)'; ctx.lineWidth=2; ctx.strokeRect(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2);
   // grille
   ctx.strokeStyle='rgba(120,150,220,.14)'; ctx.lineWidth=1;
@@ -332,8 +340,6 @@ export function dessiner(t){
       for(const[dx,dy]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22],[0,0]]){ ctx.fillStyle='#e5484d'; ctx.beginPath(); ctx.arc(cx+dx*state.CELL,cy+dy*state.CELL,3,0,7); ctx.fill(); ctx.strokeStyle='#8f2b2f'; ctx.lineWidth=1; for(let a=0;a<4;a++){ ctx.beginPath(); ctx.moveTo(cx+dx*state.CELL,cy+dy*state.CELL); ctx.lineTo(cx+dx*state.CELL+Math.cos(a*1.57)*5,cy+dy*state.CELL+Math.sin(a*1.57)*5); ctx.stroke(); } } }
     else if(o.type==='glace'){ ctx.fillStyle='rgba(191,233,255,'+(.20+.10*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
       ctx.strokeStyle='rgba(191,233,255,.7)'; ctx.lineWidth=1; ctx.strokeRect(state.GX+o.c*state.CELL+2,state.GY+o.r*state.CELL+2,state.CELL-4,state.CELL-4); }
-    else if(o.type==='ruine'){ ctx.fillStyle='#6a5a42'; const s=state.CELL*0.66; ctx.fillRect(Math.round(cx-s/2),Math.round(cy-s/2),Math.round(s),Math.round(s));
-      ctx.strokeStyle='#c9a97a'; ctx.lineWidth=2; ctx.strokeRect(Math.round(cx-s/2),Math.round(cy-s/2),Math.round(s),Math.round(s)); }
     else if(im){ ctx.drawImage(im,Math.round(cx-im.width/2),Math.round(cy-im.height/2)); }
     // PV des obstacles destructibles à plusieurs PV (station)
     if(def.destructible && (o.maxhp||def.hp)>1) dessinerPV(cx,Math.round(cy+state.CELL*0.32),o.hp,o.maxhp||def.hp,'#ff2a5a');
@@ -379,14 +385,12 @@ export function dessiner(t){
     if(state.boss.type==='rayon'&&state.boss.charge) dessinerIcone(imgEclairIco,state.boss.x+ctx.measureText(txtBoss).width/2+8,by-6,1);
     ctx.textAlign='left'; }
 
-  // mission planète : base ennemie + tourelles fixes — rendu simple (rectangle teinté + barre
-  // de PV), sur le même principe que le boss ci-dessus ; sprites dédiés à l'étape 8 (habillage).
+  // mission planète : base ennemie + tourelles fixes (sprites dédiés, voir sprites.js)
   if(state.planete){ const pl=state.planete, base=pl.base;
     // endormie (biome Grotte) : invisible tant qu'aucun vaisseau n'est à 2 cases ou moins
-    if(base.reveillee!==false){
-      const bx0=state.GX+base.c*state.CELL+3, by0=state.GY+base.r*state.CELL+3, bw0=base.w*state.CELL-6, bh0=base.h*state.CELL-6;
-      ctx.fillStyle='#4a1f6a'; ctx.fillRect(bx0,by0,bw0,bh0);
-      ctx.strokeStyle='#a355e0'; ctx.lineWidth=2; ctx.strokeRect(bx0,by0,bw0,bh0);
+    if(base.reveillee!==false && imgBaseMap){
+      ctx.drawImage(imgBaseMap,Math.round(base.x-imgBaseMap.width/2),Math.round(base.y-imgBaseMap.height/2));
+      const by0=state.GY+base.r*state.CELL+3, bw0=base.w*state.CELL-6, bx0=state.GX+base.c*state.CELL+3;
       const bbw=bw0-8, bbx=bx0+4, bby=by0-8; ctx.fillStyle='#2a1040'; ctx.fillRect(bbx,bby,bbw,6);
       ctx.fillStyle='#a355e0'; ctx.fillRect(bbx,bby,bbw*Math.max(0,base.hp/base.maxhp),6);
       ctx.fillStyle='#a355e0'; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
@@ -395,9 +399,9 @@ export function dessiner(t){
 
     // tourelles endormies (Grotte) ou camouflées (Villes anciennes) : invisibles tant que non révélées
     for(const tr of pl.tourelles){ if(!tr.reveillee) continue;
-      const tx0=state.GX+tr.c*state.CELL+6, ty0=state.GY+tr.r*state.CELL+6, tw0=state.CELL-12;
-      ctx.fillStyle='#6a4a2f'; ctx.fillRect(tx0,ty0,tw0,tw0);
-      ctx.strokeStyle='#c9a97a'; ctx.lineWidth=2; ctx.strokeRect(tx0,ty0,tw0,tw0);
+      const im=imgTourelleMap&&(imgTourelleMap[tr.id]||imgTourelleMap.canon);
+      if(im) ctx.drawImage(im,Math.round(tr.x-im.width/2),Math.round(tr.y-im.height/2));
+      const ty0=state.GY+tr.r*state.CELL+6;
       if(tr.maxhp>1){ const n=tr.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, hbx=Math.round(tr.x-tot/2), hby=Math.round(ty0-6);
         for(let i=0;i<n;i++){ ctx.fillStyle=i<tr.hp?'#e5484d':'#4a5262'; ctx.fillRect(hbx+i*(sq+gap),hby,sq,sq); } }
     }
