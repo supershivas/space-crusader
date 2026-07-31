@@ -548,19 +548,22 @@ export function dessinerIllustration(t){
   const startXHaut=W*(0.1+0.8*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
-  // L'ennemi entier (descente, pause avant le tir, laser, explosion) se dessine sur le calque
-  // de devant (ci) : son point d'arrêt est au niveau du titre, donc dessiné sur le calque
-  // arrière (comme avant) il se retrouvait caché derrière les lettres opaques pendant toute
-  // sa pause — invisible, puis l'explosion apparaissait "de nulle part" une fois passée devant
-  // (voir plus bas) : ça donnait l'impression qu'il était détruit avant même de s'être arrêté.
-  // Son trajet reste entièrement au-dessus des boutons (restY < leur position), donc rien ne
-  // vient jamais les recouvrir.
-  if(ci){
-    if(tc<T_ENTREE){
-      const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3);
-      const ex=startXHaut+(restX-startXHaut)*ease, ey=-eH+(restY-(-eH))*ease;
-      ci.globalAlpha=Math.min(1,p*1.5); drawSur(ci,AILE, ex-eW/2, ey-eH/2, eSc); ci.globalAlpha=1;
-    } else if(tc<T_ENTREE+T_ATTENTE){
+  // La descente (entree) reste sur le calque arrière (c), derrière le titre/les boutons : le
+  // chasseur approche encore, il ne doit pas sembler survoler le titre par-dessus. Une fois
+  // arrivé et immobile (attente/tir/boom), il bascule sur le calque de devant (ci) : dessiné
+  // sur le calque arrière comme avant, il restait caché derrière les lettres opaques pendant
+  // toute sa pause avant le tir — invisible, puis l'explosion apparaissait "de nulle part" une
+  // fois passée devant (voir plus bas), donnant l'impression qu'il était détruit avant même de
+  // s'être arrêté. Le passage d'un calque à l'autre se fait pile à son arrivée (fin de
+  // l'entrée), pas pendant qu'il est encore visiblement en mouvement. Son trajet reste
+  // entièrement au-dessus des boutons (restY < leur position), donc rien ne vient jamais les
+  // recouvrir.
+  if(tc<T_ENTREE){
+    const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3);
+    const ex=startXHaut+(restX-startXHaut)*ease, ey=-eH+(restY-(-eH))*ease;
+    c.globalAlpha=Math.min(1,p*1.5); draw(AILE, ex-eW/2, ey-eH/2, eSc); c.globalAlpha=1;
+  } else if(ci){
+    if(tc<T_ENTREE+T_ATTENTE){
       drawSur(ci,AILE, restX-eW/2, restY-eH/2+bob(1.1), eSc);
     } else if(tc<T_ENTREE+T_ATTENTE+T_TIR){
       drawSur(ci,AILE, restX-eW/2, restY-eH/2, eSc);
