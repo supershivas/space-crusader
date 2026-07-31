@@ -91,5 +91,72 @@ la progression de l'escadrille.
   (nouvelles entrées tourelle/base/biome), équilibrage par difficulté
   (`DIFFICULTES`).
 
-**Prochaine étape** : conception entièrement verrouillée — passer à un plan
-d'implémentation technique détaillé, puis coder.
+**Plan d'implémentation** (chaque étape doit rester jouable/testable avant de
+passer à la suivante — jamais tout d'un bloc) :
+
+1. **Données de base** (`config.js`, `state.js`) : catalogue `BIOMES` (id V1 :
+   `desert`/`glace`/`grotte`/`villes_anciennes`, avec sa mécanique associée),
+   catalogue `TOURELLES` (types PV/portée/dégâts, sur le modèle des
+   archétypes de boss), formule de PV de la base par secteur/difficulté,
+   extension de `DIFFICULTES` (multiplicateurs dégâts tourelle / PV base /
+   cadence de garnison), nouvelles entrées `OBSTACLES` (`glace` traversable,
+   `ruine` = variante destructible de `debris`/`station`). Nouveaux champs
+   `state.planete` (base, tourelles, biome courant, compteurs propres à
+   chaque mécanique). Pas d'écran atteignable encore, juste les fondations.
+
+2. **Intégration carte** (`map.js`) : nouveau type de nœud `planete` dans
+   `NOEUD_TYPES`/`ICONE`/`COUL_NOEUD`/`NOM_NOEUD`/`DESC_NOEUD`, tirage au
+   même titre que `elite` mais plafonné à 1/secteur et jamais au nœud de
+   colonne 0. `entrerNoeud` aiguille vers une nouvelle fonction
+   `demarrerMissionPlanete()` plutôt que `demarrerCombat`. i18n minimal (nom/
+   description du nœud) pour que la carte reste cohérente visuellement, même
+   sans contenu de mission réel derrière pour l'instant.
+
+3. **Entités planète** (nouveau module, ex. `planete.js`, + ajouts dans
+   `entities.js`) : création de la base (PV, position fixe rangées du haut),
+   des tourelles fixes, et de la fonction de production de garnison par la
+   base (réutilise la logique d'avance des ailes de `finDuTour`, sans la
+   branche de percée finale qui suppose un croiseur — à remplacer par un
+   arrêt en ligne de défense devant la base).
+
+4. **Boucle de tour dédiée** : `demarrerTourJoueurPlanete()` (identique au
+   combat spatial mais sans actions `tourelle`/`bouclier`) et
+   `finDuTourPlanete()` (tirs des tourelles fixes + avance de la garnison +
+   check victoire base à 0 PV / échec flotte à 0 vaisseau). Réutilise au
+   maximum les primitives existantes de `combat.js` (`tirer`, `frapperAile`,
+   `tuerAile`, `exploser`, `casesMouvement`) plutôt que de les dupliquer.
+   Point de test : un combat "boîte grise" jouable de bout en bout, sans
+   mécanique de biome ni habillage.
+
+5. **Mécaniques de biome**, une à la fois, dans l'ordre du moins au plus
+   coûteux en nouveau code : désert (réutilise `champs`/`champEn` presque
+   tel quel) → grotte (malus de portée + flag "endormi" sur tourelles/base)
+   → glace (nouveau `champ:'glace'` + glissade au déplacement) → villes
+   anciennes (ruines denses + flag "camouflée" sur tourelles, détection par
+   proximité/destruction). Chaque mécanique testée isolément avant la
+   suivante.
+
+6. **UI/HUD** (`ui.js`, `render.js`) : barre de PV de la base à la place de
+   la barre de PV croiseur, masquage des actions `tourelle`/`bouclier`,
+   récap de fin de mission réutilisant `ouvrirMission`/le circuit de
+   récompense `elite` (choix d'amélioration).
+
+7. **Sauvegarde/reprise** (`state.js` `sauvegarderPartie`/`chargerSauvegarde`,
+   `main.js` `reprendrePartie`) : sérialiser une mission planète en cours
+   (base, tourelles, biome, compteurs de mécanique) sur le modèle de ce qui
+   existe pour un combat spatial en cours.
+
+8. **Habillage** : sprites de base/tourelles/ruines, décor par biome
+   (`render.js`, `sprites.js`), nouvelle section `design-system.html`,
+   traduction FR/EN complète (`i18n.js`), entrées d'encyclopédie (base,
+   tourelles par type, biomes), éventuels nouveaux achievements.
+
+9. **Vérifications transverses avant fusion** : le tutoriel scripté
+   (`tuto.js`) n'est jamais impacté par un nœud planète en première
+   position ; le mode combat spatial existant n'est pas régressé (tests
+   Playwright du flux existant) ; test Playwright dédié pour chacun des 4
+   biomes (victoire, défaite flotte détruite, reprise de partie en cours de
+   mission) ; incrément `VERSION` (`src/version.js`) et cache du service
+   worker (`sw.js`) comme à chaque changement livré.
+
+**Prochaine étape** : démarrer l'étape 1 (données de base) dès feu vert.
