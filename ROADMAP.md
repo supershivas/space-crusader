@@ -112,7 +112,7 @@ passer à la suivante — jamais tout d'un bloc) :
    description du nœud) pour que la carte reste cohérente visuellement, même
    sans contenu de mission réel derrière pour l'instant.
 
-3. **Entités planète** (nouveau module, ex. `planete.js`, + ajouts dans
+3. ✅ **Entités planète** (nouveau module, ex. `planete.js`, + ajouts dans
    `entities.js`) : création de la base (PV, position fixe rangées du haut),
    des tourelles fixes, et de la fonction de production de garnison par la
    base (réutilise la logique d'avance des ailes de `finDuTour`, sans la
@@ -159,4 +159,5 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 3 (entités planète — base, tourelles, garnison).
+**Prochaine étape** : étape 4 (boucle de tour dédiée — checkpoint : un combat
+« boîte grise » jouable de bout en bout).
