@@ -2,7 +2,7 @@
    ENTITÉS — création, prédicats et cycle de vie (vaisseaux, ailes,
    astéroïdes, boss, bonus)
    ===================================================================== */
-import { state, centreCase, decouvrir } from './state.js';
+import { state, centreCase, decouvrir, afficherDegats } from './state.js';
 import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
@@ -75,7 +75,7 @@ export function porteurAura(a){ return state.ailes.some(p=>p.type==='porteur'&&p
 export function brouilleurAura(a){ return state.ailes.some(p=>p.type==='brouilleur'&&p!==a&&Math.abs(p.c-a.c)<=1&&Math.abs(p.r-a.r)<=1); }
 export function estProtege(a){ return !estElite(a)&&brouilleurAura(a); }
 
-export function blesser(f){ f.hp=(f.hp||1)-1; return f.hp<=0; }
+export function blesser(f){ f.hp=(f.hp||1)-1; afficherDegats(f.x,f.y,1); return f.hp<=0; }
 
 /* ---- ennemis & formations ---- */
 export function typeAile(){
