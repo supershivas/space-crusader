@@ -36,6 +36,11 @@
      le canvas reste donc à un stack level normal, et c'est .accueil-contenu qui passe devant. */
   #illus{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;
     background:#070b18;border-radius:var(--radius-md);}
+  /* calque distinct, au-dessus du titre/boutons (z-index 2 > .accueil-contenu) : seule l'onde
+     de choc de l'explosion (voir dessinerIllustration()) y est dessinée, sur fond transparent —
+     tout le reste de l'illustration (étoiles, vaisseaux, laser) reste sur #illus, derrière. */
+  #illusImpact{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;
+    z-index:2;pointer-events:none;}
   .accueil-contenu{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;}
   .ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
          gap:var(--space-md);padding:var(--space-lg);text-align:center;background:rgba(7,11,24,.87);backdrop-filter:blur(2px);border-radius:var(--radius-md);}
@@ -340,6 +345,7 @@
 
     <div id="accueil" class="ecran">
       <canvas id="illus"></canvas>
+      <canvas id="illusImpact"></canvas>
       <div class="accueil-contenu">
       <h1 data-i18n-html="home_titre">DÉFENSE<br>DU CROISEUR</h1>
       <p id="homeMeilleurScore" style="display:none;margin:-6px 0 2px;color:#ffd23d;font-family:var(--pixel);font-size:var(--fs-petit);"></p>

@@ -483,8 +483,15 @@ function initIllusEtoiles(W,H){
 }
 export function dessinerIllustration(t){
   const cv=document.getElementById('illus'); if(!cv) return; const c=cv.getContext('2d'); c.imageSmoothingEnabled=false;
+  // calque transparent au-dessus du titre/boutons (voir #illusImpact dans index.html) : seule
+  // l'explosion (souffle + étincelles) s'y dessine, pour vraiment recouvrir le titre au moment
+  // de l'impact plutôt que de rester cachée derrière lui comme le reste de l'illustration.
+  const cvI=document.getElementById('illusImpact'), ci=cvI&&cvI.getContext('2d');
+  if(ci) ci.imageSmoothingEnabled=false;
   const W=state.LARGEUR||240, H=state.HAUTEUR||420;
   if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; illusEtoiles=null; }
+  if(cvI&&(cvI.width!==W||cvI.height!==H)){ cvI.width=W; cvI.height=H; }
+  if(ci) ci.clearRect(0,0,W,H);
   if(!illusEtoiles) initIllusEtoiles(W,H);
   c.clearRect(0,0,W,H); c.fillStyle='#070b18'; c.fillRect(0,0,W,H);
   // étoiles qui défilent doucement vers le bas, en boucle (position dérivée de t, pas d'état à faire évoluer)
@@ -544,19 +551,21 @@ export function dessinerIllustration(t){
   } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
     const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
     declencherSecousseTitre(cycleIdx);
-    const glow=c.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.35*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
-    c.fillStyle=glow; c.fillRect(restX-dw,restY-dh,dw*2,dh*2);
-    c.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);
-    // étincelles qui jaillissent en éventail vers le haut, au-dessus du point d'impact —
-    // le souffle rond seul ne "lisait" pas assez comme une explosion au niveau du titre.
-    const prog=tb/T_BOOM;
-    for(let i=0;i<6;i++){
-      const ang=-Math.PI/2+(hash(cycleIdx+20+i)-0.5)*Math.PI*0.9, spd=W*(0.05+0.06*hash(cycleIdx+30+i));
-      const px=restX+Math.cos(ang)*spd*prog, py=restY+Math.sin(ang)*spd*prog;
-      c.globalAlpha=Math.max(0,1-prog); c.fillStyle=i%2?'#ffd23d':'#ff8a3d';
-      c.fillRect(Math.round(px-1.5),Math.round(py-1.5),3,3);
+    if(ci){
+      const glow=ci.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.5*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
+      ci.fillStyle=glow; ci.fillRect(restX-dw,restY-dh,dw*2,dh*2);
+      ci.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);
+      // étincelles qui jaillissent en éventail vers le haut, au-dessus du point d'impact —
+      // le souffle rond seul ne "lisait" pas assez comme une explosion au niveau du titre.
+      const prog=tb/T_BOOM;
+      for(let i=0;i<6;i++){
+        const ang=-Math.PI/2+(hash(cycleIdx+20+i)-0.5)*Math.PI*0.9, spd=W*(0.05+0.06*hash(cycleIdx+30+i));
+        const px=restX+Math.cos(ang)*spd*prog, py=restY+Math.sin(ang)*spd*prog;
+        ci.globalAlpha=Math.max(0,1-prog); ci.fillStyle=i%2?'#ffd23d':'#ff8a3d';
+        ci.fillRect(Math.round(px-1.5),Math.round(py-1.5),3,3);
+      }
+      ci.globalAlpha=1;
     }
-    c.globalAlpha=1;
   }
 }
 /* secoue le titre de l'accueil (DOM) à l'instant précis où l'ennemi explose à sa hauteur —
