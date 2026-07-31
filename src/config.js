@@ -67,17 +67,21 @@ export const META=[
    menaceDelta : ajustement de l'intervalle avant la prochaine menace (+ = plus rare)
    eliteVagueDelta : ajustement de la vague à partir de laquelle les élites peuvent apparaître (+ = plus tard)
    eliteProbMult : multiplicateur de la probabilité d'apparition d'une élite
-   trousNoirs : autorise ou non les trous noirs parmi les menaces */
+   trousNoirs : autorise ou non les trous noirs parmi les menaces
+   tourelleDmgMult : multiplicateur des dégâts infligés par les tourelles (missions planète)
+   baseHpMult : multiplicateur des PV de la base ennemie (missions planète)
+   garnisonDelta : ajustement de l'intervalle entre deux productions de garnison par la base
+                   (missions planète, + = plus rare, même logique que menaceDelta) */
 export const DIFFICULTES = {
-  facile:    { label:'Facile',    hpMult:1.25, squadDelta:-1, menaceDelta:2,  eliteVagueDelta:2,  eliteProbMult:0.5, trousNoirs:false },
-  normal:    { label:'Normal',    hpMult:1,    squadDelta:0,  menaceDelta:0,  eliteVagueDelta:0,  eliteProbMult:1,   trousNoirs:true  },
-  difficile: { label:'Difficile', hpMult:0.8,  squadDelta:1,  menaceDelta:-1, eliteVagueDelta:-1, eliteProbMult:1.6, trousNoirs:true  },
+  facile:    { label:'Facile',    hpMult:1.25, squadDelta:-1, menaceDelta:2,  eliteVagueDelta:2,  eliteProbMult:0.5, trousNoirs:false, tourelleDmgMult:0.8, baseHpMult:0.85, garnisonDelta:2  },
+  normal:    { label:'Normal',    hpMult:1,    squadDelta:0,  menaceDelta:0,  eliteVagueDelta:0,  eliteProbMult:1,   trousNoirs:true,  tourelleDmgMult:1,   baseHpMult:1,    garnisonDelta:0  },
+  difficile: { label:'Difficile', hpMult:0.8,  squadDelta:1,  menaceDelta:-1, eliteVagueDelta:-1, eliteProbMult:1.6, trousNoirs:true,  tourelleDmgMult:1.3, baseHpMult:1.15, garnisonDelta:-1 },
 };
 
-/* ===== OBSTACLES (Lot 1) =====
-   bloque : empêche déplacement ET tirs (débris, station, barrière, mines)
+/* ===== OBSTACLES (Lot 1 + Lot missions planète) =====
+   bloque : empêche déplacement ET tirs (débris, station, barrière, mines, ruine)
    destructible / hp : peut être détruit par un tir allié
-   champ : traversable, applique un effet par tour (gaz, gravité) */
+   champ : traversable, applique un effet par tour (gaz, gravité, glace) */
 export const OBSTACLES = {
   debris:   { nom:'Débris',           desc:'Bloque tirs et déplacements. Destructible (1 PV).', bloque:true,  destructible:true,  hp:1, col:'#8f857a' },
   station:  { nom:'Épave de station', desc:'Bloque. Largue un bonus si détruite (2 PV).',        bloque:true,  destructible:true,  hp:2, col:'#37e0ff' },
@@ -85,7 +89,35 @@ export const OBSTACLES = {
   mines:    { nom:'Champ de mines',   desc:'Explose en zone (dégâts 2) si détruit.',             bloque:true,  destructible:true,  hp:1, col:'#e5484d' },
   gaz:      { nom:'Gaz toxique',      desc:'Traversable. 1 dégât/tour aux unités dedans.',       bloque:false, destructible:false, hp:0, champ:'gaz',     col:'#8cff5a' },
   gravite:  { nom:'Champ de gravité', desc:'Traversable. Ralentit les ennemis (vitesse 1).',     bloque:false, destructible:false, hp:0, champ:'gravite', col:'#4aa3ff' },
+  glace:    { nom:'Plaque de glace',  desc:'Traversable. Fait glisser d\'une case de plus dans le sens du déplacement (mission planète, biome Glace).', bloque:false, destructible:false, hp:0, champ:'glace', col:'#bfe9ff' },
+  ruine:    { nom:'Ruine',            desc:'Bloque tirs et déplacements. Destructible (1 PV). Peut dissimuler une tourelle (mission planète, biome Villes anciennes).', bloque:true, destructible:true, hp:1, col:'#c9a97a' },
 };
+
+/* ===== MISSIONS PLANÈTE =====
+   Une mission planète (nœud de carte 'planete') est un combat inversé : pas de croiseur à
+   l'écran, l'escadrille doit avancer jusqu'à une base ennemie fixe (rangées du haut) et la
+   détruire, en franchissant des tourelles fixes et la garnison produite périodiquement par
+   la base. Catalogues de données uniquement ici — la boucle de jeu dédiée (planete.js) et
+   l'intégration à la carte (map.js) viennent dans les étapes suivantes de la roadmap. */
+// biomes de la V1 : chacun porte une mécanique de terrain signature (voir ROADMAP.md)
+export const BIOMES = [
+  {id:'desert',          mecanique:'tempete'},
+  {id:'glace',            mecanique:'glissade'},
+  {id:'grotte',           mecanique:'obscurite'},
+  {id:'villes_anciennes', mecanique:'embuscade'},
+];
+// tourelles fixes défendant l'approche de la base, sur le modèle des archétypes de boss
+export const TOURELLES = [
+  {id:'canon',  ico:'cible',   hp:2, portee:1, degats:8},
+  {id:'sniper', ico:'cible',   hp:1, portee:2, degats:6},
+  {id:'lourde', ico:'bouclier',hp:3, portee:1, degats:12},
+];
+// PV de la base ennemie : croît avec le secteur (comme la difficulté globale du jeu),
+// ajusté par le multiplicateur de difficulté (baseHpMult)
+export function basePvMax(secteur,difficulte){
+  const d=DIFFICULTES[difficulte]||DIFFICULTES.normal;
+  return Math.round((30+secteur*12)*d.baseHpMult);
+}
 
 /* ===== CAPACITÉS ACTIVES DES VAISSEAUX (une fois par combat) =====
    Déclenchées par un second appui sur le vaisseau déjà sélectionné. */

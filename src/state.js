@@ -29,6 +29,12 @@ export const state = {
   carte:undefined, noeudActuel:undefined, secteur:undefined, enCombat:undefined,
   scenePlanete:null,
 
+  // mission planète en cours ('planete.js') : null hors mission. Une fois peuplé (étapes
+  // suivantes de la roadmap) : {biome, base:{hp,maxhp,c,r,w,h}, tourelles:[...], garnisonCompteur,
+  // prochaineGarnison, + compteurs propres à la mécanique du biome (ex. tempeteChamps/tempeteTimer
+  // pour le désert).
+  planete:null,
+
   ultimeJauge:undefined, ondeChoc:undefined,
   hpCruiser:undefined, score:undefined, phase:undefined, selection:undefined, vague:undefined,
   actionFaite:undefined, modeTourelle:undefined, modeCapacite:null, hangar:undefined, tirsGratuits:undefined,
