@@ -147,10 +147,13 @@
     border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);text-align:center;opacity:0;transform:translateY(-10px);
     transition:opacity .25s,transform .25s;box-shadow:0 0 0 1px rgba(55,224,255,.4),0 6px 18px rgba(0,0,0,.7);}
   .toast.show{opacity:1;transform:translateY(0);}
-  .toast.t-ok{border-color:#2fd6a0;color:#baffe0;box-shadow:0 0 0 1px rgba(47,214,160,.4),0 6px 18px rgba(0,0,0,.7);}
-  .toast.t-warn{border-color:#ffb347;color:#ffdcae;box-shadow:0 0 0 1px rgba(255,179,71,.4),0 6px 18px rgba(0,0,0,.7);}
-  .toast.t-bad{border-color:#e5484d;color:#ffb8ba;box-shadow:0 0 0 1px rgba(229,72,77,.4),0 6px 18px rgba(0,0,0,.7);}
-  .toast.t-gold{border-color:#ffd23d;color:#ffd23d;box-shadow:0 0 0 1px rgba(255,210,61,.4),0 6px 18px rgba(0,0,0,.7);}
+  /* Fond légèrement teinté de la couleur de la variante (pas seulement la bordure) : un cadre
+     coloré se distingue davantage d'un coup d'œil qu'une simple bordure sur un fond resté
+     identique pour toutes les variantes. */
+  .toast.t-ok{background:#0d2420;border-color:#2fd6a0;color:#baffe0;box-shadow:0 0 0 1px rgba(47,214,160,.4),0 6px 18px rgba(0,0,0,.7);}
+  .toast.t-warn{background:#241d0d;border-color:#ffb347;color:#ffdcae;box-shadow:0 0 0 1px rgba(255,179,71,.4),0 6px 18px rgba(0,0,0,.7);}
+  .toast.t-bad{background:#241014;border-color:#e5484d;color:#ffb8ba;box-shadow:0 0 0 1px rgba(229,72,77,.4),0 6px 18px rgba(0,0,0,.7);}
+  .toast.t-gold{background:#241c05;border-color:#ffd23d;color:#ffd23d;box-shadow:0 0 0 1px rgba(255,210,61,.4),0 6px 18px rgba(0,0,0,.7);}
 
   /* Achievements popup */
   #achieve{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%) scale(.8);z-index:12;
