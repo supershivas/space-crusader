@@ -128,7 +128,7 @@ passer à la suivante — jamais tout d'un bloc) :
    Point de test : un combat "boîte grise" jouable de bout en bout, sans
    mécanique de biome ni habillage.
 
-5. **Mécaniques de biome**, une à la fois, dans l'ordre du moins au plus
+5. ✅ **Mécaniques de biome**, une à la fois, dans l'ordre du moins au plus
    coûteux en nouveau code : désert (réutilise `champs`/`champEn` presque
    tel quel) → grotte (malus de portée + flag "endormi" sur tourelles/base)
    → glace (nouveau `champ:'glace'` + glissade au déplacement) → villes
@@ -159,6 +159,7 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 5 (mécaniques de biome, une à la fois : désert →
-grotte → glace → villes anciennes). Le combat « boîte grise » est jouable de
-bout en bout depuis l'étape 4, sans habillage ni effet de biome.
+**Prochaine étape** : étape 6 (UI/HUD — barre de PV de la base à la place de
+celle du croiseur, masquage visuel propre des actions tourelle/bouclier,
+polish du récap de fin de mission). Les 4 biomes ont chacun leur mécanique
+de terrain fonctionnelle depuis l'étape 5.
