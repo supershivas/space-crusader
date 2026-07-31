@@ -238,9 +238,12 @@ const STRINGS = {
     tt_bouclier_restant:'{n} utilisation restante ce combat',
     tt_bouclier_restants:'{n} utilisations restantes ce combat',
     tt_bouclier_epuise:'Épuisé pour ce combat',
-    tt_tir_bloque:'Tir bloqué / hors d’atteinte',
+    tt_tir_bloque:'Tir bloqué par un obstacle',
     tt_vaisseau_brouille:'Vaisseau brouillé',
     tt_tir_bloque_court:'Tir bloqué',
+    tt_hors_de_portee:'Cible hors de portée (trop loin sur le côté)',
+    tt_cible_protegee:'Cible protégée par une escorte à proximité',
+    tt_bloque_par_allie:'Tir bloqué par un de tes vaisseaux',
 
     // ===== Achievements =====
     ach_first_blood_nom:'Premier Sang', ach_first_blood_desc:'Détruire 1 ennemi',
@@ -618,9 +621,12 @@ const STRINGS = {
     tt_bouclier_restant:'{n} use left this battle',
     tt_bouclier_restants:'{n} uses left this battle',
     tt_bouclier_epuise:'Exhausted for this battle',
-    tt_tir_bloque:'Shot blocked / out of reach',
+    tt_tir_bloque:'Shot blocked by an obstacle',
     tt_vaisseau_brouille:'Ship jammed',
     tt_tir_bloque_court:'Shot blocked',
+    tt_hors_de_portee:'Target out of range (too far sideways)',
+    tt_cible_protegee:'Target protected by a nearby escort',
+    tt_bloque_par_allie:'Shot blocked by one of your ships',
 
     ach_first_blood_nom:'First Blood', ach_first_blood_desc:'Destroy 1 enemy',
     ach_combo_3_nom:'Combo', ach_combo_3_desc:'3 kills in 1 turn',

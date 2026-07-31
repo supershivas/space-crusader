@@ -588,6 +588,21 @@ canvas.addEventListener('pointerup', ()=>{ tooltip.classList.remove('visible'); 
 canvas.addEventListener('pointercancel', ()=>{ tooltip.classList.remove('visible'); state.hoverCell=null; });
 canvas.addEventListener('pointerleave', ()=>{ tooltip.classList.remove('visible'); state.hoverCell=null; });
 
+/* Diagnostique pourquoi un tir sur la case (c) a échoué, pour un message clair au lieu du
+   générique "Tir bloqué / hors d'atteinte" d'avant (qui confondait plusieurs causes très
+   différentes) : colonne hors de la portée latérale (au-delà de ±p), cible protégée par
+   l'aura d'un brouilleur à proximité (estProtege — n'a rien à voir avec un obstacle sur la
+   trajectoire), tir intercepté par un de nos propres vaisseaux plus proche dans la même
+   colonne, ou enfin bloqué par un obstacle/une menace (cas générique restant). */
+function raisonTirBloque(an,c,cible){
+  if(an.jam) return t('tt_vaisseau_brouille_champ');
+  const beam=an.beams.find(b=>b.c===c);
+  if(!beam) return t('tt_hors_de_portee');
+  if(cible && estProtege(cible)) return t('tt_cible_protegee');
+  if(beam.kind==='allie') return t('tt_bloque_par_allie');
+  return t('tt_tir_bloque');
+}
+
 canvas.addEventListener('pointerdown', ev=>{
   initAudio(); if(state.paused) return;
   const {x,y}=coord(ev.clientX,ev.clientY);
@@ -619,10 +634,10 @@ canvas.addEventListener('pointerdown', ev=>{
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
-  const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(an.jam?t('tt_vaisseau_brouille_champ'):t('tt_tir_bloque'),'log-red'); return; }
-  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(t('tt_tir_bloque'),'log-red'); return; }
-  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(t('tt_tir_bloque'),'log-red'); return; }
-  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg(t('tt_tir_bloque'),'log-red'); return; }
+  const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(raisonTirBloque(an,c,cible),'log-red'); return; }
+  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
+  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
+  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
   if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){ f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++; const b=bonusEn(c,r); if(b){ if(b.type==='mimic') declencheMimic(b,f); else ramasser(b); } state.selection=null; return; }
   state.selection=null;
 });
