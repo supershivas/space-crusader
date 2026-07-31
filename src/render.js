@@ -89,7 +89,7 @@ export function configurer(){
   // boutons d'action : pleine largeur du terrain de jeu (mêmes marges que la grille), pas une
   // largeur plafonnée par bouton qui laissait un vide inutile de chaque côté sur grand écran.
   const gap=8, ax=MARGE, aw=(state.LARGEUR-2*MARGE-2*gap)/3;
-  state.ACT=[{id:'vaisseau',lbl:'VAISSEAU',x:ax,y:actY,w:aw,h:actH},{id:'tourelle',lbl:'TOURELLE',x:ax+aw+gap,y:actY,w:aw,h:actH},{id:'bouclier',lbl:'BOUCLIER',x:ax+2*(aw+gap),y:actY,w:aw,h:actH}];
+  state.ACT=[{id:'vaisseau',lblKey:'hud_vaisseau',x:ax,y:actY,w:aw,h:actH},{id:'tourelle',lblKey:'hud_tourelle',x:ax+aw+gap,y:actY,w:aw,h:actH},{id:'bouclier',lblKey:'hud_bouclier',x:ax+2*(aw+gap),y:actY,w:aw,h:actH}];
   state.HP_MAX=Math.round(100*state.COLS/7); state.MAX_VAISSEAUX=Math.max(6,Math.round(state.COLS*0.8)); state.AILES_MAX=Math.max(10,Math.round(state.COLS*1.5));
   state.STARTF=Math.max(4,Math.round(state.COLS*0.5)); state.STARTA=Math.max(3,Math.round(state.COLS*0.4)); state.RANG_TIR=Math.max(2,Math.round(state.RANGS*0.25)); state.RECHARGE=Math.round(state.HP_MAX*0.10);
   state.nebuleuses=[{x:state.LARGEUR*0.25,y:state.HAUTEUR*0.30,r:state.LARGEUR*0.55,c1:'rgba(90,55,150,.16)',v:3},{x:state.LARGEUR*0.82,y:state.HAUTEUR*0.18,r:state.LARGEUR*0.5,c1:'rgba(40,95,150,.14)',v:5}];
@@ -147,13 +147,13 @@ function dessinerCadreHUD(){
   ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
   ctx.textAlign='center';
   ctx.font='8px "Press Start 2P", monospace'; ctx.fillStyle='#7fd0b0';
-  const secTxt='SECTEUR '+state.secteur+' · V'+state.vague, secW=ctx.measureText(secTxt).width;
+  const secTxt=trad('carte_secteur')+' '+state.secteur+' · V'+state.vague, secW=ctx.measureText(secTxt).width;
   ctx.font='10px "Press Start 2P", monospace'; const scoreTxt=String(state.score).padStart(3,'0'), scoreW=ctx.measureText(scoreTxt).width;
   const gap=16, demi=(secW+gap+scoreW)/2;
   ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(secTxt,cx-demi,fy+22);
   ctx.font='10px "Press Start 2P", monospace'; ctx.fillStyle='#ffd23d'; ctx.fillText(scoreTxt,cx-demi+secW+gap,fy+22);
   ctx.textAlign='center'; ctx.font='9px "Press Start 2P", monospace'; ctx.fillStyle=state.phase==='joueur'?'#37e0ff':'#ff8f6b';
-  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?'CHOISIS UNE CIBLE':'À TOI DE JOUER'):'LES ENNEMIS ATTAQUENT…',cx,fy+46);
+  ctx.fillText(state.phase==='joueur'?(state.modeTourelle?trad('hud_choisis_cible'):trad('hud_a_toi_de_jouer')):trad('hud_ennemis_attaquent'),cx,fy+46);
   // Le libellé "OBJECTIF SECONDAIRE" clarifie que cette mission de vague est un bonus
   // (récompense en cas de réussite) et non une condition d'échec de la vague en cours.
   if(state.objectifVague){
@@ -173,8 +173,8 @@ function planetePixel(px,py,R,c1,c2,d){ const pas=Math.max(3,Math.round(R/4)); p
     const s=cx+cy; ctx.fillStyle = s<-R*0.35?c1 : s>R*0.45?d : c2; ctx.fillRect(px+gx,py+gy,pas,pas); } }
 function dessinerCarte(t){ const pulse=.5+.5*Math.sin(t/300);
   ctx.clearRect(0,0,state.LARGEUR,state.HAUTEUR); fond();
-  ctx.fillStyle='#37e0ff'; ctx.font='16px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('SECTEUR '+state.secteur,state.LARGEUR/2,40);
-  ctx.fillStyle='#9fb0d8'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText('CHOISIS TA ROUTE',state.LARGEUR/2,62);
+  ctx.fillStyle='#37e0ff'; ctx.font='16px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('carte_secteur')+' '+state.secteur,state.LARGEUR/2,40);
+  ctx.fillStyle='#9fb0d8'; ctx.font='8px "Press Start 2P", monospace'; ctx.fillText(trad('carte_choisis_route'),state.LARGEUR/2,62);
   ctx.strokeStyle='rgba(120,150,220,.3)'; ctx.lineWidth=2; ctx.setLineDash([4,5]);
   for(const lvl of state.carte) for(const nd of lvl){ const p=posNoeud(nd); for(const l of nd.liens){ const q=posNoeud(l); ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y); ctx.stroke(); } }
   ctx.setLineDash([]);
@@ -198,6 +198,15 @@ function dessinerMenaceBoss(pulse){
   else if(boss.type==='rayon'){ if(boss.charge){ const gx0=Math.max(state.GX,state.GX+(boss.c-1)*state.CELL); ctx.save(); ctx.setLineDash([]); ctx.fillStyle='rgba(55,224,255,'+(.12+.12*pulse)+')'; ctx.fillRect(gx0,state.GY,Math.min(5*state.CELL,state.GX+state.COLS*state.CELL-gx0),state.RANGS*state.CELL); ctx.restore(); } }
   else if(boss.type==='nuee'||boss.type==='blinde'||boss.type==='nid'){ ligne(boss.c+1); }
   else { for(let dc=0;dc<3;dc++) ligne(boss.c+dc); }
+}
+
+/* deux segments parallèles décalés perpendiculairement à (x1,y1)-(x2,y2) — donne le double
+   faisceau laser (purement visuel, voir dessiner() ci-dessous : chaque tir du jeu, allié comme
+   ennemi, se dessine désormais en deux traits parallèles au lieu d'un seul, sans rien changer
+   à la résolution du tir elle-même). */
+function segmentsParalleles(x1,y1,x2,y2,decal){
+  const dx=x2-x1, dy=y2-y1, len=Math.hypot(dx,dy)||1, ox=-dy/len*decal, oy=dx/len*decal;
+  return [[x1+ox,y1+oy,x2+ox,y2+oy],[x1-ox,y1-oy,x2-ox,y2-oy]];
 }
 
 /* barre de PV en petits carrés (pleins = couleur, vides = gris), centrée sur cx, sous l'unité — commune alliés/ennemis/obstacles */
@@ -237,7 +246,7 @@ export function dessiner(t){
     else if(w.kind==='trou'){ ctx.strokeStyle='rgba(180,120,255,'+al+')'; ctx.lineWidth=3; ctx.strokeRect(state.GX+(w.c-1)*state.CELL+3,state.GY+(w.r-1)*state.CELL+3,3*state.CELL-6,3*state.CELL-6); dessinerIcone(imgAlerte,centreCase(w.c,w.r).x,centreCase(w.c,w.r).y,al); }
     else { ctx.fillStyle='rgba(155,107,214,'+(.12+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL);
       dessinerIcone(imgAlerte,state.GX+((w.c0+w.c1+1)/2)*state.CELL-24,state.GY+14,al);
-      ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText('CHAMP',state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
+      ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_champ'),state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
     ctx.textAlign='left'; ctx.restore(); }
 
   if(state.phase==='joueur'){
@@ -294,7 +303,7 @@ export function dessiner(t){
     // cercle rouge UNIQUEMENT sur les ennemis réellement atteignables (ligne de mire dégagée)
     ctx.strokeStyle='#ff5a5a'; ctx.lineWidth=3; for(const a of an.ailesOk){ ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); }
     if(an.mimicsOk) for(const m of an.mimicsOk){ ctx.beginPath(); ctx.arc(m.x,m.y,state.CELL*0.42,0,7); ctx.stroke(); }
-    if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('BROUILLÉ',state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
+    if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_brouille'),state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
   if(state.modeTourelle){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=3; for(const a of state.ailes){ if(a.r<0) continue; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); } if(state.boss){ ctx.strokeRect(state.GX+state.boss.c*state.CELL+4,state.GY+state.boss.r*state.CELL+4,3*state.CELL-8,2*state.CELL-8); } }
 
   // croiseur (endommagé visuel)
@@ -368,12 +377,18 @@ export function dessiner(t){
     ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(o.ang); ctx.drawImage(o.img,-o.img.width*sc/2,-o.img.height*sc/2,o.img.width*sc,o.img.height*sc); ctx.restore();
     if(o.maxhp>1){ const n=o.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(o.x-tot/2), by=Math.round(o.y+o.img.height*sc/2+1); for(let i=0;i<n;i++){ ctx.fillStyle=i<o.hp?'#ff2a5a':'#4a5262'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq); } } }
 
-  // trails (traînées lasers)
-  for(const l of state.trails){ ctx.globalAlpha=Math.max(0,.35-l.t/.35); const lw=l.gros?4:2; ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(l.x1,l.y1); ctx.lineTo(l.x2,l.y2); ctx.stroke(); ctx.globalAlpha=1; }
+  // trails (traînées lasers) — double trait parallèle
+  for(const l of state.trails){ ctx.globalAlpha=Math.max(0,.35-l.t/.35); const lw=l.gros?4:2; ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw;
+    for(const [ax,ay,bx,by] of segmentsParalleles(l.x1,l.y1,l.x2,l.y2,l.gros?3:2)){ ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke(); }
+    ctx.globalAlpha=1; }
 
-  // lasers
-  for(const l of state.lasers){ ctx.globalAlpha=1-l.t/.16; const lw=l.gros?5:3; ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(l.x1,l.y1); ctx.lineTo(l.x2,l.y2); ctx.stroke();
-    ctx.strokeStyle=l.ennemi?'#e5484d':'#37e0ff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(l.x1,l.y1); ctx.lineTo(l.x2,l.y2); ctx.stroke(); ctx.globalAlpha=1; }
+  // lasers — double trait parallèle, chacun avec son cœur lumineux
+  for(const l of state.lasers){ ctx.globalAlpha=1-l.t/.16; const lw=l.gros?5:3;
+    for(const [ax,ay,bx,by] of segmentsParalleles(l.x1,l.y1,l.x2,l.y2,l.gros?3:2)){
+      ctx.strokeStyle=l.ennemi?'#ff7a5a':'#bff3ff'; ctx.lineWidth=lw; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+      ctx.strokeStyle=l.ennemi?'#e5484d':'#37e0ff'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+    }
+    ctx.globalAlpha=1; }
 
   // vaisseaux joueur
   for(const f of state.fighters){ const fy=f.y+flotte(f,t); if(f===state.selection){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=4; const cc=centreCase(f.c,f.r); ctx.strokeRect(cc.x-state.CELL/2+5,cc.y-state.CELL/2+5,state.CELL-10,state.CELL-10); }
@@ -402,7 +417,7 @@ export function dessiner(t){
   for(const p of state.particules){ ctx.globalAlpha=Math.max(0,1-p.t/p.vie); ctx.fillStyle=p.c; ctx.fillRect(p.x,p.y,p.taille,p.taille); } ctx.globalAlpha=1;
 
   // Combo display
-  if(state.comboCount>1){ ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('x'+state.comboCount+' COMBO',state.LARGEUR/2,state.GY-12); ctx.textAlign='left'; }
+  if(state.comboCount>1){ ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_combo',{n:state.comboCount}),state.LARGEUR/2,state.GY-12); ctx.textAlign='left'; }
 
   if(state.ondeChoc>0){ const cx=state.LARGEUR/2, cy=state.cruiserY, R=(1-state.ondeChoc)*Math.max(state.LARGEUR,state.HAUTEUR)*1.15; ctx.strokeStyle='rgba(255,210,61,'+(state.ondeChoc*0.85)+')'; ctx.lineWidth=2+10*state.ondeChoc; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke(); ctx.strokeStyle='rgba(255,255,255,'+(state.ondeChoc*0.5)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,R*0.82,0,7); ctx.stroke(); }
 
@@ -419,7 +434,7 @@ export function dessiner(t){
     ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
     if(state.flashCroiseur>0){ ctx.fillStyle='rgba(255,255,255,'+(state.flashCroiseur*.5)+')'; ctx.fillRect(pv.x+2,pv.y+2,pv.w-4,pv.h-4); }
     arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
-    ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText('PV',pv.x+8,pv.y+pv.h/2+3);
+    ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(trad('tt_pv'),pv.x+8,pv.y+pv.h/2+3);
     if(state.enFeu>0){ dessinerIcone(imgFeuIco,pv.x+pv.w-14,pv.y+pv.h/2,.6+.4*pulse); ctx.fillStyle='rgba(255,138,61,'+(.6+.4*pulse)+')'; ctx.font='9px monospace'; ctx.textAlign='right'; ctx.fillText('×'+state.enFeu,pv.x+pv.w-24,pv.y+pv.h/2+3); ctx.textAlign='left'; }
   }
   { const seuil=state.ultimeSeuil||ULTIME_MAX; const pr=Math.min(1,state.ultimeJauge/seuil), pret=state.ultimeJauge>=seuil, u=state.ULT;
@@ -428,13 +443,13 @@ export function dessiner(t){
       ctx.fillStyle='#7a3fd6'; ctx.fillRect(u.x+2,u.y+2,Math.max(0,(u.w-4)*pr),u.h-4);
       arrondi(u.x,u.y,u.w,u.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
       ctx.fillStyle='#cbd6f0'; ctx.font='8px "Press Start 2P", monospace'; ctx.textAlign='center';
-      ctx.fillText('ULTIME '+Math.floor(pr*100)+'%',state.LARGEUR/2,u.y+u.h/2+3); ctx.textAlign='left';
+      ctx.fillText(trad('hud_ultime',{n:Math.floor(pr*100)}),state.LARGEUR/2,u.y+u.h/2+3); ctx.textAlign='left';
     } else {
       // prête : un vrai bouton jaune, à la même place et à la même échelle que la barre.
       arrondi(u.x,u.y,u.w,u.h,RADIUS.bar); ctx.fillStyle='rgba(255,210,61,'+(0.75+0.25*pulse)+')'; ctx.fill();
       ctx.strokeStyle='#ffd23d'; ctx.lineWidth=2; ctx.stroke();
       ctx.fillStyle='#241a00'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center';
-      const txtUlt='FRAPPE ORBITALE', cyUlt=u.y+u.h/2+3, w=ctx.measureText(txtUlt).width;
+      const txtUlt=trad('hud_frappe_orbitale'), cyUlt=u.y+u.h/2+3, w=ctx.measureText(txtUlt).width;
       dessinerIcone(imgEclairIco,state.LARGEUR/2-w/2-10,cyUlt-3,1);
       ctx.fillText(txtUlt,state.LARGEUR/2,cyUlt); ctx.textAlign='left';
     }
@@ -445,7 +460,7 @@ export function dessiner(t){
     arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
     if(a.anim>0){ arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle='rgba(255,255,255,'+(a.anim*0.5)+')'; ctx.fill(); }
     ctx.fillStyle=dispo||vise?'#e8eefc':'#5b6580'; ctx.textAlign='center';
-    let lbl=a.lbl; if(a.id==='tourelle'&&state.tirsGratuits>0) lbl='TOUR.x'+(state.tirsGratuits+(state.actionFaite?0:1));
+    let lbl=trad(a.lblKey); if(a.id==='tourelle'&&state.tirsGratuits>0) lbl=trad('hud_tourelle_x',{n:state.tirsGratuits+(state.actionFaite?0:1)});
     const ico=a.id==='vaisseau'?imgIcoVaisseau:a.id==='tourelle'?imgIcoTourelle:imgIcoBouclier;
     const cx=a.x+a.w/2, iy=a.y+5;
     if(ico){ ctx.save(); ctx.globalAlpha=(dispo||vise)?1:0.4;
@@ -463,7 +478,7 @@ export function dessiner(t){
   ctx.fillStyle=prete?'rgba(255,210,61,'+(0.85+0.15*pulse)+')':(actif?'#2fd6a0':'#26424a'); ctx.fill();
   if(prete){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=2; ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,'+(0.12+0.18*pulse)+')'; arrondi(state.BTN.x+3,state.BTN.y+3,state.BTN.w-6,state.BTN.h-6,RADIUS.bar-2); ctx.fill(); }
-  ctx.fillStyle=prete?'#241a00':(actif?'#07240f':'#4b5f66'); ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('FIN DU TOUR ▶',state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
+  ctx.fillStyle=prete?'#241a00':(actif?'#07240f':'#4b5f66'); ctx.font='13px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_fin_du_tour'),state.BTN.x+state.BTN.w/2,state.BTN.y+state.BTN.h/2+5); ctx.textAlign='left';
 
   // Transition phase
   if(state.phase==='ennemi'&&state.lockTimer>0.7){ ctx.fillStyle='rgba(229,72,77,'+(.2*(state.lockTimer-0.7)/0.2)+')'; ctx.fillRect(0,0,state.LARGEUR,state.HAUTEUR); }

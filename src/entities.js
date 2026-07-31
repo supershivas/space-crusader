@@ -127,7 +127,13 @@ export function apparaitreEscadrille(){ if(state.ailes.length>=state.AILES_MAX) 
 export function tuerAile(a){ state.ailes.splice(state.ailes.indexOf(a),1); state.score++; state.killsThisWave++; state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+1);
   if(a.type==='stronghold'){ // se scinde en 2 mini-navettes sur les cases adjacentes libres
     let poses=0; for(const [dc,dr] of [[-1,0],[1,0],[0,-1],[0,1],[-1,-1],[1,1]]){ if(poses>=2) break; const c=a.c+dc, r=a.r+dr; if(c>=0&&c<state.COLS&&r>=0&&r<state.RANGS-1&&!aileEn(c,r)&&!occupe(c,r)){ faireAile(c,r,'mini_navette'); poses++; } } }
-  if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r)); }
+  if(Math.random()<0.18+0.08*state.ups.bonusPlus) larguerBonus(a.c,Math.max(0,a.r));
+  // parfois, l'épave laisse un débris (obstacle destructible 1 PV) sur sa case si elle reste
+  // libre — jamais garanti, juste une chance résiduelle après la destruction.
+  if(a.r>=0 && !occupe(a.c,a.r) && !asterEn(a.c,a.r) && !obstacleEn(a.c,a.r) && Math.random()<0.12){
+    const p=centreCase(a.c,a.r);
+    state.obstacles.push({c:a.c,r:a.r,type:'debris',hp:OBSTACLES.debris.hp,maxhp:OBSTACLES.debris.hp,x:p.x,y:p.y,variante:Math.random()<0.5,ang:0});
+  } }
 
 /* bonus */
 export function larguerBonus(c,r){ const t=tirageParRarete(RARETE.bonus,['pv','tir','vaisseau']); decouvrir('bonus',t); const p=centreCase(c,r); state.bonus.push({c,r,type:t,x:p.x,y:p.y,ttl:4}); }

@@ -38,6 +38,13 @@ export const state = {
   tourCompteur:undefined, prochainAsteroide:undefined, prochainBoss:undefined,
   ambianceT:undefined,
 
+  // Incrémenté à chaque undo() (ui.js) : les effets de tir différés en setTimeout (tir de
+  // zone, tourelle, tourelle, tir chargé, tir sur le boss…) capturent sa valeur au moment du
+  // tir et vérifient qu'elle n'a pas changé avant de s'appliquer — sinon un Échap pendant la
+  // fenêtre du setTimeout restaurait l'état visuel mais laissait le tir s'appliquer quand même
+  // sur les ennemis restaurés (annulation incomplète).
+  actionGen:0,
+
   comboCount:undefined, comboTimer:undefined, bestCombo:undefined,
   undoStack:[], paused:false,
 

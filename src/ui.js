@@ -91,7 +91,7 @@ export function showAchievement(title,desc){
   setTimeout(()=>achieveDiv.classList.remove('visible'), 3000);
 }
 export function addHighscore(){
-  const entry={score:state.score,vague:state.vague,date:new Date().toLocaleDateString('fr-FR')};
+  const entry={score:state.score,vague:state.vague,date:new Date().toLocaleDateString(state.langue==='en'?'en-US':'fr-FR')};
   state.highscores.push(entry); state.highscores.sort((a,b)=>b.score-a.score); state.highscores=state.highscores.slice(0,5); saveData();
   const tbl=document.getElementById('highscores');
   tbl.innerHTML='';
@@ -107,7 +107,7 @@ const btnReroll=document.getElementById('btnReroll'), rerollLabel=document.getEl
 function rendreChoixAmelioration(dispo){
   const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3);
   upgradeCards.innerHTML='';
-  for(const u of choix){ const niv=state.ups[u.id]?' · Niv.'+(state.ups[u.id]+1):'';
+  for(const u of choix){ const niv=state.ups[u.id]?t('up_niveau',{n:state.ups[u.id]+1}):'';
     const b=document.createElement('div'); b.className='card';
     b.appendChild(divEmo(u.ico));
     const d=document.createElement('div'); d.innerHTML='<div class="nom">'+t('up_'+u.id+'_nom')+niv+'</div><div class="desc">'+t('up_'+u.id+'_desc')+'</div>'; b.appendChild(d);
@@ -244,9 +244,9 @@ export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.
     const carteSkin=(titre,liste,cle,appliquer)=>{
       const wrap=document.createElement('div'); wrap.style.display='flex'; wrap.style.flexDirection='column'; wrap.style.gap='6px'; wrap.style.alignItems='center';
       const d=document.createElement('div'); d.className='desc'; d.textContent=titre; wrap.appendChild(d);
-      const row=document.createElement('div'); row.style.display='flex'; row.style.gap='6px';
+      const row=document.createElement('div'); row.style.display='flex'; row.style.gap='10px';
       liste.forEach((s,i)=>{ const sw=document.createElement('div'); sw.title=s.nom;
-        sw.style.width='24px'; sw.style.height='24px'; sw.style.borderRadius='5px'; sw.style.cursor='pointer';
+        sw.style.width='40px'; sw.style.height='40px'; sw.style.borderRadius='var(--radius-sm)'; sw.style.cursor='pointer';
         sw.style.background=s.over.C||s.over.O||'#4a5a86'; sw.style.border=(state.meta[cle]||0)===i?'2px solid #ffd23d':'2px solid #24406e';
         sw.onclick=()=>{ state.meta[cle]=i; saveData(); appliquer(); ouvrirMeta(); };
         row.appendChild(sw); });
@@ -613,7 +613,7 @@ canvas.addEventListener('pointerdown', ev=>{
   if(dansRect(x,y,state.BTN)){ finDuTour(); return; }
   for(const a of state.ACT){ if(dansRect(x,y,a)){ a.anim=1; choisirAction(a.id); return; } }
   const cell=caseDe(x,y); if(!cell){ state.selection=null; state.modeTourelle=false; state.modeCapacite=null; return; } const {c,r}=cell;
-  if(state.modeTourelle){ if(bossEn(c,r)){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); state.trails.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); sonTir(); finirTourelle(); setTimeout(()=>toucherBoss(2,px,py),120); } else { const t=aileEn(c,r); if(t){ tirerTourelle(t); } else state.modeTourelle=false; } return; }
+  if(state.modeTourelle){ if(bossEn(c,r)){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); state.trails.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:px,y2:py,t:0,ennemi:false,gros:true}); sonTir(); finirTourelle(); const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(2,px,py); },120); } else { const t=aileEn(c,r); if(t){ tirerTourelle(t); } else state.modeTourelle=false; } return; }
   if(state.modeCapacite){
     const {ship,kind}=state.modeCapacite;
     if(kind==='bond'){
@@ -633,7 +633,7 @@ canvas.addEventListener('pointerdown', ev=>{
   if(f.c===c&&f.r===r){ if(activerCapacite(f)) return; state.selection=null; return; }
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
-  if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; setTimeout(()=>toucherBoss(deg,px,py),130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
+  if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(deg,px,py); },130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(raisonTirBloque(an,c,cible),'log-red'); return; }
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
   const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
@@ -651,7 +651,7 @@ export function undo(){
   state.killsThisWave=s.killsThisWave||0; state.shipsLostThisWave=s.shipsLostThisWave||0; state.bossKilledThisWave=s.bossKilledThisWave||false; state.ultimeJauge=s.ultimeJauge||0;
   state.hpCruiser=s.hpCruiser; state.score=s.score; state.vague=s.vague; state.actionFaite=s.actionFaite; state.tirsGratuits=s.tirsGratuits; state.hangar=s.hangar;
   state.tourCompteur=s.tourCompteur; state.prochainAsteroide=s.prochainAsteroide; state.prochainBoss=s.prochainBoss;
-  state.selection=null; state.modeTourelle=false; sonUndo(); logMsg('↺ '+t('log_annule'),'log-ylw');
+  state.selection=null; state.modeTourelle=false; state.actionGen++; sonUndo(); logMsg('↺ '+t('log_annule'),'log-ylw');
 }
 export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.toggle('visible',state.paused); tooltip.classList.remove('visible'); if(state.paused){ stopMusic(); sonPause(); } else { startMusic(); } }
 

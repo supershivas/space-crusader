@@ -54,7 +54,9 @@ export function tirerCharge(f,cible){
   sonTir(); f.used=true; f.capUsed=true; state.tirsJoueurTotal++; state.selection=null; state.modeCapacite=null;
   logMsg('💥 Tir chargé !','log-ylw');
   const c2 = cible.c+1<state.COLS ? cible.c+1 : cible.c-1;
+  const gen=state.actionGen;
   setTimeout(()=>{
+    if(state.actionGen!==gen) return;   // annulé (Échap) pendant le délai avant impact
     const col=state.ailes.filter(a=>a.r>=0&&(a.c===cible.c||a.c===c2)); let kills=0;
     for(const a of col){ if(frapperAile(a,true)) kills++; }
     f.kills=(f.kills||0)+kills;
@@ -174,12 +176,21 @@ export function choisirAction(id){
   else if(id==='bouclier'){ if(state.boucliersRestants<=0) return; const soin=Math.round(state.RECHARGE*(1+0.25*state.ups.bouclier)); state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+soin); state.boucliersRestants--; state.actionFaite=true; state.modeTourelle=false; state.flashRecharge=1;
     const eteint=state.enFeu>0; state.enFeu=0; sonRenfort(); logMsg('Bouclier +'+soin+(eteint?' · 🔥 éteint':'')+' ('+state.boucliersRestants+' restante'+(state.boucliersRestants>1?'s':'')+')','log-grn'); }
 }
+/* la tourelle inflige 2 PV de dégâts (via frapperAile, comme un tir allié normal) au lieu de
+   détruire systématiquement sa cible — un ennemi à plus de 2 PV (lourd, stronghold, titan…)
+   survit désormais à un tir de tourelle. */
 export function tirerTourelle(a){
   state.lasers.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:a.x,y2:a.y,t:0,ennemi:false,gros:true});
   state.trails.push({x1:state.LARGEUR/2,y1:state.cruiserY+4,x2:a.x,y2:a.y,t:0,ennemi:false,gros:true});
   sonTir(); finirTourelle();
-  const cible=a;
-  setTimeout(()=>{ if(state.ailes.includes(cible)){ exploser(cible.x,cible.y,true); tuerAile(cible); state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; sonBoom(); checkAchievements(); } }, 120);
+  const cible=a, gen=state.actionGen;
+  setTimeout(()=>{
+    if(state.actionGen!==gen) return;   // annulé (Échap) pendant le délai avant impact
+    if(state.ailes.includes(cible)){
+      if(frapperAile(cible,true,2)){ state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; }
+      sonBoom(); checkAchievements();
+    }
+  }, 120);
 }
 export function finirTourelle(){ if(state.actionFaite&&state.tirsGratuits>0) state.tirsGratuits--; else state.actionFaite=true; state.modeTourelle=false; }
 export function toucherBoss(deg,px,py){ if(!state.boss) return;
@@ -197,8 +208,9 @@ export function tirer(f,aile){
   state.lasers.push({x1:f.x,y1:f.y-6,x2:aile.x,y2:aile.y,t:0,ennemi:false});
   state.trails.push({x1:f.x,y1:f.y-6,x2:aile.x,y2:aile.y,t:0,ennemi:false});
   sonTir(); f.used=true; state.selection=null; state.tirsJoueurTotal++;
-  const type=f.type, cible=aile;
+  const type=f.type, cible=aile, gen=state.actionGen;
   setTimeout(()=>{                          // l'explosion arrive APRÈS le laser
+    if(state.actionGen!==gen) return;   // annulé (Échap) pendant le délai avant impact
     if(type==='rouge'){ const rad=1+((state.ups&&state.ups.rouge_range)||0); const zone=state.ailes.filter(a=>a.r>=0&&Math.abs(a.c-cible.c)<=rad&&Math.abs(a.r-cible.r)<=rad); let kills=0;
       for(const a of zone){ if(frapperAile(a,true)) kills++; }
       f.kills=(f.kills||0)+kills;
@@ -225,8 +237,8 @@ export function declencheUltime(){
   state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0; state.ultimeSeuil+=ULTIME_INCREMENT;
   sonBoom(); sonVague(); logMsg('⚡ '+t('toast_frappe_orbitale').toUpperCase(),'log-ylw'); montrerToast('⚡ '+t('toast_frappe_orbitale'),'gold'); checkAchievements();
 }
-export function frapperAile(a,grand){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
-  a.hp=(a.hp||1)-1;
+export function frapperAile(a,grand,deg=1){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
+  a.hp=(a.hp||1)-deg;
   if(a.hp>0){ exploser(a.x,a.y,false); return false; }   // touché mais pas encore détruit (ennemis blindés)
   exploser(a.x,a.y,grand); tuerAile(a); return true; }
 
