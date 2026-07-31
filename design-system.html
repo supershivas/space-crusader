@@ -66,6 +66,15 @@
   .guide-card .nom{font-size:6.5px;color:#ffd23d;}
   .rarete{font-size:5.5px;border:1px solid;border-radius:var(--radius-sm);padding:1px 5px;margin-top:2px;}
 
+  /* Lignes de stats/récap (clé -> valeur) : encyclopédie (détail d'une entrée) ET récap de
+     fin d'étape (#mission) réutilisent le même composant plutôt que d'inventer un tableau
+     ad hoc à chaque écran. */
+  .guide-stats{font-size:var(--fs-petit);color:#cbd6f0;border-top:1px solid #24406e;padding-top:8px;display:flex;flex-direction:column;gap:5px;}
+  .guide-stats div{display:flex;justify-content:space-between;gap:14px;}
+  .guide-stats span:first-child{color:#7fd0b0;}
+  .guide-stats .recap-plus{color:#2fd6a0;}
+  .mission-score{font-family:var(--pixel);font-size:var(--fs-titre);color:#ffd23d;margin-top:12px;text-shadow:0 2px 0 #6a4a10;}
+
   /* ===== Modales (aperçu statique — la vraie .modal est position:absolute;inset:0 en jeu) ===== */
   .modal-preview{background:rgba(7,11,24,.9);border-radius:var(--radius-lg);padding:28px 16px;display:flex;justify-content:center;}
   .modal-inner{text-align:center;max-width:320px;width:100%;}
@@ -266,6 +275,27 @@
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
         <button class="jouer secondaire">Annuler</button>
         <button class="jouer danger">Confirmer</button>
+      </div>
+    </div>
+
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Écran de fin d'étape (récap animé)</h3>
+    <p class="note">Titre <code>--fs-display</code> (même gabarit que les écrans de conclusion), objectif secondaire,
+      puis chaque ligne de bonus gagnée ce combat (<code>.guide-stats</code>, réutilisé tel quel — valeur en
+      <code>.recap-plus</code>) révélée une à une (fondu + léger décalage vertical, ~140ms d'écart), et enfin
+      le score qui se décompte du total précédent jusqu'au nouveau (easing ease-out, ~700ms) avec un petit
+      "pop" d'échelle à l'arrivée. Voir <code>ui.js:ouvrirMission()</code>.</p>
+    <div class="modal-preview">
+      <div class="modal-inner">
+        <h3 style="font-size:var(--fs-display);text-shadow:0 3px 0 #10406a;">ZONE SÉCURISÉE</h3>
+        <div class="m-hint" style="margin-bottom:0;">✅ Objectif secondaire : Aucun dégât au croiseur</div>
+        <div class="guide-stats" style="max-width:240px;margin:10px auto 0;">
+          <div><span>6 ennemis détruits</span><span class="recap-plus">+6</span></div>
+          <div><span>Boss vaincu</span><span class="recap-plus">+5</span></div>
+          <div><span>Objectif secondaire réussi</span><span class="recap-plus">+3</span></div>
+        </div>
+        <div class="mission-score">Score : 63</div>
+        <div class="m-hint" style="margin-top:8px;margin-bottom:0;">Secteur 2 · Croiseur 340/400 PV</div>
+        <button class="jouer" style="margin-top:14px;">Continuer ▶</button>
       </div>
     </div>
   </section>

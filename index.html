@@ -205,6 +205,18 @@
   .guide-stats div{display:flex;justify-content:space-between;gap:14px;}
   .guide-stats span:first-child{color:#7fd0b0;}
 
+  /* Récap de fin d'étape (#mission) : réutilise .guide-stats pour les lignes de bonus
+     (même composant que les stats de l'encyclopédie), révélées une à une (petit effet
+     "wow" cohérent avec le reste du jeu) puis un score qui se décompte jusqu'au total. */
+  #missionRecap{border-top:none;}
+  #missionRecap:not(:empty){border-top:1px solid #24406e;}
+  #missionRecap > div{opacity:0;transform:translateY(6px);transition:opacity .3s,transform .3s;}
+  #missionRecap > div.visible{opacity:1;transform:translateY(0);}
+  #missionRecap .recap-plus{color:#2fd6a0;}
+  .mission-score{font-family:var(--pixel);font-size:var(--fs-titre);color:#ffd23d;margin-top:12px;text-shadow:0 2px 0 #6a4a10;}
+  .mission-score.pop{animation:missionScorePop .35s ease-out;}
+  @keyframes missionScorePop{0%{transform:scale(1);}45%{transform:scale(1.25);}100%{transform:scale(1);}}
+
   /* icônes pixel-art (remplacent les emoji) */
   .ico-slot{display:inline-flex;vertical-align:-4px;margin-right:5px;}
   .ico-slot canvas,.pixel-ico{image-rendering:pixelated;vertical-align:middle;}
@@ -274,7 +286,12 @@
       <button class="jouer" id="btnFermerInfo" data-i18n="info_fermer">Fermer</button>
       <button class="jouer secondaire" id="btnRelancerTuto"><span class="ico-slot" data-ico="chapeau"></span><span data-i18n="info_revoir_tuto">Revoir le tutoriel</span></button>
       </div></div>
-    <div id="mission" class="modal"><h1 id="missionTitre" style="color:#37e0ff">ZONE SÉCURISÉE</h1><div class="hint" id="missionStats"></div><button class="jouer" id="btnMission" style="margin-top:14px;font-size:var(--fs-modale);padding:11px 22px;" data-i18n="mission_continuer">Continuer ▶</button></div>
+    <div id="mission" class="modal"><h1 id="missionTitre" style="color:#37e0ff">ZONE SÉCURISÉE</h1>
+      <div class="hint" id="missionObjectif" style="margin-bottom:0;"></div>
+      <div class="guide-stats" id="missionRecap" style="width:100%;max-width:280px;margin-top:10px;"></div>
+      <div class="mission-score" id="missionScoreLigne"><span data-i18n="mission_score">Score</span> : <span id="missionScoreVal">0</span></div>
+      <div class="hint" id="missionInfos" style="margin-top:8px;"></div>
+      <button class="jouer" id="btnMission" style="margin-top:14px;font-size:var(--fs-modale);padding:11px 22px;" data-i18n="mission_continuer">Continuer ▶</button></div>
     <div id="resultat" class="modal"><h2><span class="ico-slot" data-ico="point"></span><span data-i18n="resultat_titre">RÉSULTAT</span></h2>
       <div class="hint" id="resultatTexte" style="max-width:300px;"></div>
       <button class="jouer" id="btnResultatOk" style="margin-top:14px;font-size:var(--fs-corps);padding:11px 22px;" data-i18n="maj_ok">OK</button></div>

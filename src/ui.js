@@ -29,7 +29,8 @@ const upgradeDiv=document.getElementById('upgrade'), upgradeCards=document.getEl
 const buildDiv=document.getElementById('build'), buildCards=document.getElementById('buildCards');
 const eventDiv=document.getElementById('event'), eventTitre=document.getElementById('eventTitre'), eventDesc=document.getElementById('eventDesc'), eventCards=document.getElementById('eventCards');
 const carteDiv=document.getElementById('carte'), carteChoixDiv=document.getElementById('carteChoix');
-const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionStats=document.getElementById('missionStats');
+const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionObjectif=document.getElementById('missionObjectif'),
+  missionRecap=document.getElementById('missionRecap'), missionScoreVal=document.getElementById('missionScoreVal'), missionScoreLigne=document.getElementById('missionScoreLigne'), missionInfos=document.getElementById('missionInfos');
 const metaDiv=document.getElementById('meta'), metaCristaux=document.getElementById('metaCristaux'), metaCards=document.getElementById('metaCards');
 const resultatDiv=document.getElementById('resultat'), resultatTexte=document.getElementById('resultatTexte');
 const majDiv=document.getElementById('maj'), majVersion=document.getElementById('majVersion');
@@ -381,10 +382,37 @@ function ajusterTitreModale(h1){
   }
 }
 
-export function ouvrirMission(type,reussi){ state.phase='mission'; tooltip.classList.remove('visible');
+/* décompte animé du score (easing ease-out), du total d'avant-étape jusqu'au nouveau total —
+   voir ouvrirMission() ci-dessous. Un petit "pop" (échelle) marque l'arrivée sur la valeur finale. */
+function animerDecompteScore(el,de,vers,duree=700){
+  if(de===vers){ el.textContent=vers; return; }
+  const t0=performance.now();
+  function etape(now){
+    const p=Math.min(1,(now-t0)/duree), ease=1-Math.pow(1-p,3);
+    el.textContent=Math.round(de+(vers-de)*ease);
+    if(p<1) requestAnimationFrame(etape);
+    else { el.textContent=vers; missionScoreLigne.classList.add('pop'); setTimeout(()=>missionScoreLigne.classList.remove('pop'),350); }
+  }
+  requestAnimationFrame(etape);
+}
+/* écran de fin d'étape ("ZONE SÉCURISÉE" / élites / boss) : récapitule chaque ligne de bonus
+   gagnée ce combat (révélées une à une, effet "wow" cohérent avec la bannière de début
+   d'étape), puis décompte le score animé jusqu'au nouveau total. recap = {avant,apres,lignes}
+   fourni par gagnerCombat() dans map.js. */
+export function ouvrirMission(type,reussi,recap){ state.phase='mission'; tooltip.classList.remove('visible');
   missionTitre.textContent = type==='boss'?t('mission_boss_titre'):(type==='elite'?t('mission_elite_titre'):t('mission_normal_titre'));
-  const obj = state.objectifVague ? ((reussi?'✅ ':'✗ ')+t('objectif_secondaire')+' : '+texteObjectif(state.objectifVague)) : '';
-  missionStats.innerHTML = (obj?obj+'<br>':'')+t('mission_secteur')+' '+state.secteur+' · '+t('mission_score')+' '+state.score+'<br>'+t('mission_croiseur')+' '+state.hpCruiser+'/'+state.HP_MAX+' '+t('mission_pv');
+  missionObjectif.textContent = state.objectifVague ? ((reussi?'✅ ':'✗ ')+t('objectif_secondaire')+' : '+texteObjectif(state.objectifVague)) : '';
+  missionRecap.innerHTML='';
+  const lignes=(recap&&recap.lignes)||[];
+  lignes.forEach((l,i)=>{
+    const row=document.createElement('div'); row.innerHTML='<span>'+l.label+'</span><span class="recap-plus">+'+l.points+'</span>';
+    missionRecap.appendChild(row);
+    setTimeout(()=>row.classList.add('visible'), 150+i*140);
+  });
+  const avant=recap?recap.avant:state.score, apres=recap?recap.apres:state.score;
+  missionScoreVal.textContent=avant; missionScoreLigne.classList.remove('pop');
+  setTimeout(()=>animerDecompteScore(missionScoreVal,avant,apres), 150+lignes.length*140+150);
+  missionInfos.innerHTML = t('mission_secteur')+' '+state.secteur+' · '+t('mission_croiseur')+' '+state.hpCruiser+'/'+state.HP_MAX+' '+t('mission_pv');
   missionDiv.classList.add('visible'); ajusterTitreModale(missionTitre); }
 
 export function finPartie(){

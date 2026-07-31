@@ -508,11 +508,15 @@ export function dessinerIllustration(t){
   draw(JOUEUR, xGauche, alliesY+bob(0), scJ);
   draw(ROUGE,  xDroite, alliesY+bob(2.4), scJ);
 
-  // Un chasseur ennemi (Aile) survient de temps en temps entre les deux alliés, puis l'un des
-  // deux — au hasard, cycle après cycle — le détruit dans une grande explosion. Cycle rejoué
-  // en boucle sans état à mémoriser : tout dérive de t, comme le reste de l'illustration ;
-  // hash() en tire un pseudo-aléatoire stable par cycle (lequel allié tire, où l'ennemi se
-  // pose, d'où il entre) sans jamais appeler Math.random() à chaque frame (ça scintillerait).
+  // Un chasseur ennemi (Aile) descend du haut de l'écran de temps en temps, se pose entre
+  // les deux alliés (au niveau du croiseur), puis l'un des deux — au hasard, cycle après
+  // cycle — le détruit dans une grande explosion. Cycle rejoué en boucle sans état à
+  // mémoriser : tout dérive de t, comme le reste de l'illustration ; hash() en tire un
+  // pseudo-aléatoire stable par cycle (lequel allié tire, où l'ennemi se pose, par où il
+  // entre en haut) sans jamais appeler Math.random() à chaque frame (ça scintillerait).
+  // La descente traverse forcément la bande médiane (titre + boutons, en DOM par-dessus,
+  // donc l'ennemi passe visuellement derrière) : seule cette entrée y déroge, l'ennemi au
+  // repos/tir/explosion reste toujours dans la bande basse comme les alliés et le croiseur.
   const CYCLE=6500, T_ENTREE=1200, T_ATTENTE=2200, T_TIR=250, T_BOOM=300;
   const hash=n=>{ const x=Math.sin(n*12.9898)*43758.5453; return x-Math.floor(x); };
   const cycleIdx=Math.floor(t/CYCLE), tc=t%CYCLE;
@@ -521,12 +525,13 @@ export function dessinerIllustration(t){
   // reste centré à bonne distance des deux alliés (jamais assez large pour les chevaucher,
   // même dans le cas le plus défavorable — vérifié en Chromium headless).
   const restX=W*(0.40+0.20*hash(cycleIdx+7.7)), restY=posGauche.y+H*0.015*(hash(cycleIdx+3.3)-0.5);
-  const startX=hash(cycleIdx+9.1)<0.5?W*1.15:-W*0.15;
+  const startXHaut=W*(0.15+0.7*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
   if(tc<T_ENTREE){
-    const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3), ex=startX+(restX-startX)*ease;
-    c.globalAlpha=Math.min(1,p*1.5); draw(AILE, ex-eW/2, restY-eH/2, eSc); c.globalAlpha=1;
+    const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3);
+    const ex=startXHaut+(restX-startXHaut)*ease, ey=-eH+(restY-(-eH))*ease;
+    c.globalAlpha=Math.min(1,p*1.5); draw(AILE, ex-eW/2, ey-eH/2, eSc); c.globalAlpha=1;
   } else if(tc<T_ENTREE+T_ATTENTE){
     draw(AILE, restX-eW/2, restY-eH/2+bob(1.1), eSc);
   } else if(tc<T_ENTREE+T_ATTENTE+T_TIR){

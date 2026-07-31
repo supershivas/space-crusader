@@ -213,6 +213,9 @@ const STRINGS = {
     mission_score:'Score',
     mission_croiseur:'Croiseur',
     mission_pv:'PV',
+    mission_recap_kills:'{n} ennemis détruits',
+    mission_recap_boss:'Boss vaincu',
+    mission_recap_objectif:'Objectif secondaire réussi',
 
     // ===== Tooltips (survol) =====
     tt_pv:'PV',
@@ -591,6 +594,9 @@ const STRINGS = {
     mission_score:'Score',
     mission_croiseur:'Cruiser',
     mission_pv:'HP',
+    mission_recap_kills:'{n} enemies destroyed',
+    mission_recap_boss:'Boss defeated',
+    mission_recap_objectif:'Secondary objective completed',
 
     tt_pv:'HP',
     tt_deplacement:'Move',

@@ -121,12 +121,18 @@ function annoncerEtape(type){
 export function gagnerCombat(){ state.enCombat=false;
   const reussi=objectifReussi(); if(state.damageThisWave===0) state.achievements.perfect_wave=true;
   state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.04));
-  if(reussi){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.12)); state.score+=3; }
+  // récap des lignes de bonus affichées (et décomptées en animation) sur l'écran de fin
+  // d'étape : uniquement celles qui ont vraiment rapporté des points ce combat-ci.
+  const lignes=[];
+  if(state.killsThisWave>0) lignes.push({label:t('mission_recap_kills',{n:state.killsThisWave}), points:state.killsThisWave});
+  if(state.bossKilledThisWave) lignes.push({label:t('mission_recap_boss'), points:5});
+  if(reussi){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.12)); state.score+=3; lignes.push({label:t('mission_recap_objectif'), points:3}); }
+  const recap={avant:state.scoreAvantVague, apres:state.score, lignes};
   state.vague++; sonVague(); setMusicPhase('calme'); checkAchievements();
   const type=state.noeudActuel?state.noeudActuel.type:'combat';
   state.suiteMission=()=>{ if(type==='boss'){ state.suiteAmelioration=secteurSuivant; ouvrirAmelioration(); }
     else if(type==='elite'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } else ouvrirCarte(); };
-  ouvrirMission(type,reussi); }
+  ouvrirMission(type,reussi,recap); }
 /* réorganise tous les vaisseaux sur les deux premières lignes (bas de grille) */
 export function reorganiserVaisseaux(){
   const r0=state.RANGS-1, r1=state.RANGS-2, libres=[];
@@ -151,6 +157,7 @@ export function assignerObjectif(){
   if(state.boss) pool.push({type:'boss'});
   const o={...pool[Math.floor(Math.random()*pool.length)]};
   state.objectifVague=o; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false; state.damageThisWave=0;
+  state.scoreAvantVague=state.score; // repère pour le décompte animé du score au récap de fin d'étape (ouvrirMission)
 }
 export function objectifReussi(){ const o=state.objectifVague; if(!o) return false;
   return o.type==='sansdegat' ? state.damageThisWave===0

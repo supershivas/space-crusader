@@ -23,7 +23,7 @@ export const state = {
   obstacles:undefined,
 
   // progression de la partie en cours
-  ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined,
+  ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined, scoreAvantVague:undefined,
   bossKilledThisWave:undefined, pendingUpgrade:undefined, choixBuild:undefined, pendingEvent:undefined,
   suiteAmelioration:undefined, suiteEvenement:undefined, suiteMission:null,
   carte:undefined, noeudActuel:undefined, secteur:undefined, enCombat:undefined,
@@ -130,7 +130,7 @@ export function sauvegarderPartie(serialiserCarte){
   if(state.phase==='fin'||state.phase==='accueil') return;
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify({
     v:1, secteur:state.secteur, vague:state.vague, score:state.score, hpCruiser:state.hpCruiser, HP_MAX:state.HP_MAX, ups:state.ups, ultimeJauge:state.ultimeJauge, tourCompteur:state.tourCompteur, prochainAsteroide:state.prochainAsteroide,
-    enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave,
+    enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave, scoreAvantVague:state.scoreAvantVague,
     hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte, rerollsRestants:state.rerollsRestants,
     boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil, enFeu:state.enFeu||0,
     fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,maxhp:f.maxhp,used:f.used,capUsed:f.capUsed||false,kills:f.kills||0,gele:f.gele||0})),
