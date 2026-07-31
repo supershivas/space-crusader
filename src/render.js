@@ -500,7 +500,17 @@ export function dessinerIllustration(t){
   const R=Math.round(W*0.16), px=W-R*0.9, py=H*0.13, pas=Math.max(3,Math.round(R/6));
   for(let gx=-R;gx<=R;gx+=pas) for(let gy=-R;gy<=R;gy+=pas){ const cx=gx+pas/2,cy=gy+pas/2; if(Math.hypot(cx,cy)>R) continue;
     const tt=cx+cy; c.fillStyle=tt<-R*0.35?'#7ea8e0':tt>R*0.45?'#1e2f55':'#4a6ea8'; c.fillRect(Math.round(px+gx),Math.round(py+gy),pas,pas); }
-  const draw=(g,ox,oy,sc)=>{ for(let y=0;y<g.length;y++){ const row=g[y]; for(let x=0;x<row.length;x++){ const col=PAL[row[x]]; if(!col) continue; c.fillStyle=col; c.fillRect(Math.round(ox+x*sc),Math.round(oy+y*sc),sc,sc); } } };
+  // +1px sur chaque case : avec une échelle non entière (le croiseur/les alliés/l'ennemi de
+  // l'illustration d'accueil sont volontairement à une échelle fractionnaire — scC pour
+  // remplir exactement la largeur, scJ/eSc pour des proportions précises), le point de départ
+  // de chaque case arrondi indépendamment (Math.round) ne retombe pas toujours exactement à
+  // la case suivante : ça laissait un pixel de fond (noir) visible en seam entre certaines
+  // cases adjacentes. La case suivante (dessinée juste après, plus à droite/en bas) redessine
+  // par-dessus ce léger débordement, donc ça ne change rien au résultat visuel — sauf à
+  // combler la fissure.
+  const cellPx=sc=>Math.ceil(sc)+1;
+  const drawSur=(ctx,g,ox,oy,sc)=>{ const cp=cellPx(sc); for(let y=0;y<g.length;y++){ const row=g[y]; for(let x=0;x<row.length;x++){ const col=PAL[row[x]]; if(!col) continue; ctx.fillStyle=col; ctx.fillRect(Math.round(ox+x*sc),Math.round(oy+y*sc),cp,cp); } } };
+  const draw=(g,ox,oy,sc)=>drawSur(c,g,ox,oy,sc);
   const sc=Math.max(3,Math.round(W/95)), bob=ph=>Math.sin(t/480+ph)*3;
   // Tout se joue dans la bande basse de l'écran : le croiseur (pleine largeur, collé au bord
   // bas) et les deux vaisseaux alliés qui veillent juste au-dessus. La bande médiane (titre +
@@ -538,20 +548,27 @@ export function dessinerIllustration(t){
   const startXHaut=W*(0.1+0.8*hash(cycleIdx+5.5));
   const eSc=sc*0.6, eW=AILE[0].length*eSc, eH=AILE.length*eSc;
 
-  if(tc<T_ENTREE){
-    const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3);
-    const ex=startXHaut+(restX-startXHaut)*ease, ey=-eH+(restY-(-eH))*ease;
-    c.globalAlpha=Math.min(1,p*1.5); draw(AILE, ex-eW/2, ey-eH/2, eSc); c.globalAlpha=1;
-  } else if(tc<T_ENTREE+T_ATTENTE){
-    draw(AILE, restX-eW/2, restY-eH/2+bob(1.1), eSc);
-  } else if(tc<T_ENTREE+T_ATTENTE+T_TIR){
-    draw(AILE, restX-eW/2, restY-eH/2, eSc);
-    c.strokeStyle='rgba('+laserCol+',.85)'; c.lineWidth=2;
-    c.beginPath(); c.moveTo(attaquant.x,attaquant.y); c.lineTo(restX,restY); c.stroke();
-  } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
-    const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
-    declencherSecousseTitre(cycleIdx);
-    if(ci){
+  // L'ennemi entier (descente, pause avant le tir, laser, explosion) se dessine sur le calque
+  // de devant (ci) : son point d'arrêt est au niveau du titre, donc dessiné sur le calque
+  // arrière (comme avant) il se retrouvait caché derrière les lettres opaques pendant toute
+  // sa pause — invisible, puis l'explosion apparaissait "de nulle part" une fois passée devant
+  // (voir plus bas) : ça donnait l'impression qu'il était détruit avant même de s'être arrêté.
+  // Son trajet reste entièrement au-dessus des boutons (restY < leur position), donc rien ne
+  // vient jamais les recouvrir.
+  if(ci){
+    if(tc<T_ENTREE){
+      const p=tc/T_ENTREE, ease=1-Math.pow(1-p,3);
+      const ex=startXHaut+(restX-startXHaut)*ease, ey=-eH+(restY-(-eH))*ease;
+      ci.globalAlpha=Math.min(1,p*1.5); drawSur(ci,AILE, ex-eW/2, ey-eH/2, eSc); ci.globalAlpha=1;
+    } else if(tc<T_ENTREE+T_ATTENTE){
+      drawSur(ci,AILE, restX-eW/2, restY-eH/2+bob(1.1), eSc);
+    } else if(tc<T_ENTREE+T_ATTENTE+T_TIR){
+      drawSur(ci,AILE, restX-eW/2, restY-eH/2, eSc);
+      ci.strokeStyle='rgba('+laserCol+',.85)'; ci.lineWidth=2;
+      ci.beginPath(); ci.moveTo(attaquant.x,attaquant.y); ci.lineTo(restX,restY); ci.stroke();
+    } else if(tc<T_ENTREE+T_ATTENTE+T_TIR+T_BOOM){
+      const tb=tc-(T_ENTREE+T_ATTENTE+T_TIR), idx=Math.min(NFRAMES-1,Math.floor(tb/50)), im=framesBoom[idx], dw=W*0.22, dh=dw;
+      declencherSecousseTitre(cycleIdx);
       const glow=ci.createRadialGradient(restX,restY,0,restX,restY,dw); glow.addColorStop(0,'rgba(255,138,61,'+(.5*(1-tb/T_BOOM))+')'); glow.addColorStop(1,'rgba(255,138,61,0)');
       ci.fillStyle=glow; ci.fillRect(restX-dw,restY-dh,dw*2,dh*2);
       ci.drawImage(im, restX-dw/2, restY-dh/2, dw, dh);

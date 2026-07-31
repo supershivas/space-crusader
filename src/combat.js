@@ -412,7 +412,11 @@ export function tirsBoss(){
   return deg;
 }
 
-export function exploser(x,y,grand){ state.explosions.push({x,y,t:0,scale:grand?2.3:1.05}); const n=grand?32:14;
+// scale compensé pour la taille d'export des frames d'explosion (EG dans sprites.js, passé de
+// 15 à 25px pour corriger un clipping carré sur l'anneau) : *0.6 pour garder la même taille
+// affichée à l'écran qu'avant (2.3→1.38, 1.05→0.63), sinon toutes les explosions du jeu
+// auraient brusquement grossi de 66% avec le nouveau sprite source plus grand.
+export function exploser(x,y,grand){ state.explosions.push({x,y,t:0,scale:grand?1.38:0.63}); const n=grand?32:14;
   for(let i=0;i<n;i++){ const a=Math.random()*Math.PI*2, sp=40+Math.random()*(grand?260:150); state.particules.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,vie:(grand?.6:.5)+Math.random()*.4,t:0,c:['#ffe14d','#ff8a3d','#ff5a3d','#fff2b0'][i%4],taille:3+Math.random()*(grand?4:3)}); } }
 
 /* =====================================================================

@@ -181,8 +181,14 @@ export function iconCanvas(key,px=20){
 /* fournit l'image déjà cuite (pour dessiner sur le canvas de jeu via drawImage) */
 export function iconImage(key,echelle=3){ return cuire(ICONS[key],echelle); }
 
-/* explosions : anneaux qui grandissent */
-export const NFRAMES=6, EG=15, EPS=4;
+/* explosions : anneaux qui grandissent — la grille (EG) doit rester assez grande pour contenir
+   l'anneau du DERNIER frame (rayon max = 1.2+(NFRAMES-1)*1.75 = 9.95px) sur les 4 côtés, pas
+   seulement en diagonale : avec EG=15 (demi-largeur 7), les deux derniers frames dépassaient
+   ce rayon de 7 (8.2 et 9.95 > 7) et se retrouvaient tronqués à plat par le bord carré du
+   canvas — un "clipping carré" visible sur l'anneau juste avant qu'il disparaisse, sur
+   TOUTES les explosions du jeu (combat comme illustration d'accueil). EG=25 (demi-largeur 12)
+   laisse une marge confortable au rayon max. */
+export const NFRAMES=6, EG=25, EPS=4;
 export const framesBoom=(function(){ const fr=[]; for(let f=0;f<NFRAMES;f++){ const off=document.createElement('canvas'); off.width=EG*EPS; off.height=EG*EPS; const c=off.getContext('2d');
   const cx=(EG-1)/2, cy=(EG-1)/2, outer=1.2+f*1.75, inner=outer-2.4;
   for(let y=0;y<EG;y++) for(let x=0;x<EG;x++){ const d=Math.hypot(x-cx,y-cy); let col=null;
