@@ -58,6 +58,26 @@ la progression de l'escadrille.
 - Biomes (tranché) : V1 limitée à 4 — désert, glace, grotte, villes anciennes
   — pour limiter le travail d'art/i18n avant de valider que le mode est
   amusant. Jungle et lacs restent en réserve pour une vague suivante.
+  Chacun a une mécanique de terrain signature (pas qu'un habillage visuel),
+  pensée pour s'accrocher aux systèmes existants plutôt qu'en inventer de
+  nouveaux :
+  - **Désert — tempête de sable** : toutes les quelques tours, une tempête
+    balaie 1-2 colonnes (réutilise `state.champs`/`champEn()`, déjà géré en
+    `jam:true` dans `analyseTir`) — ni le joueur ni les tourelles ne
+    peuvent tirer à travers tant qu'elle dure.
+  - **Glace — sol glissant** : certaines cases (nouveau type `OBSTACLES`
+    traversable, `champ:'glace'`) font glisser d'une case de plus dans la
+    même direction tout vaisseau qui s'y déplace — joueur comme ennemis
+    produits par la base.
+  - **Grotte — obscurité** : portée de tir réduite de 1 pendant toute la
+    mission ; tourelles et base « endormies » (invisibles, ne tirent pas)
+    tant qu'aucun vaisseau allié n'est à 2 cases ou moins, puis se
+    réveillent au tour suivant.
+  - **Villes anciennes — ruines + tourelles embusquées** : terrain dense en
+    ruines destructibles (variante de l'obstacle `debris`/`station`
+    existant) bloquant les lignes de tir directes ; 1-2 tourelles
+    camouflées, invisibles/inactives jusqu'à approche à 1 case ou
+    destruction de la ruine qui les cache.
 - Récompense de fin de mission (tranché) : traitée comme un nœud `elite`
   (choix d'amélioration garanti après victoire), cohérent avec la durée/
   l'enjeu d'un siège multi-tours.
@@ -71,6 +91,5 @@ la progression de l'escadrille.
   (nouvelles entrées tourelle/base/biome), équilibrage par difficulté
   (`DIFFICULTES`).
 
-**Prochaine étape** : détailler la mécanique de terrain propre à chacun des
-4 biomes de la V1 (pas seulement un habillage visuel), puis commencer
-l'implémentation.
+**Prochaine étape** : conception entièrement verrouillée — passer à un plan
+d'implémentation technique détaillé, puis coder.
