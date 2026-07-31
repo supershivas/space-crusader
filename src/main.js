@@ -8,6 +8,7 @@ import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS, CAPACIT
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
+import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil } from './ui.js';
@@ -83,11 +84,27 @@ function reprendrePartie(){
   state.champs=(d.champs||[]).map(c=>({...c})); state.menacesWarn=(d.menacesWarn||[]).map(w=>({...w}));
   for(const o of d.obstacles||[]){ const p=centreCase(o.c,o.r); state.obstacles.push({c:o.c,r:o.r,type:o.type,hp:o.hp,maxhp:(OBSTACLES[o.type]?OBSTACLES[o.type].hp:o.hp),x:p.x,y:p.y,variante:Math.random()<0.5,ang:0}); }
   if(d.boss){ const p=centreCase(d.boss.c+1,d.boss.r); state.boss={c:d.boss.c,r:d.boss.r,w:3,h:2,hp:d.boss.hp,maxhp:d.boss.maxhp,type:d.boss.type,charge:d.boss.charge,x:p.x,y:p.y+state.CELL/2-state.CELL}; }
+  // mission planète en cours : les obstacles (dont les ruines) sont déjà restaurés ci-dessus,
+  // on peut donc relier la cachette d'une tourelle camouflée (biome Villes anciennes) à l'objet
+  // obstacle réel plutôt qu'à la position sérialisée.
+  if(d.planete){
+    const b=d.planete.base, pb=centreCase(b.c+1,0);
+    state.planete={
+      biome:d.planete.biome,
+      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
+      tourelles:(d.planete.tourelles||[]).map(tr=>{ const p=centreCase(tr.c,tr.r);
+        const cachette=tr.cachette?state.obstacles.find(o=>o.c===tr.cachette.c&&o.r===tr.cachette.r&&o.type==='ruine'):null;
+        return {id:tr.id,ico:tr.ico,c:tr.c,r:tr.r,hp:tr.hp,maxhp:tr.maxhp,portee:tr.portee,degats:tr.degats,camouflee:tr.camouflee,reveillee:tr.reveillee,cachette,x:p.x,y:p.y}; }),
+      tourCompteur:d.planete.tourCompteur||0, prochaineGarnison:d.planete.prochaineGarnison, prochaineTempete:d.planete.prochaineTempete,
+    };
+    state.suiteDemarrerTour=demarrerTourJoueurPlanete; state.suiteFinPlanete=finMissionPlanete;
+    activerRappelsBiome(state.planete.biome);
+  }
   deserialiserCarte(d.carte);
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');
   document.getElementById('pause').classList.remove('visible'); document.getElementById('pauseBtn').style.display='block';
   document.getElementById('log').innerHTML=''; startMusic(); redimensionner();
-  if(state.enCombat) demarrerTourJoueur(); else ouvrirCarte();
+  if(state.planete) demarrerTourJoueurPlanete(); else if(state.enCombat) demarrerTourJoueur(); else ouvrirCarte();
   return true;
 }
 

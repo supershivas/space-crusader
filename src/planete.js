@@ -1,14 +1,14 @@
 /* =====================================================================
    MISSIONS PLANÈTE — entités, boucle de tour dédiée, victoire/échec
    ===================================================================== */
-import { state, centreCase } from './state.js';
+import { state, centreCase, sauvegarderPartie } from './state.js';
 import { DIFFICULTES, TOURELLES, BIOMES, OBSTACLES, basePvMax } from './config.js';
 import { faireAile, aileEn, tourelleEn, fighterEn, blesser, tuerFighter,
          champObstacleEn, champEn, obstacleEn, dansGrille, occupe } from './entities.js';
 import { exploser } from './combat.js';
 import { sonBoom, sonTirEnnemi, setMusicPhase } from './audio.js';
 import { ouvrirMission, ouvrirAmelioration, montrerToast } from './ui.js';
-import { ouvrirCarte, reorganiserVaisseaux } from './map.js';
+import { ouvrirCarte, reorganiserVaisseaux, serialiserCarte } from './map.js';
 import { t } from './i18n.js';
 
 /* base ennemie : PV proportionnels au secteur/difficulté (comme HP_MAX du croiseur), position
@@ -151,12 +151,19 @@ export function appliquerGlissade(entite,dc,dr){
   const nc=entite.c+dc, nr=entite.r+dr;
   if(dansGrille(nc,nr)&&!occupe(nc,nr)) { entite.c=nc; entite.r=nr; }
 }
+/* callback state.onObstacleDetruit (consommé par frapperObstacle, combat.js) : à reposer aussi
+   bien à la création de la mission qu'à sa reprise après rechargement (reprendrePartie, main.js),
+   qui reconstruit state.planete sans repasser par appliquerMecaniqueBiome. */
+export function activerRappelsBiome(biomeId){
+  if(biomeId==='villes_anciennes') state.onObstacleDetruit=(o)=>{ if(o.type==='ruine') verifierCamouflage(); };
+}
 function appliquerMecaniqueBiome(biomeId){
   const pl=state.planete;
   if(biomeId==='desert') initDesert(pl);
   else if(biomeId==='grotte'){ for(const tr of pl.tourelles) tr.reveillee=false; pl.base.reveillee=false; }
   else if(biomeId==='glace') genererGlace();
-  else if(biomeId==='villes_anciennes'){ genererRuines(pl); state.onObstacleDetruit=(o)=>{ if(o.type==='ruine') verifierCamouflage(); }; }
+  else if(biomeId==='villes_anciennes') genererRuines(pl);
+  activerRappelsBiome(biomeId);
 }
 
 /* ===== FLUX DE MISSION ===== */
@@ -190,13 +197,12 @@ export function demarrerMissionPlanete(){
 }
 
 /* équivalent de demarrerTourJoueur() (combat.js) mais sans les réglages propres au croiseur
-   (tirsGratuits/tourelleDouble) et sans sauvegarde automatique (reprise de mission en cours :
-   étape 7 de la roadmap, pas encore gérée). */
+   (tirsGratuits/tourelleDouble) ; sauvegarde à chaque tour comme en combat spatial (étape 7). */
 export function demarrerTourJoueurPlanete(){
   state.phase='joueur';
   for(const f of state.fighters){ if(f.gele>0){ f.gele--; f.used=true; } else f.used=false; f.provoque=false; }
   state.actionFaite=false; state.modeTourelle=false; state.modeCapacite=null;
-  setMusicPhase('calme');
+  setMusicPhase('calme'); sauvegarderPartie(serialiserCarte);
 }
 
 /* phase ennemie d'une mission planète : tourelles fixes qui tirent sur le vaisseau le plus

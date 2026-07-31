@@ -160,6 +160,15 @@ export function sauvegarderPartie(serialiserCarte){
     champs: state.champs.map(c=>({c0:c.c0,c1:c.c1,turns:c.turns})),
     obstacles: state.obstacles.map(o=>({c:o.c,r:o.r,type:o.type,hp:o.hp})),
     menacesWarn:state.menacesWarn, boss: state.boss?{c:state.boss.c,r:state.boss.r,hp:state.boss.hp,maxhp:state.boss.maxhp,type:state.boss.type,charge:state.boss.charge}:null,
+    // mission planète en cours (null hors mission) : la cachette d'une tourelle camouflée
+    // (biome Villes anciennes) est une référence directe à un obstacle, non sérialisable telle
+    // quelle — on n'enregistre que sa position, re-liée à l'obstacle correspondant à la reprise.
+    planete: state.planete ? {
+      biome: state.planete.biome,
+      base: {c:state.planete.base.c, r:state.planete.base.r, w:state.planete.base.w, h:state.planete.base.h, hp:state.planete.base.hp, maxhp:state.planete.base.maxhp, reveillee:state.planete.base.reveillee},
+      tourelles: state.planete.tourelles.map(tr=>({id:tr.id, ico:tr.ico, c:tr.c, r:tr.r, hp:tr.hp, maxhp:tr.maxhp, portee:tr.portee, degats:tr.degats, camouflee:tr.camouflee, reveillee:tr.reveillee, cachette: tr.cachette?{c:tr.cachette.c,r:tr.cachette.r}:null})),
+      tourCompteur: state.planete.tourCompteur, prochaineGarnison: state.planete.prochaineGarnison, prochaineTempete: state.planete.prochaineTempete,
+    } : null,
     carte: serialiserCarte()
   })); }catch(e){}
 }
