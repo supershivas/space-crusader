@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Croiseur — Éditeur pixel art</title>
+<style>
+  @font-face{ font-family:'Press Start 2P'; font-style:normal; font-weight:400; font-display:swap;
+    src:url('fonts/PressStart2P.woff2') format('woff2'); }
+</style>
+<!-- Variables CSS partagées : voir theme.css (même fichier que index.html / design-system.html). -->
+<link rel="stylesheet" href="theme.css">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--espace);color:var(--texte);font-family:var(--pixel);line-height:var(--lh-normal);padding:20px 14px 60px;}
+  h1{font-size:clamp(16px,4.4vw,26px);color:#37e0ff;text-shadow:0 3px 0 #10406a;margin:0 0 4px;}
+  .sous{font-size:var(--fs-petit);color:#9fb0d8;max-width:70ch;margin:0 0 20px;}
+  .liens{font-size:6px;color:#4a5a86;margin-bottom:24px;display:flex;gap:14px;}
+  .liens a{color:#4a5a86;}
+
+  h2{font-size:var(--fs-souligne);color:#ffd23d;border-bottom:2px solid #24406e;padding-bottom:var(--space-xs);margin:0 0 var(--space-sm);}
+  fieldset{border:2px solid #24406e;border-radius:var(--radius-lg);padding:var(--space-md);margin:0 0 var(--space-lg);}
+  legend{font-size:var(--fs-petit);color:#ffd23d;padding:0 6px;}
+  label{display:block;font-size:6.5px;color:#9fb0d8;margin-bottom:3px;}
+  select,input[type=text],input[type=number]{font-family:var(--pixel);font-size:8px;background:#0c1428;color:var(--texte);
+    border:2px solid #2f4a86;border-radius:var(--radius-sm);padding:6px 8px;width:100%;}
+  input[type=color]{width:100%;height:30px;border:2px solid #2f4a86;border-radius:var(--radius-sm);background:#0c1428;padding:2px;cursor:pointer;}
+
+  button{font-family:var(--pixel);cursor:pointer;}
+  button.jouer{font-size:clamp(9px,2.6vmin,12px);color:#07240f;background:#2fd6a0;border:none;border-bottom:4px solid #1c8d67;
+    padding:9px 14px;border-radius:var(--radius-md);box-shadow:0 4px 14px rgba(47,214,160,.3);}
+  button.jouer:active{transform:translateY(2px);border-bottom-width:2px;}
+  button.jouer.secondaire{background:#3b5aa0;border-bottom-color:#25396b;box-shadow:none;}
+  button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;box-shadow:none;}
+  button.jouer:disabled{opacity:.45;cursor:default;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .row > *{flex:1;min-width:90px;}
+
+  .layout{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--space-lg);max-width:1180px;margin:0 auto;}
+  @media(min-width:900px){ .layout{grid-template-columns:230px minmax(0,1fr) 230px;align-items:start;} }
+
+  /* ===== Grille d'édition ===== */
+  .stage{display:flex;flex-direction:column;align-items:center;gap:var(--space-sm);}
+  .canvas-wrap{overflow:auto;max-width:100%;border:2px solid #2f4a86;border-radius:var(--radius-md);background:
+    repeating-conic-gradient(#141c30 0% 25%, #0c1428 0% 50%) 50% / 16px 16px;}
+  #gridCanvas{display:block;touch-action:none;cursor:crosshair;image-rendering:pixelated;}
+  .toolbar{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;}
+  .tool-btn{font-size:14px;width:34px;height:34px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-sm);color:#cbd6f0;}
+  .tool-btn.actif{background:#2fd6a0;border-color:#1c8d67;color:#07240f;}
+  .toggle-btn{font-size:6px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-sm);color:#9fb0d8;padding:6px 8px;}
+  .toggle-btn.actif{background:#3b5aa0;border-color:#25396b;color:#fff;}
+
+  /* ===== Palette ===== */
+  .palette-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;}
+  @media(min-width:900px){ .palette-grid{grid-template-columns:repeat(6,1fr);} }
+  .swatch{position:relative;aspect-ratio:1;border-radius:var(--radius-sm);border:2px solid rgba(255,255,255,.15);cursor:pointer;}
+  .swatch.actif{border-color:#fff;box-shadow:0 0 0 2px #37e0ff;}
+  .swatch.custom::after{content:'+';position:absolute;top:-4px;right:-2px;font-size:7px;color:#ffd23d;}
+  .swatch-code{position:absolute;bottom:1px;right:2px;font-size:5px;color:rgba(255,255,255,.7);text-shadow:0 1px 0 #000;}
+
+  /* ===== Aperçus & export ===== */
+  .apercus{display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;}
+  .apercu-case canvas{image-rendering:pixelated;border-radius:var(--radius-sm);background:
+    repeating-conic-gradient(#141c30 0% 25%, #0c1428 0% 50%) 50% / 12px 12px;}
+  .apercu-case .lbl{font-size:5.5px;color:#7f8db0;text-align:center;margin-top:4px;}
+  textarea{font-family:var(--pixel);font-size:7px;line-height:var(--lh-normal);background:#0c1428;color:#7fd0b0;
+    border:2px solid #2f4a86;border-radius:var(--radius-sm);padding:8px;width:100%;min-height:120px;resize:vertical;}
+  .avert{font-size:6px;color:#ffb04d;margin-top:6px;line-height:var(--lh-normal);}
+  .ok{font-size:6px;color:#7fd0b0;margin-top:6px;}
+</style>
+</head>
+<body>
+
+<h1>Éditeur pixel art</h1>
+<p class="sous">Outil de production autonome — n'est chargé ni par le jeu, ni par le service worker. Édite des grilles
+  compatibles avec la palette <code>PAL</code> de <code>src/sprites.js</code> ; le résultat s'exporte en JS prêt à coller
+  dans le code du jeu. Pensé pour les portraits de héros, mais réutilisable tel quel pour les sprites de vaisseaux et,
+  plus largement, tout élément pixel-art du jeu.</p>
+<p class="liens"><a href="index.html">← Le jeu</a><a href="design-system.html" target="_blank" rel="noopener">Design system</a></p>
+
+<div class="layout">
+
+  <!-- ===== Colonne gauche : projet + toile ===== -->
+  <div>
+    <fieldset>
+      <legend>Projet</legend>
+      <label for="selCategorie">Catégorie</label>
+      <select id="selCategorie">
+        <option value="portrait">Portrait de héros</option>
+        <option value="vaisseau">Sprite de vaisseau</option>
+        <option value="icone">Icône</option>
+        <option value="autre">Autre</option>
+      </select>
+      <div class="row" style="margin-top:8px;">
+        <div><label for="inLargeur">Largeur</label><input id="inLargeur" type="number" min="2" max="64" value="20"></div>
+        <div><label for="inHauteur">Hauteur</label><input id="inHauteur" type="number" min="2" max="64" value="22"></div>
+      </div>
+      <button class="jouer secondaire" id="btnAppliquerTaille" style="width:100%;margin-top:8px;font-size:6.5px;">Appliquer la taille (efface la toile)</button>
+      <label for="inNom" style="margin-top:10px;">Nom (variable d'export)</label>
+      <input id="inNom" type="text" value="HEROS_NOUVEAU">
+      <div class="row" style="margin-top:8px;">
+        <button class="jouer" id="btnNouveau" style="font-size:6.5px;">Nouveau</button>
+        <button class="jouer secondaire" id="btnEnregistrer" style="font-size:6.5px;">Enregistrer</button>
+      </div>
+      <label for="selProjets" style="margin-top:10px;">Projets enregistrés</label>
+      <select id="selProjets"><option value="">— aucun —</option></select>
+      <div class="row" style="margin-top:8px;">
+        <button class="jouer secondaire" id="btnCharger" style="font-size:6.5px;">Charger</button>
+        <button class="jouer danger" id="btnSupprimer" style="font-size:6.5px;">Supprimer</button>
+      </div>
+    </fieldset>
+  </div>
+
+  <!-- ===== Colonne centrale : toile ===== -->
+  <div class="stage">
+    <div class="toolbar">
+      <button class="tool-btn actif" data-outil="crayon" title="Crayon">✎</button>
+      <button class="tool-btn" data-outil="gomme" title="Gomme">▢</button>
+      <button class="tool-btn" data-outil="pot" title="Pot de peinture (remplissage)">▨</button>
+      <button class="tool-btn" data-outil="pipette" title="Pipette">◎</button>
+      <button class="toggle-btn" id="btnMiroir">Miroir H</button>
+      <button class="toggle-btn actif" id="btnGrille">Grille</button>
+      <button class="jouer secondaire" id="btnAnnuler" style="font-size:6.5px;">Annuler</button>
+      <button class="jouer secondaire" id="btnRefaire" style="font-size:6.5px;">Refaire</button>
+      <button class="jouer danger" id="btnEffacer" style="font-size:6.5px;">Tout effacer</button>
+    </div>
+    <div class="row" style="max-width:260px;">
+      <label for="inZoom" style="margin:0;">Zoom (<span id="lblZoom">24</span>px/case)</label>
+    </div>
+    <input id="inZoom" type="range" min="6" max="40" value="24" style="max-width:260px;">
+    <div class="canvas-wrap"><canvas id="gridCanvas"></canvas></div>
+  </div>
+
+  <!-- ===== Colonne droite : palette + aperçu + export ===== -->
+  <div>
+    <fieldset>
+      <legend>Palette</legend>
+      <div class="palette-grid" id="paletteGrid"></div>
+      <div class="row" style="margin-top:10px;">
+        <input id="inCustomColor" type="color" value="#ff5a5a">
+        <button class="jouer secondaire" id="btnAjoutCouleur" style="font-size:6px;">+ couleur perso</button>
+      </div>
+      <p class="avert" id="avertCustom" style="display:none;">Couleur(s) perso non présentes dans <code>PAL</code> (src/sprites.js) :
+        à y ajouter à la main pour que l'export s'affiche correctement en jeu.</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Aperçu</legend>
+      <div class="apercus">
+        <div class="apercu-case"><canvas id="apercuJeu"></canvas><div class="lbl">Taille jeu (×1)</div></div>
+        <div class="apercu-case"><canvas id="apercuZoom"></canvas><div class="lbl">Zoomé (×6)</div></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Export</legend>
+      <textarea id="taExport" readonly></textarea>
+      <button class="jouer secondaire" id="btnCopier" style="width:100%;margin-top:8px;font-size:6.5px;">Copier</button>
+      <p class="ok" id="okCopie" style="display:none;">Copié !</p>
+    </fieldset>
+
+    <fieldset>
+      <legend>Importer</legend>
+      <p class="avert" style="display:block;color:#9fb0d8;">Colle ici une grille existante (ex. le contenu de
+        <code>ROUGE=[...]</code> depuis <code>sprites.js</code>) puis charge-la pour la modifier.</p>
+      <textarea id="taImport" placeholder='["....","...."]'></textarea>
+      <button class="jouer secondaire" id="btnImporter" style="width:100%;margin-top:8px;font-size:6.5px;">Charger depuis le texte</button>
+      <p class="avert" id="avertImport" style="display:none;color:#ff9a9a;"></p>
+    </fieldset>
+  </div>
+
+</div>
+
+<script type="module">
+import { PAL, cuire } from './src/sprites.js';
+
+/* =====================================================================
+   MODÈLE — grille = tableau de chaînes (mêmes conventions que sprites.js) :
+   chaque caractère = un code palette ('.' = transparent). `cells` est la
+   source de vérité ; tout le reste (canvas, export, aperçu) en dérive.
+   ===================================================================== */
+const PRESETS = {
+  portrait: {w:20,h:22,nom:'HEROS_NOUVEAU'},
+  vaisseau: {w:11,h:9, nom:'JOUEUR_NOUVEAU'},
+  icone:    {w:7, h:7, nom:'ICO_NOUVEAU'},
+  autre:    {w:16,h:16,nom:'SPRITE_NOUVEAU'},
+};
+const STORAGE_KEY='dc_pixel_editor_projects';
+const CUSTOM_KEY='dc_pixel_editor_custom_pal';
+
+let largeur=20, hauteur=22;
+let cells=grilleVide(largeur,hauteur);
+let outil='crayon';
+let couleurActive=Object.keys(PAL).find(k=>PAL[k])||'W';
+let miroir=false, grilleVisible=true, cellPx=24;
+let customPal=chargerCustomPal();
+let undoStack=[], redoStack=[];
+let peinture=false;
+
+function grilleVide(w,h){ return Array.from({length:h},()=>'.'.repeat(w)); }
+function chargerCustomPal(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_KEY))||{}; }catch(e){ return {}; } }
+function sauverCustomPal(){ try{ localStorage.setItem(CUSTOM_KEY,JSON.stringify(customPal)); }catch(e){} }
+function paletteComplete(){ return {...PAL,...customPal}; }
+
+/* =====================================================================
+   PALETTE UI
+   ===================================================================== */
+const paletteGrid=document.getElementById('paletteGrid');
+const avertCustom=document.getElementById('avertCustom');
+function dessinerPalette(){
+  paletteGrid.innerHTML='';
+  const pal=paletteComplete();
+  for(const code in pal){
+    if(!pal[code]) continue; // '.' = transparent, pas une couleur choisissable (la gomme s'en charge)
+    const sw=document.createElement('div');
+    sw.className='swatch'+(code===couleurActive?' actif':'')+(customPal[code]?' custom':'');
+    sw.style.background=pal[code];
+    sw.title=code+' — '+pal[code];
+    sw.innerHTML='<span class="swatch-code">'+code+'</span>';
+    sw.onclick=()=>{ couleurActive=code; outil='crayon'; majOutils(); dessinerPalette(); };
+    paletteGrid.appendChild(sw);
+  }
+  avertCustom.style.display=Object.keys(customPal).length?'block':'none';
+}
+document.getElementById('btnAjoutCouleur').onclick=()=>{
+  const hex=document.getElementById('inCustomColor').value;
+  const used=new Set(Object.keys(paletteComplete()));
+  const charset='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('');
+  const libre=charset.find(c=>!used.has(c));
+  if(!libre){ alert('Palette pleine — plus de code disponible.'); return; }
+  customPal[libre]=hex; sauverCustomPal(); couleurActive=libre; dessinerPalette(); majTout();
+};
+
+/* =====================================================================
+   TOILE — rendu + interactions
+   ===================================================================== */
+const canvas=document.getElementById('gridCanvas');
+const ctx=canvas.getContext('2d');
+
+function redimensionnerCanvas(){ canvas.width=largeur*cellPx; canvas.height=hauteur*cellPx; dessinerToile(); }
+function dessinerToile(){
+  const pal=paletteComplete();
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  for(let y=0;y<hauteur;y++){
+    const ligne=cells[y];
+    for(let x=0;x<largeur;x++){
+      const col=pal[ligne[x]];
+      if(col){ ctx.fillStyle=col; ctx.fillRect(x*cellPx,y*cellPx,cellPx,cellPx); }
+    }
+  }
+  if(grilleVisible){
+    ctx.strokeStyle='rgba(255,255,255,.08)'; ctx.lineWidth=1;
+    for(let x=0;x<=largeur;x++){ ctx.beginPath(); ctx.moveTo(x*cellPx+.5,0); ctx.lineTo(x*cellPx+.5,hauteur*cellPx); ctx.stroke(); }
+    for(let y=0;y<=hauteur;y++){ ctx.beginPath(); ctx.moveTo(0,y*cellPx+.5); ctx.lineTo(largeur*cellPx,y*cellPx+.5); ctx.stroke(); }
+  }
+}
+
+function setCell(x,y,code){
+  if(x<0||y<0||x>=largeur||y>=hauteur) return;
+  const ligne=cells[y];
+  if(ligne[x]===code) return false;
+  cells[y]=ligne.slice(0,x)+code+ligne.slice(x+1);
+  if(miroir){ const mx=largeur-1-x; const l2=cells[y]; if(l2[mx]!==code) cells[y]=l2.slice(0,mx)+code+l2.slice(mx+1); }
+  return true;
+}
+
+function remplir(x0,y0,codeCible,codeNouveau){
+  if(codeCible===codeNouveau) return;
+  const pile=[[x0,y0]];
+  while(pile.length){
+    const [x,y]=pile.pop();
+    if(x<0||y<0||x>=largeur||y>=hauteur) continue;
+    if(cells[y][x]!==codeCible) continue;
+    setCellSansMiroir(x,y,codeNouveau);
+    pile.push([x+1,y],[x-1,y],[x,y+1],[x,y-1]);
+  }
+}
+function setCellSansMiroir(x,y,code){ const ligne=cells[y]; cells[y]=ligne.slice(0,x)+code+ligne.slice(x+1); }
+
+function caseDepuisEvent(ev){
+  const r=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/r.width, scaleY=canvas.height/r.height;
+  const px=((ev.touches?ev.touches[0].clientX:ev.clientX)-r.left)*scaleX;
+  const py=((ev.touches?ev.touches[0].clientY:ev.clientY)-r.top)*scaleY;
+  return {x:Math.floor(px/cellPx), y:Math.floor(py/cellPx)};
+}
+
+function appliquerOutil(x,y,estDebutTrait){
+  if(x<0||y<0||x>=largeur||y>=hauteur) return;
+  if(outil==='pipette'){ const c=cells[y][x]; if(c!=='.'&&paletteComplete()[c]){ couleurActive=c; dessinerPalette(); } outil='crayon'; majOutils(); return; }
+  if(estDebutTrait) pousserUndo();
+  if(outil==='pot'){ remplir(x,y,cells[y][x],couleurActive); }
+  else if(outil==='gomme'){ setCell(x,y,'.'); }
+  else { setCell(x,y,couleurActive); }
+  dessinerToile(); majApercus(); majExport();
+}
+
+canvas.addEventListener('mousedown',ev=>{ peinture=true; const c=caseDepuisEvent(ev); appliquerOutil(c.x,c.y,true); });
+canvas.addEventListener('mousemove',ev=>{ if(!peinture||outil==='pipette') return; const c=caseDepuisEvent(ev); appliquerOutil(c.x,c.y,false); });
+window.addEventListener('mouseup',()=>peinture=false);
+canvas.addEventListener('touchstart',ev=>{ ev.preventDefault(); peinture=true; const c=caseDepuisEvent(ev); appliquerOutil(c.x,c.y,true); },{passive:false});
+canvas.addEventListener('touchmove',ev=>{ ev.preventDefault(); if(!peinture||outil==='pipette') return; const c=caseDepuisEvent(ev); appliquerOutil(c.x,c.y,false); },{passive:false});
+canvas.addEventListener('touchend',()=>peinture=false);
+
+/* =====================================================================
+   OUTILS / TOGGLES
+   ===================================================================== */
+document.querySelectorAll('.tool-btn').forEach(btn=>{
+  btn.onclick=()=>{ outil=btn.dataset.outil; majOutils(); };
+});
+function majOutils(){ document.querySelectorAll('.tool-btn').forEach(b=>b.classList.toggle('actif',b.dataset.outil===outil)); }
+
+document.getElementById('btnMiroir').onclick=(ev)=>{ miroir=!miroir; ev.target.classList.toggle('actif',miroir); };
+document.getElementById('btnGrille').onclick=(ev)=>{ grilleVisible=!grilleVisible; ev.target.classList.toggle('actif',grilleVisible); dessinerToile(); };
+
+const inZoom=document.getElementById('inZoom'), lblZoom=document.getElementById('lblZoom');
+inZoom.oninput=()=>{ cellPx=+inZoom.value; lblZoom.textContent=cellPx; redimensionnerCanvas(); };
+
+/* =====================================================================
+   UNDO / REDO — snapshot du tableau cells (chaînes = immuables, copie peu coûteuse)
+   ===================================================================== */
+function pousserUndo(){ undoStack.push(cells.slice()); if(undoStack.length>60) undoStack.shift(); redoStack=[]; majBoutonsUndo(); }
+function majBoutonsUndo(){ document.getElementById('btnAnnuler').disabled=!undoStack.length; document.getElementById('btnRefaire').disabled=!redoStack.length; }
+document.getElementById('btnAnnuler').onclick=()=>{ if(!undoStack.length) return; redoStack.push(cells.slice()); cells=undoStack.pop(); dessinerToile(); majApercus(); majExport(); majBoutonsUndo(); };
+document.getElementById('btnRefaire').onclick=()=>{ if(!redoStack.length) return; undoStack.push(cells.slice()); cells=redoStack.pop(); dessinerToile(); majApercus(); majExport(); majBoutonsUndo(); };
+document.getElementById('btnEffacer').onclick=()=>{ if(!confirm('Effacer toute la toile ?')) return; pousserUndo(); cells=grilleVide(largeur,hauteur); dessinerToile(); majApercus(); majExport(); };
+
+/* =====================================================================
+   CATÉGORIE / TAILLE
+   ===================================================================== */
+const selCategorie=document.getElementById('selCategorie'), inLargeur=document.getElementById('inLargeur'),
+  inHauteur=document.getElementById('inHauteur'), inNom=document.getElementById('inNom');
+selCategorie.onchange=()=>{ const p=PRESETS[selCategorie.value]; inLargeur.value=p.w; inHauteur.value=p.h; if(!inNom.value||Object.values(PRESETS).some(pp=>pp.nom===inNom.value)) inNom.value=p.nom; };
+document.getElementById('btnAppliquerTaille').onclick=()=>{
+  const w=Math.max(2,Math.min(64,+inLargeur.value||16)), h=Math.max(2,Math.min(64,+inHauteur.value||16));
+  if(cells.some(l=>l.replace(/\./g,'').length) && !confirm('Changer la taille efface la toile actuelle. Continuer ?')) return;
+  largeur=w; hauteur=h; cells=grilleVide(largeur,hauteur); undoStack=[]; redoStack=[]; majBoutonsUndo();
+  redimensionnerCanvas(); majApercus(); majExport();
+};
+
+/* =====================================================================
+   APERÇU (rendu via `cuire()`, la même fonction que le jeu utilise —
+   garantit une fidélité pixel-perfect avec le rendu en jeu réel)
+   ===================================================================== */
+function majApercus(){
+  const pal=paletteComplete();
+  const off1=cuireAvecPalette(cells,3,pal), off2=cuireAvecPalette(cells,10,pal);
+  const c1=document.getElementById('apercuJeu'), c2=document.getElementById('apercuZoom');
+  c1.width=off1.width; c1.height=off1.height; c1.getContext('2d').drawImage(off1,0,0);
+  c2.width=off2.width; c2.height=off2.height; c2.getContext('2d').drawImage(off2,0,0);
+}
+/* variante de sprites.js:cuire() acceptant une palette fusionnée (PAL + couleurs perso) */
+function cuireAvecPalette(grille,echelle,pal){
+  const w=grille[0].length,h=grille.length,off=document.createElement('canvas'); off.width=w*echelle; off.height=h*echelle;
+  const c=off.getContext('2d');
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const col=pal[grille[y][x]]; if(!col) continue; c.fillStyle=col; c.fillRect(x*echelle,y*echelle,echelle,echelle); }
+  return off;
+}
+
+/* =====================================================================
+   EXPORT / IMPORT
+   ===================================================================== */
+const taExport=document.getElementById('taExport');
+function majExport(){
+  const nom=(inNom.value||'SPRITE').trim().replace(/[^A-Za-z0-9_]/g,'_');
+  const lignes=cells.map(l=>JSON.stringify(l));
+  taExport.value='export const '+nom+'=[\n  '+lignes.join(',\n  ')+'\n];';
+}
+inNom.addEventListener('input',majExport);
+document.getElementById('btnCopier').onclick=async()=>{
+  try{ await navigator.clipboard.writeText(taExport.value); const ok=document.getElementById('okCopie'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',1500); }
+  catch(e){ taExport.select(); document.execCommand('copy'); }
+};
+
+const avertImport=document.getElementById('avertImport');
+document.getElementById('btnImporter').onclick=()=>{
+  const txt=document.getElementById('taImport').value;
+  const m=txt.match(/\[[\s\S]*\]/);
+  avertImport.style.display='none';
+  if(!m){ avertImport.textContent='Aucun tableau ["....", "...."] trouvé dans le texte collé.'; avertImport.style.display='block'; return; }
+  let arr;
+  try{ arr=JSON.parse(m[0].replace(/'/g,'"')); }catch(e){ avertImport.textContent='Impossible de lire le tableau (format inattendu).'; avertImport.style.display='block'; return; }
+  if(!Array.isArray(arr)||!arr.length||typeof arr[0]!=='string'){ avertImport.textContent='Le tableau doit contenir des chaînes (une par ligne).'; avertImport.style.display='block'; return; }
+  const w=Math.max(...arr.map(l=>l.length));
+  pousserUndo();
+  largeur=w; hauteur=arr.length;
+  cells=arr.map(l=>l.padEnd(w,'.'));
+  inLargeur.value=largeur; inHauteur.value=hauteur;
+  redimensionnerCanvas(); majApercus(); majExport();
+};
+
+/* =====================================================================
+   PROJETS (localStorage)
+   ===================================================================== */
+const selProjets=document.getElementById('selProjets');
+function chargerProjets(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY))||[]; }catch(e){ return []; } }
+function sauverProjets(liste){ try{ localStorage.setItem(STORAGE_KEY,JSON.stringify(liste)); }catch(e){} }
+function rafraichirListeProjets(){
+  const liste=chargerProjets();
+  selProjets.innerHTML='<option value="">— aucun —</option>'+liste.map((p,i)=>'<option value="'+i+'">'+p.nom+' ('+p.categorie+', '+p.largeur+'×'+p.hauteur+')</option>').join('');
+}
+document.getElementById('btnNouveau').onclick=()=>{
+  if(cells.some(l=>l.replace(/\./g,'').length) && !confirm('Repartir d’une toile vide ? Le projet non enregistré sera perdu.')) return;
+  const p=PRESETS[selCategorie.value]; largeur=p.w; hauteur=p.h; inLargeur.value=p.w; inHauteur.value=p.h;
+  cells=grilleVide(largeur,hauteur); undoStack=[]; redoStack=[]; majBoutonsUndo();
+  redimensionnerCanvas(); majApercus(); majExport();
+};
+document.getElementById('btnEnregistrer').onclick=()=>{
+  const liste=chargerProjets();
+  const nom=(inNom.value||'SPRITE').trim();
+  const projet={nom,categorie:selCategorie.value,largeur,hauteur,cells:cells.slice(),customPal:{...customPal}};
+  const idxExistant=liste.findIndex(p=>p.nom===nom);
+  if(idxExistant>=0) liste[idxExistant]=projet; else liste.push(projet);
+  sauverProjets(liste); rafraichirListeProjets();
+  selProjets.value=String(idxExistant>=0?idxExistant:liste.length-1);
+};
+document.getElementById('btnCharger').onclick=()=>{
+  const i=selProjets.value; if(i==='') return;
+  const p=chargerProjets()[+i]; if(!p) return;
+  largeur=p.largeur; hauteur=p.hauteur; cells=p.cells.slice(); inLargeur.value=largeur; inHauteur.value=hauteur;
+  inNom.value=p.nom; selCategorie.value=p.categorie; customPal={...customPal,...(p.customPal||{})}; sauverCustomPal();
+  undoStack=[]; redoStack=[]; majBoutonsUndo();
+  dessinerPalette(); redimensionnerCanvas(); majApercus(); majExport();
+};
+document.getElementById('btnSupprimer').onclick=()=>{
+  const i=selProjets.value; if(i==='') return;
+  const liste=chargerProjets(); if(!confirm('Supprimer « '+liste[+i].nom+' » ?')) return;
+  liste.splice(+i,1); sauverProjets(liste); rafraichirListeProjets();
+};
+
+/* =====================================================================
+   INIT
+   ===================================================================== */
+function majTout(){ dessinerToile(); majApercus(); majExport(); }
+selCategorie.value='portrait';
+dessinerPalette();
+rafraichirListeProjets();
+majBoutonsUndo();
+redimensionnerCanvas();
+majApercus();
+majExport();
+</script>
+</body>
+</html>
