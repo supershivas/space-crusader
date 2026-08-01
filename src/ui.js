@@ -7,7 +7,7 @@ import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES,
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
-import { rafraichirSkinCroiseur, imgBossGuide, imgBaseGuide, imgTourelleGuide } from './render.js';
+import { rafraichirSkinCroiseur, imgBossGuide, imgBaseGuide, imgTourelleGuide, randomiserAccueil } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
@@ -128,7 +128,7 @@ btnReroll.addEventListener('click',()=>{
   const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
   state.rerollsRestants--; sonSelect(); rendreChoixAmelioration(dispo);
 });
-function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); logMsg('⬆ '+t('log_amelioration_acquise'),'log-grn'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
+function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); montrerToast('⬆ '+t('up_'+id+'_nom'),'ok'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
 
 function apercuVaisseau(type){
   const src=imgVaisseau(type), box=52;
@@ -143,11 +143,12 @@ export function ouvrirBuild(){ state.choixBuild=true; tooltip.classList.remove('
   if(!state.fighters.some(f=>f.type==='rouge')) liste.push(SHIP_ROUGE);   // reconstruire le rouge s'il est détruit
   for(const s of liste){ const b=document.createElement('div'); b.className='card';
     b.appendChild(apercuVaisseau(s.id));
-    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+t('ship_'+s.id+'_nom')+'</div><div class="desc">'+t('ship_'+s.id+'_desc')+'</div>'; b.appendChild(d);
+    const tours=(s.id==='normal')?1:2;
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+t('ship_'+s.id+'_nom')+'</div><div class="desc">'+t('ship_'+s.id+'_desc')+'</div><div class="card-tours">'+t('build_tours',{n:tours})+'</div>'; b.appendChild(d);
     b.onclick=()=>choisirBuild(s.id); buildCards.appendChild(b); }
   buildDiv.classList.add('visible');
 }
-function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
+function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours,toursInitial:tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
 buildDiv.addEventListener('click',e=>{ if(e.target===buildDiv){ state.choixBuild=false; buildDiv.classList.remove('visible'); } });
 
 /* Exécute effet() et récupère le(s) message(s) de journal qu'il a produits pendant son exécution
@@ -286,6 +287,21 @@ const GUIDE_MENACES=[
    biome, c'est un terrain, pas une entité) */
 const GUIDE_TOURELLES=['canon','sniper','lourde'];
 const GUIDE_BIOMES=[{type:'desert',ico:'alerte'},{type:'glace',ico:'gel'},{type:'grotte',ico:'demon'},{type:'villes_anciennes',ico:'carte'}];
+/* Résumé des entrées d'encyclopédie découvertes (toutes catégories confondues), pour l'écran
+   de fin de partie — mêmes listes/clés de nom que ouvrirGuide(), sans dupliquer le catalogue. */
+function decouvertesResume(){
+  const noms=[];
+  for(const type of GUIDE_ALLIES) if(estDecouvert('vaisseau',type)) noms.push(t('ship_'+type+'_nom'));
+  for(const type of GUIDE_ENNEMIS) if(estDecouvert('aile',type)) noms.push(t('ail_'+type+'_nom'));
+  for(const type of GUIDE_BOSS) if(estDecouvert('boss',type)) noms.push(t('boss_'+type+'_nom'));
+  for(const type of GUIDE_BONUS) if(estDecouvert('bonus',type)) noms.push(t('bonus_'+type+'_nom'));
+  for(const m of GUIDE_MENACES) if(estDecouvert('menace',m.type)) noms.push(t(m.nomKey));
+  if(estDecouvert('planete_base','base')) noms.push(t('planete_base_guide_nom'));
+  for(const type of GUIDE_TOURELLES) if(estDecouvert('planete_tourelle',type)) noms.push(t('tourelle_'+type+'_nom'));
+  for(const b of GUIDE_BIOMES) if(estDecouvert('planete_biome',b.type)) noms.push(t('biome_'+b.type+'_nom'));
+  const total=GUIDE_ALLIES.length+GUIDE_ENNEMIS.length+GUIDE_BOSS.length+GUIDE_BONUS.length+GUIDE_MENACES.length+1+GUIDE_TOURELLES.length+GUIDE_BIOMES.length;
+  return {noms, total};
+}
 function badgeRarete(tier){
   if(!tier) return '';
   const coul={commun:'#9fb0d8',peu_commun:'#2fd6a0',rare:'#37e0ff',epique:'#ffd23d'}[tier]||'#9fb0d8';
@@ -448,6 +464,11 @@ export function finPartie(){
     const noms=Object.keys(ACHIEVEMENTS_DEF).filter(id=>state.achievements[id]).map(id=>t('ach_'+id+'_nom'));
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
+  // Encyclopédie découverte pendant la partie (toutes parties confondues, décomptes persistants)
+  const dec=document.getElementById('finDecouvertes');
+  if(dec){ const r=decouvertesResume();
+    dec.innerHTML = r.noms.length ? '📖 '+t('fin_encyclopedie')+' '+r.noms.length+'/'+r.total+' — '+r.noms.join(' · ') : '';
+  }
   document.getElementById('fin').classList.remove('cache');
   ajusterTitreModale(document.querySelector('#fin h1'));
 }
@@ -465,7 +486,7 @@ export function majMeilleurScoreAccueil(){
 /* Retour à l'écran d'accueil depuis le menu pause. */
 export function retourAccueil(){
   state.paused=false; pauseDiv.classList.remove('visible');
-  stopMusic(); state.phase='accueil';
+  stopMusic(); state.phase='accueil'; randomiserAccueil();
   document.getElementById('pauseBtn').style.display='none';
   document.getElementById('fin').classList.add('cache');
   document.getElementById('accueil').classList.remove('cache');
@@ -615,6 +636,7 @@ function raisonTirBloque(an,c,cible){
   const beam=an.beams.find(b=>b.c===c);
   if(!beam) return t('tt_hors_de_portee');
   if(cible && estProtege(cible)) return t('tt_cible_protegee');
+  if(cible && OBSTACLES[cible.type] && !OBSTACLES[cible.type].destructible) return t('tt_obstacle_indestructible');
   if(beam.kind==='allie') return t('tt_bloque_par_allie');
   return t('tt_tir_bloque');
 }
@@ -649,13 +671,13 @@ canvas.addEventListener('pointerdown', ev=>{
   if(f.c===c&&f.r===r){ if(activerCapacite(f)) return; state.selection=null; return; }
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
-  if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(deg,px,py); },130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
-  if(state.planete && baseEn(c,r)){ if(an.base){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBase(deg,px,py); },130); } else logMsg(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'log-red'); return; }
-  if(state.planete){ const tourCible=tourelleEn(c,r); if(tourCible){ if(an.tourellesOk.has(tourCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperTourelle(tourCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; } }
-  const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else logMsg(raisonTirBloque(an,c,cible),'log-red'); return; }
-  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
-  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
-  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else logMsg(raisonTirBloque(an,c),'log-red'); return; }
+  if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(deg,px,py); },130); } else montrerToast(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'bad'); return; }
+  if(state.planete && baseEn(c,r)){ if(an.base){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBase(deg,px,py); },130); } else montrerToast(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'bad'); return; }
+  if(state.planete){ const tourCible=tourelleEn(c,r); if(tourCible){ if(an.tourellesOk.has(tourCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperTourelle(tourCible),130); } else montrerToast(raisonTirBloque(an,c),'bad'); return; } }
+  const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else montrerToast(raisonTirBloque(an,c,cible),'bad'); return; }
+  const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else montrerToast(raisonTirBloque(an,c,ob),'bad'); return; }
+  const asterCible=asterEn(c,r); if(asterCible){ if(an.asteroidesOk.has(asterCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperAster(asterCible),130); } else montrerToast(raisonTirBloque(an,c),'bad'); return; }
+  const mimicCible=bonusEn(c,r); if(mimicCible&&mimicCible.type==='mimic'){ if(an.mimicsOk&&an.mimicsOk.has(mimicCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>declencheMimic(mimicCible,null),130); } else montrerToast(raisonTirBloque(an,c),'bad'); return; }
   if(!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)&&casesMouvement(f).some(p=>p.c===c&&p.r===r)){
     const dc=Math.sign(c-f.c), dr=Math.sign(r-f.r);
     f.c=c; f.r=r; f.used=true; state.deplacementsJoueurTotal++;

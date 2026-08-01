@@ -83,7 +83,7 @@ function construireScene(type){
     {ico:'eclair',nom:t('rest_recalibrage_nom'),desc:t('rest_recalibrage_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg(t('evt_recalibre'),'log-grn'); }},
   ]}; }
   if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
-    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({ico:u.ico,nom:t('up_'+u.id+'_nom'),desc:t('up_'+u.id+'_desc'),effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+t('up_'+u.id+'_nom'),'log-grn'); }}));
+    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({ico:u.ico,nom:t('up_'+u.id+'_nom'),desc:t('up_'+u.id+'_desc'),effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); montrerToast('⬆ '+t('up_'+u.id+'_nom'),'ok'); }}));
     if(!choix.length) choix.push({ico:'gemme',nom:t('tresor_butin_nom'),desc:t('tresor_butin_desc'),effet:()=>{ state.score+=8; }});
     return {kind:'tresor',titre:t('scene_tresor_titre'),suite,choix}; }
   if(type==='hangar'){ return {kind:'hangar',titre:t('scene_hangar_titre'),suite,choix:[
@@ -112,7 +112,10 @@ export function demarrerCombat(type){
   for(let s=0;s<squads;s++) apparaitreEscadrille();
   if(type==='elite'){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,Math.random()<0.5?'porteur':'brouilleur'); }
   if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS'); logMsg(t('log_forteresse'),'log-red'); montrerToast('⚠ '+t('toast_forteresse_approche'),'bad'); }
-  assignerObjectif(); if(type==='boss') state.objectifVague={type:'boss'};
+  // Pas d'objectif secondaire "détruire le boss" pendant un combat de boss : c'est déjà
+  // l'objectif PRINCIPAL (obligatoire pour passer à la suite), un faux objectif secondaire
+  // toujours réussi sinon. assignerObjectif() exclut ce cas.
+  assignerObjectif();
   annoncerEtape(type);
   demarrerTourJoueur(); }
 /* modale animée (bannière + explosion de particules) qui annonce le type d'étape et sa mission,
@@ -155,26 +158,28 @@ export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(stat
 /* ===== OBJECTIFS DE VAGUE ===== */
 export function texteObjectif(o){
   if(!o) return '';
-  return o.type==='kills' ? t('obj_kills',{n:o.cible}) : t('obj_'+o.type);
+  return (o.type==='kills'||o.type==='rapide'||o.type==='combo') ? t('obj_'+o.type,{n:o.cible}) : t('obj_'+o.type);
 }
 // "Survis à la vague" n'est jamais tiré comme objectif secondaire : survivre est déjà
 // l'objectif principal implicite de tout combat (on perd la partie sinon), donc ça ne
-// pouvait jamais échouer — un faux objectif toujours réussi.
+// pouvait jamais échouer — un faux objectif toujours réussi. Idem pour "détruire le boss"
+// pendant un combat de boss : c'est déjà l'objectif PRINCIPAL de l'étape (voir map.js:
+// annoncerEtape/gagnerCombat), jamais un objectif secondaire valide.
 export function assignerObjectif(){
-  const pool=[{type:'sansdegat'},{type:'protege'},{type:'kills',cible:Math.max(6,state.COLS)}];
-  if(state.boss) pool.push({type:'boss'});
+  const pool=[{type:'sansdegat'},{type:'protege'},{type:'kills',cible:Math.max(6,state.COLS)},{type:'rapide',cible:5},{type:'combo',cible:3}];
   const o={...pool[Math.floor(Math.random()*pool.length)]};
-  state.objectifVague=o; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false; state.damageThisWave=0;
+  state.objectifVague=o; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false; state.damageThisWave=0; state.bestComboThisWave=0;
   state.scoreAvantVague=state.score; // repère pour le décompte animé du score au récap de fin d'étape (ouvrirMission)
 }
 export function objectifReussi(){ const o=state.objectifVague; if(!o) return false;
   return o.type==='sansdegat' ? state.damageThisWave===0
        : o.type==='protege'   ? state.shipsLostThisWave===0
        : o.type==='kills'     ? state.killsThisWave>=o.cible
-       : o.type==='boss'      ? state.bossKilledThisWave : false; }
+       : o.type==='rapide'    ? state.tourCompteur<=o.cible
+       : o.type==='combo'     ? (state.bestComboThisWave||0)>=o.cible : false; }
 
 /* ===== ÉVÉNEMENTS entre les vagues ===== */
-export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge'))); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); logMsg('⬆ '+t('up_'+u.id+'_nom'), 'log-grn'); }
+export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge'))); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); montrerToast('⬆ '+t('up_'+u.id+'_nom'),'ok'); }
 export const EVENEMENTS=[
  {titre:{fr:'MARCHAND',en:'MERCHANT'}, desc:{fr:'Un marchand échange une cache d\'armes contre un peu de coque.',en:'A merchant trades a weapons cache for some of your hull.'}, choix:[
    {ico:'panier', nom:{fr:'Acheter',en:'Buy'}, desc:{fr:'-25% PV, +1 amélioration',en:'-25% HP, +1 upgrade'}, effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.75)); ameliorationAleatoire(); }},

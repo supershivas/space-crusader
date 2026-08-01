@@ -111,6 +111,7 @@ const STRINGS = {
     up_rouge_back_nom:'Rétro-tir', up_rouge_back_desc:'Vaisseau Rouge : tire aussi vers l\'arrière',
 
     // ===== Vaisseaux (SHIPS) =====
+    build_tours:'{n} tour(s)',
     ship_normal_nom:'Standard', ship_normal_desc:'Prêt en 1 tour',
     ship_rapide_nom:'Intercepteur', ship_rapide_desc:'+1 déplacement · 2 tours',
     ship_bombardier_nom:'Bombardier', ship_bombardier_desc:'Détruit la colonne · 2 tours',
@@ -221,6 +222,8 @@ const STRINGS = {
     obj_protege:'Ne perds aucun vaisseau',
     obj_kills:'Détruis {n} ennemis',
     obj_boss:'Détruis le boss',
+    obj_rapide:'Termine en {n} tours max',
+    obj_combo:'Combo de {n} kills en 1 tour',
 
     // ===== Boss =====
     boss_canon_nom:'Canonnier', boss_canon_desc:'3 colonnes',
@@ -279,6 +282,7 @@ const STRINGS = {
     tt_hors_de_portee:'Cible hors de portée (trop loin sur le côté)',
     tt_cible_protegee:'Cible protégée par une escorte à proximité',
     tt_bloque_par_allie:'Tir bloqué par un de tes vaisseaux',
+    tt_obstacle_indestructible:'Obstacle indestructible',
 
     // ===== Achievements =====
     ach_first_blood_nom:'Premier Sang', ach_first_blood_desc:'Détruire 1 ennemi',
@@ -302,6 +306,7 @@ const STRINGS = {
     fin_boss_vaincus:'Boss vaincus',
     fin_meilleur_combo:'Meilleur combo',
     fin_succes_debloques:'succès débloqués',
+    fin_encyclopedie:'Encyclopédie :',
     fin_cristaux_gagnes:'cristaux gagnés',
     fin_vague:'Vague',
 
@@ -542,6 +547,7 @@ const STRINGS = {
     up_rouge_range_nom:'Shockwave', up_rouge_range_desc:'Red Ship: ±2 blast radius',
     up_rouge_back_nom:'Rear Fire', up_rouge_back_desc:'Red Ship: also fires backward',
 
+    build_tours:'{n} turn(s)',
     ship_normal_nom:'Standard', ship_normal_desc:'Ready in 1 turn',
     ship_rapide_nom:'Interceptor', ship_rapide_desc:'+1 move · 2 turns',
     ship_bombardier_nom:'Bomber', ship_bombardier_desc:'Destroys the column · 2 turns',
@@ -645,6 +651,8 @@ const STRINGS = {
     obj_protege:"Don't lose any ship",
     obj_kills:'Destroy {n} enemies',
     obj_boss:'Destroy the boss',
+    obj_rapide:'Finish within {n} turns',
+    obj_combo:'{n}-kill combo in 1 turn',
 
     boss_canon_nom:'Gunner', boss_canon_desc:'3 columns',
     boss_sniper_nom:'Sniper', boss_sniper_desc:'targets 3 ships',
@@ -700,6 +708,7 @@ const STRINGS = {
     tt_hors_de_portee:'Target out of range (too far sideways)',
     tt_cible_protegee:'Target protected by a nearby escort',
     tt_bloque_par_allie:'Shot blocked by one of your ships',
+    tt_obstacle_indestructible:'Indestructible obstacle',
 
     ach_first_blood_nom:'First Blood', ach_first_blood_desc:'Destroy 1 enemy',
     ach_combo_3_nom:'Combo', ach_combo_3_desc:'3 kills in 1 turn',
@@ -721,6 +730,7 @@ const STRINGS = {
     fin_boss_vaincus:'Bosses defeated',
     fin_meilleur_combo:'Best combo',
     fin_succes_debloques:'achievements unlocked',
+    fin_encyclopedie:'Encyclopedia:',
     fin_cristaux_gagnes:'crystals earned',
     fin_vague:'Wave',
 

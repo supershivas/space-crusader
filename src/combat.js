@@ -1,7 +1,7 @@
 /* =====================================================================
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
-import { state, centreCase, saveState, sauvegarderPartie, decouvrir } from './state.js';
+import { state, centreCase, saveState, sauvegarderPartie, decouvrir, afficherDegats } from './state.js';
 import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn, tourelleEn, baseEn,
@@ -60,7 +60,7 @@ export function tirerCharge(f,cible){
     const col=state.ailes.filter(a=>a.r>=0&&(a.c===cible.c||a.c===c2)); let kills=0;
     for(const a of col){ if(frapperAile(a,true)) kills++; }
     f.kills=(f.kills||0)+kills;
-    state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
+    state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
     if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw');
     sonBoom(); checkAchievements();
   }, 130);
@@ -120,7 +120,7 @@ export function analyseTir(f){
   return {ailesOk,obstaclesOk,asteroidesOk,mimicsOk,tourellesOk,base:baseOk,boss:bossOk,beams,jam:false};
 }
 /* tir allié sur un astéroïde : -1 PV, détruit à 0 */
-export function frapperAster(o){ o.hp--; exploser(o.x,o.y,false); sonBoom();
+export function frapperAster(o){ o.hp--; afficherDegats(o.x,o.y,1); exploser(o.x,o.y,false); sonBoom();
   if(o.hp<=0){ const i=state.asteroides.indexOf(o); if(i>=0) state.asteroides.splice(i,1); exploser(o.x,o.y,true); state.score++; } }
 /* MIMIC : faux bonus jaune. Explose au contact d'un vaisseau (le blesse). */
 export function declencheMimic(b,f){ const i=state.bonus.indexOf(b); if(i>=0) state.bonus.splice(i,1);
@@ -129,7 +129,7 @@ export function declencheMimic(b,f){ const i=state.bonus.indexOf(b); if(i>=0) st
 
 /* dégât d'un tir allié sur un obstacle destructible ; gère station (bonus) et mines (explosion de zone) */
 export function frapperObstacle(o){
-  o.hp--; exploser(o.x,o.y,false); sonBoom();
+  o.hp--; afficherDegats(o.x,o.y,1); exploser(o.x,o.y,false); sonBoom();
   if(o.hp<=0){
     const idx=state.obstacles.indexOf(o); if(idx>=0) state.obstacles.splice(idx,1);
     exploser(o.x,o.y,true);
@@ -206,15 +206,15 @@ export function tirerTourelle(a){
   setTimeout(()=>{
     if(state.actionGen!==gen) return;   // annulé (Échap) pendant le délai avant impact
     if(state.ailes.includes(cible)){
-      if(frapperAile(cible,true,2)){ state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; }
+      if(frapperAile(cible,true,2)){ state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; }
       sonBoom(); checkAchievements();
     }
   }, 120);
 }
 export function finirTourelle(){ if(state.actionFaite&&state.tirsGratuits>0) state.tirsGratuits--; else state.actionFaite=true; state.modeTourelle=false; }
 export function toucherBoss(deg,px,py){ if(!state.boss) return;
-  if(state.boss.type==='miroir'){ const reflet=Math.max(1,Math.round(deg*0.25)); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-reflet)); state.damageThisWave+=reflet; state.flashCroiseur=1; sonAie(); logMsg('🪞 Reflet ! -'+reflet+' PV','log-red'); }
-  state.boss.hp-=deg; exploser(px,py,false); sonBoom();
+  if(state.boss.type==='miroir'){ const reflet=Math.max(1,Math.round(deg*0.25)); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-reflet)); state.damageThisWave+=reflet; state.flashCroiseur=1; sonAie(); afficherDegats(state.LARGEUR/2,state.GRID_BAS-24,reflet); logMsg('🪞 Reflet ! -'+reflet+' PV','log-red'); }
+  state.boss.hp-=deg; afficherDegats(px,py,deg); exploser(px,py,false); sonBoom();
   if(state.boss.hp<=0){
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
@@ -233,14 +233,14 @@ export function tirer(f,aile){
     if(type==='rouge'){ const rad=1+((state.ups&&state.ups.rouge_range)||0); const zone=state.ailes.filter(a=>a.r>=0&&Math.abs(a.c-cible.c)<=rad&&Math.abs(a.r-cible.r)<=rad); let kills=0;
       for(const a of zone){ if(frapperAile(a,true)) kills++; }
       f.kills=(f.kills||0)+kills;
-      state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
+      state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
       if(kills>=3) logMsg(kills+' ENNEMIS ! 🔥','log-ylw'); }
     else if(type==='bombardier'){ const col=state.ailes.filter(a=>a.c===cible.c&&a.r>=0); let kills=0;
       for(const a of col){ if(frapperAile(a,true)) kills++; }
       f.kills=(f.kills||0)+kills;
-      state.secousse=Math.max(state.secousse,8); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount;
+      state.secousse=Math.max(state.secousse,8); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
       if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw'); }
-    else if(state.ailes.includes(cible)){ if(frapperAile(cible,false)){ f.kills=(f.kills||0)+1; state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; } }
+    else if(state.ailes.includes(cible)){ if(frapperAile(cible,false)){ f.kills=(f.kills||0)+1; state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; } }
     sonBoom(); checkAchievements();
   }, 130);
 }
@@ -257,7 +257,7 @@ export function declencheUltime(){
   sonBoom(); sonVague(); logMsg('⚡ '+t('toast_frappe_orbitale').toUpperCase(),'log-ylw'); montrerToast('⚡ '+t('toast_frappe_orbitale'),'gold'); checkAchievements();
 }
 export function frapperAile(a,grand,deg=1){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
-  a.hp=(a.hp||1)-deg;
+  a.hp=(a.hp||1)-deg; afficherDegats(a.x,a.y,deg);
   if(a.hp>0){ exploser(a.x,a.y,false); return false; }   // touché mais pas encore détruit (ennemis blindés)
   exploser(a.x,a.y,grand); tuerAile(a); return true; }
 
@@ -292,7 +292,7 @@ export function finDuTour(){
     else { const dl=degLaserActuel(); degats+=cb.bomber?dl*2:dl; } }
   if(state.boss){ degats+=tirsBoss(); }
   if(tirs.length||state.boss) sonTirEnnemi();
-  if(degats>0){ degats=Math.floor(degats); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-degats)); state.damageThisWave+=degats; state.flashCroiseur=1; state.secousse=Math.max(state.secousse,7); sonAie(); logMsg('-'+degats+' PV','log-red'); }
+  if(degats>0){ degats=Math.floor(degats); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-degats)); state.damageThisWave+=degats; state.flashCroiseur=1; state.secousse=Math.max(state.secousse,7); sonAie(); afficherDegats(state.LARGEUR/2,state.GRID_BAS-24,degats); logMsg('-'+degats+' PV','log-red'); }
 
   // (1b) TRANSPORTEURS ennemis : télégraphient une case (visible au tour suivant) puis y larguent une mini-navette
   for(const a of state.ailes){ if(a.type!=='transporteur'||a.r<state.RANG_TIR) continue;
@@ -308,7 +308,7 @@ export function finDuTour(){
     let steps=a.vitesse; if(a.type==='bombardier'&&state.tourCompteur%2===1) steps=0;
     if(champObstacleEn(a.c,a.r)==='gravite') steps=Math.min(steps,1);   // champ de gravité : ennemi ralenti
     for(let s=0;s<steps;s++){ if(!state.ailes.includes(a)) break; const nr=a.r+1;
-      if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
+      if(nr>state.RANGS-1){ state.ailes.splice(state.ailes.indexOf(a),1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS,true); exploser(centreCase(a.c,state.RANGS-1).x,state.cruiserY+8,true); afficherDegats(centreCase(a.c,state.RANGS-1).x,state.GRID_BAS-24,DEG_EPERON); logMsg('💥 Éperonnage ! -'+DEG_EPERON+' PV','log-red'); break; }
       // colonne visée (diagonale = rebond sur les bords)
       let nc=a.c;
       if(a.dc){ nc=a.c+a.dc; if(nc<0||nc>=state.COLS){ a.dc=-a.dc; nc=a.c+a.dc; } }
@@ -328,7 +328,7 @@ export function finDuTour(){
     // descente lente : 1 case tous les 2 tours (évite qu'une Faille reste éternellement hors d'atteinte)
     v.voidT=(v.voidT||0)+1;
     if(v.voidT>=2){ v.voidT=0; const nr=v.r+1;
-      if(nr>state.RANGS-1){ const vi=state.ailes.indexOf(v); if(vi>=0) state.ailes.splice(vi,1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(v.c,state.RANGS-1).x,state.GRID_BAS,true); logMsg('💥 La Faille percute le croiseur !','log-red'); continue; }
+      if(nr>state.RANGS-1){ const vi=state.ailes.indexOf(v); if(vi>=0) state.ailes.splice(vi,1); state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON)); state.damageThisWave+=DEG_EPERON; state.flashCroiseur=1; state.secousse=15; sonAie(); exploser(centreCase(v.c,state.RANGS-1).x,state.GRID_BAS,true); afficherDegats(centreCase(v.c,state.RANGS-1).x,state.GRID_BAS-24,DEG_EPERON); logMsg('💥 La Faille percute le croiseur !','log-red'); continue; }
       if(!obstacleBloquant(v.c,nr)&&!fighterEn(v.c,nr)) v.r=nr; }
     for(const f of [...state.fighters]){ if(f.type==='bouclier') continue; const d=Math.max(Math.abs(f.c-v.c),Math.abs(f.r-v.r)); if(d>=1&&d<=2){ const nc=f.c+Math.sign(v.c-f.c), nr=f.r+Math.sign(v.r-f.r); if(dansGrille(nc,nr)&&!occupe(nc,nr)&&!asterEn(nc,nr)&&!trouNoirEn(nc,nr)){ f.c=nc; f.r=nr; } } }
     for(const b of state.bonus){ const d=Math.max(Math.abs(b.c-v.c),Math.abs(b.r-v.r)); if(d>=1&&d<=2){ b.c=Math.max(0,Math.min(state.COLS-1,b.c+Math.sign(v.c-b.c))); b.r=Math.max(0,Math.min(state.RANGS-1,b.r+Math.sign(v.r-b.r))); } } }
@@ -337,7 +337,7 @@ export function finDuTour(){
   if(state.boss){ if(!(state.boss.type==='blinde'&&state.tourCompteur%2===1)) state.boss.r+=1;
     // collision avec les vaisseaux entrés dans la zone du boss : on les blesse (comme une aile), pas de destruction instantanée
     for(const f of [...state.fighters]){ if(f.c>=state.boss.c&&f.c<=state.boss.c+2&&f.r>=state.boss.r&&f.r<=state.boss.r+1){ exploser(f.x,f.y,false); const m=blesser(f); if(m) tuerFighter(f); sonBoom(); } }
-    if(state.boss.r+state.boss.h-1>state.RANGS-1){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON*2)); state.damageThisWave+=DEG_EPERON*2; state.flashCroiseur=1; state.secousse=18; sonAie(); exploser(state.boss.x,state.cruiserY+8,true); exploser(state.boss.x,state.GRID_BAS,true); state.boss=null; logMsg('💥 Le boss percute le croiseur !','log-red'); } }
+    if(state.boss.r+state.boss.h-1>state.RANGS-1){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_EPERON*2)); state.damageThisWave+=DEG_EPERON*2; state.flashCroiseur=1; state.secousse=18; sonAie(); exploser(state.boss.x,state.cruiserY+8,true); exploser(state.boss.x,state.GRID_BAS,true); afficherDegats(state.boss.x,state.GRID_BAS-24,DEG_EPERON*2); state.boss=null; logMsg('💥 Le boss percute le croiseur !','log-red'); } }
 
   // (4) ASTÉROÏDES
   for(const ast of [...state.asteroides]){ const ux=Math.sign(ast.dc), uy=Math.sign(ast.dr), steps=Math.max(Math.abs(ast.dc),Math.abs(ast.dr));
@@ -346,12 +346,12 @@ export function finDuTour(){
     for(let s=0;s<steps;s++){ cc+=ux; rr+=uy; if(rr>state.RANGS-1){ crash=true; break; } if(cc<0||cc>state.COLS-1||rr<0){ out=true; break; }
       const f=fighterEn(cc,rr); if(f){ exploser(f.x,f.y,true); const m=blesser(f); if(m) tuerFighter(f); sonBoom(); }
       const a=aileEn(cc,rr); if(a){ exploser(a.x,a.y,false); state.ailes.splice(state.ailes.indexOf(a),1); }
-      if(bossEn(cc,rr)){ state.boss.hp-=1; exploser(centreCase(cc,rr).x,centreCase(cc,rr).y,false); if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } } }
+      if(bossEn(cc,rr)){ state.boss.hp-=1; afficherDegats(centreCase(cc,rr).x,centreCase(cc,rr).y,1); exploser(centreCase(cc,rr).x,centreCase(cc,rr).y,false); if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } } }
     ast.c=cc; ast.r=rr;
     // gros astéroïde : laisse une traînée de débris bloquants 1 tour derrière lui
     if(ast.type==='gros' && !crash && !out && oldC>=0 && oldC<state.COLS && oldR>=0 && oldR<state.RANGS-1 && !obstacleEn(oldC,oldR) && !aileEn(oldC,oldR) && !fighterEn(oldC,oldR)){
       const p=centreCase(oldC,oldR); state.obstacles.push({c:oldC,r:oldR,type:'debris',hp:1,maxhp:1,x:p.x,y:p.y,variante:Math.random()<0.5,ang:0,turns:2}); }
-    if(crash){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_ASTEROIDE)); state.damageThisWave+=DEG_ASTEROIDE; state.flashCroiseur=1; state.secousse=12; sonAie(); exploser(centreCase(Math.max(0,Math.min(state.COLS-1,cc)),state.RANGS-1).x,state.GRID_BAS+8,true); state.asteroides.splice(state.asteroides.indexOf(ast),1); logMsg('Astéroïde !','log-red'); }
+    if(crash){ state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-DEG_ASTEROIDE)); state.damageThisWave+=DEG_ASTEROIDE; state.flashCroiseur=1; state.secousse=12; sonAie(); exploser(centreCase(Math.max(0,Math.min(state.COLS-1,cc)),state.RANGS-1).x,state.GRID_BAS+8,true); afficherDegats(centreCase(Math.max(0,Math.min(state.COLS-1,cc)),state.RANGS-1).x,state.GRID_BAS-24,DEG_ASTEROIDE); state.asteroides.splice(state.asteroides.indexOf(ast),1); logMsg('Astéroïde !','log-red'); }
     else if(out) state.asteroides.splice(state.asteroides.indexOf(ast),1); }
   // décompte des traînées temporaires (débris laissés par les gros astéroïdes)
   for(let i=state.obstacles.length-1;i>=0;i--){ const o=state.obstacles[i]; if(o.turns!==undefined){ o.turns--; if(o.turns<=0) state.obstacles.splice(i,1); } }
@@ -382,7 +382,7 @@ export function finDuTour(){
   if(state.ups.regen>0) state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.02*state.ups.regen));
 
   // (6b) INCENDIE (brûleur) : 1 PV/tour jusqu'à extinction (dure quelques tours, ou soignée via BOUCLIER)
-  if(state.enFeu>0){ state.enFeu--; state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-1)); state.damageThisWave+=1; state.flashCroiseur=1; logMsg('🔥 -1 PV (incendie)','log-red'); }
+  if(state.enFeu>0){ state.enFeu--; state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-1)); state.damageThisWave+=1; state.flashCroiseur=1; afficherDegats(state.LARGEUR/2,state.GRID_BAS-24,1); logMsg('🔥 -1 PV (incendie)','log-red'); }
 
   // (6c) BOSS FORGE : se répare, ainsi que les ailes proches
   if(state.boss&&state.boss.type==='forge'){
@@ -463,6 +463,7 @@ export function animer(dt){
   for(let i=state.explosions.length-1;i>=0;i--){ state.explosions[i].t+=dt; if(state.explosions[i].t>=NFRAMES*0.05) state.explosions.splice(i,1); }
   for(let i=state.lasers.length-1;i>=0;i--){ state.lasers[i].t+=dt; if(state.lasers[i].t>.16) state.lasers.splice(i,1); }
   for(let i=state.trails.length-1;i>=0;i--){ state.trails[i].t+=dt; if(state.trails[i].t>.35) state.trails.splice(i,1); }
+  for(let i=state.dmgTexts.length-1;i>=0;i--){ state.dmgTexts[i].t+=dt; if(state.dmgTexts[i].t>.8) state.dmgTexts.splice(i,1); }
   if(state.flashCroiseur>0) state.flashCroiseur=Math.max(0,state.flashCroiseur-dt*2);
   if(state.flashRecharge>0) state.flashRecharge=Math.max(0,state.flashRecharge-dt*2);
   if(state.secousse>0) state.secousse=Math.max(0,state.secousse-dt*40);

@@ -15,15 +15,18 @@ export const state = {
   BTN:undefined, ACT:undefined, ULT:undefined,
   nebuleuses:undefined,
   grandChamp:false,
+  // fond (thème/motif) de l'illustration d'accueil, retiré au hasard à chaque arrivée sur
+  // l'accueil — voir randomiserAccueil() dans render.js.
+  accueilThemeIdx:undefined, accueilPatternIdx:undefined,
 
   // entités
   fighters:undefined, ailes:undefined, asteroides:undefined, bonus:undefined, boss:undefined,
   explosions:undefined, particules:undefined, lasers:undefined, trails:undefined,
   trousNoirs:undefined, champs:undefined, menacesWarn:undefined, bossVaincus:undefined,
-  obstacles:undefined,
+  obstacles:undefined, dmgTexts:undefined,
 
   // progression de la partie en cours
-  ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined, scoreAvantVague:undefined,
+  ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined, scoreAvantVague:undefined, bestComboThisWave:undefined,
   bossKilledThisWave:undefined, pendingUpgrade:undefined, choixBuild:undefined, pendingEvent:undefined,
   suiteAmelioration:undefined, suiteEvenement:undefined, suiteMission:null,
   // callbacks utilisés uniquement pendant une mission planète (planete.js), pour éviter un
@@ -80,6 +83,11 @@ export const state = {
 };
 
 export function centreCase(c,r){ return {x:state.GX+c*state.CELL+state.CELL/2, y:state.GY+r*state.CELL+state.CELL/2}; }
+
+/* Texte flottant "-N" rouge à l'endroit précis d'un dégât (vaisseau, aile, boss, croiseur…) —
+   monte et s'efface en même temps que l'explosion qui l'accompagne (voir dessiner() /
+   render.js pour l'animation, et la boucle de mise à jour dans combat.js pour son .t). */
+export function afficherDegats(x,y,valeur){ if(!valeur) return; state.dmgTexts.push({x,y,txt:'-'+valeur,t:0}); }
 
 /* =====================================================================
    ACHIEVEMENTS + HIGHSCORES + SAUVEGARDE (localStorage)

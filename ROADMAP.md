@@ -151,7 +151,7 @@ passer à la suivante — jamais tout d'un bloc) :
    traduction FR/EN complète (`i18n.js`), entrées d'encyclopédie (base,
    tourelles par type, biomes), éventuels nouveaux achievements.
 
-9. **Vérifications transverses avant fusion** : le tutoriel scripté
+9. ✅ **Vérifications transverses avant fusion** : le tutoriel scripté
    (`tuto.js`) n'est jamais impacté par un nœud planète en première
    position ; le mode combat spatial existant n'est pas régressé (tests
    Playwright du flux existant) ; test Playwright dédié pour chacun des 4
@@ -159,6 +159,6 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 9, la dernière — vérifications transverses avant
-fusion (non-régression du tutoriel et du combat spatial, tests Playwright
-dédiés par biome, incrément de `VERSION`, puis fusion sur `main`).
+**Statut final** : les 9 étapes sont terminées et vérifiées. Mode missions
+planète intégralement fonctionnel (4 biomes, base, tourelles, garnison,
+sauvegarde/reprise, habillage, encyclopédie), fusionné sur `main`.

@@ -10,7 +10,7 @@ import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } f
 import { demarrerTourJoueur, animer } from './combat.js';
 import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
 import { initAudio, startMusic } from './audio.js';
-import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner } from './render.js';
+import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
@@ -19,13 +19,14 @@ import { VERSION } from './version.js';
 
 /* ===== ÉTAT VIDE / NOUVELLE PARTIE / REPRISE ===== */
 function etatVide(){
-  state.fighters=[];state.ailes=[];state.asteroides=[];state.bonus=[];state.boss=null;state.explosions=[];state.particules=[];state.lasers=[];state.trails=[];
+  state.fighters=[];state.ailes=[];state.asteroides=[];state.bonus=[];state.boss=null;state.explosions=[];state.particules=[];state.lasers=[];state.trails=[];state.dmgTexts=[];
   state.trousNoirs=[];state.champs=[];state.menacesWarn=[];state.obstacles=[];state.bossVaincus=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.scoreAvantVague=0;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;state.scenePlanete=null;state.planete=null;
   state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
   state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.enFeu=0;state.rerollsRestants=0;
   state.comboCount=0;state.comboTimer=0;state.bestCombo=0;state.undoStack=[];state.paused=false;
+  randomiserAccueil();
 }
 
 function nouvellePartie(){
@@ -37,7 +38,7 @@ function nouvellePartie(){
   const special=speciaux[Math.floor(Math.random()*speciaux.length)].id;
   const [cN,cS,cR]=spread(3);
   state.fighters=[nouveauVaisseau(cN,state.RANGS-1,'normal',false), nouveauVaisseau(cS,state.RANGS-1,special,false), nouveauVaisseau(cR,state.RANGS-1,'rouge',false)];
-  state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.explosions=[]; state.particules=[]; state.lasers=[]; state.trails=[];
+  state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.explosions=[]; state.particules=[]; state.lasers=[]; state.trails=[]; state.dmgTexts=[];
   state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.obstacles=[]; state.bossVaincus=0; state.enFeu=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
   state.pendingUpgrade=false; state.choixBuild=false; state.killsThisWave=0; state.shipsLostThisWave=0; state.bossKilledThisWave=false; state.scoreAvantVague=0;
