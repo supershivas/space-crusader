@@ -522,8 +522,11 @@ function updateTooltip(x,y){
     if(a.bouclier) html+='<div class="tt-spd" style="color:#ffd23d">🛡 '+t('tt_bouclier_actif')+'</div>';
     if(estProtege(a)) html+='<div class="tt-spd" style="color:#b06bff">'+t('tt_protege')+'</div>';
   } else if(f){
-    const nomKey=['normal','rouge','rapide','bombardier','bouclier','sniper'].includes(f.type)?'ship_'+f.type+'_nom':'ship_normal_nom';
-    const info={nom:t(nomKey), role:t('tt_role_'+f.type)||''};
+    // Liste complète des types de vaisseaux alliés existants (voir SHIPS/SHIP_ROUGE dans
+    // config.js + 'navette', larguée par le Transporteur) — un type absent de cette liste
+    // retombait sur "Standard", un nom trompeur pour Transporteur/Médic/Mini-navette.
+    const nomKey=['normal','rouge','rapide','bombardier','bouclier','sniper','transporteur','medic','navette'].includes(f.type)?'ship_'+f.type+'_nom':'ship_normal_nom';
+    const info={nom:t(nomKey), role:t('tt_role_'+f.type)};
     html='<div class="tt-name">'+info.nom+'</div>';
     html+='<div class="tt-spd" style="color:#cbd6f0">'+info.role+'</div>';
     html+='<div class="tt-hp">'+t('tt_pv')+': '+f.hp+'</div>';
@@ -699,7 +702,12 @@ export function undo(){
   state.tourCompteur=s.tourCompteur; state.prochainAsteroide=s.prochainAsteroide; state.prochainBoss=s.prochainBoss;
   state.selection=null; state.modeTourelle=false; state.actionGen++; sonUndo(); logMsg('↺ '+t('log_annule'),'log-ylw');
 }
-export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.toggle('visible',state.paused); tooltip.classList.remove('visible'); if(state.paused){ stopMusic(); sonPause(); } else { startMusic(); } }
+export function togglePause(){ state.paused=!state.paused; pauseDiv.classList.toggle('visible',state.paused); tooltip.classList.remove('visible');
+  // La pause reste sous les modales (voir le commentaire CSS sur #pause) : une modale de choix
+  // déjà ouverte (construction d'un vaisseau) la masquerait sinon complètement. On la ferme
+  // donc à l'entrée en pause plutôt que de la laisser flotter au-dessus, invisible mais active.
+  if(state.paused && state.choixBuild){ state.choixBuild=false; buildDiv.classList.remove('visible'); }
+  if(state.paused){ stopMusic(); sonPause(); } else { startMusic(); } }
 
 document.addEventListener('keydown', ev=>{
   if(ev.key==='Escape'){ undo(); ev.preventDefault(); }

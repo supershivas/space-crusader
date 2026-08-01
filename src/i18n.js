@@ -120,6 +120,7 @@ const STRINGS = {
     ship_transporteur_nom:'Transporteur', ship_transporteur_desc:'Largue des mini-navettes · 2 tours',
     ship_medic_nom:'Médic', ship_medic_desc:'Soigne un allié adjacent · 2 tours',
     ship_rouge_nom:'Vaisseau Rouge', ship_rouge_desc:'Tir de zone · 2 PV · prend 2 tours',
+    ship_navette_nom:'Mini-navette', ship_navette_desc:'Larguée par un Transporteur',
 
     // ===== Méta-progression (META) =====
     meta_pvBonus_nom:'Blindage', meta_pvBonus_desc:'+10 PV de départ',
@@ -347,6 +348,9 @@ const STRINGS = {
     tt_role_bombardier:'Tir qui détruit toute une colonne.',
     tt_role_bouclier:'Encaisse 3 PV.',
     tt_role_sniper:'Tir à longue portée (±2 colonnes).',
+    tt_role_transporteur:'Tir en colonne ±1.',
+    tt_role_medic:'Ne combat pas — soigne un allié adjacent (2e appui).',
+    tt_role_navette:'Larguée par un Transporteur. Tir en colonne ±1.',
 
     tt_degats:'Dégâts', tt_avance:'Avance', tt_par_tour:'/tour', tt_aucun_eperonnage:'aucun (éperonnage)',
     tt_protege:'Protégé — vise le brouilleur',
@@ -556,6 +560,7 @@ const STRINGS = {
     ship_transporteur_nom:'Carrier', ship_transporteur_desc:'Launches mini-shuttles · 2 turns',
     ship_medic_nom:'Medic', ship_medic_desc:'Heals an adjacent ally · 2 turns',
     ship_rouge_nom:'Red Ship', ship_rouge_desc:'Area fire · 2 HP · takes 2 turns',
+    ship_navette_nom:'Mini-shuttle', ship_navette_desc:'Launched by a Carrier',
 
     meta_pvBonus_nom:'Armor', meta_pvBonus_desc:'+10 starting HP',
     meta_deptAmelio_nom:'Prototype', meta_deptAmelio_desc:'+1 starting upgrade',
@@ -769,6 +774,9 @@ const STRINGS = {
     tt_role_bombardier:'Shot that destroys an entire column.',
     tt_role_bouclier:'Absorbs 3 HP.',
     tt_role_sniper:'Long-range fire (±2 columns).',
+    tt_role_transporteur:'Fires in a ±1 column.',
+    tt_role_medic:'Does not fight — heals an adjacent ally (2nd tap).',
+    tt_role_navette:'Launched by a Carrier. Fires in a ±1 column.',
 
     tt_degats:'Damage', tt_avance:'Speed', tt_par_tour:'/turn', tt_aucun_eperonnage:'none (ramming)',
     tt_protege:'Protected — target the jammer',

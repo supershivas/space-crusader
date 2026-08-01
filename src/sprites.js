@@ -25,8 +25,12 @@ export const JOUEUR_SNIPER=["BB...V...BB","BB...V...BB","BB..sVs..BB","BBbSSVSSb
 export const JOUEUR_TRANSPORTEUR=["BB.......BB","BB.ggggg.BB","BG.sSSSs.GB","BGbSSOSSbGB","BG.sSSSs.GB","BB.ggggg.BB","BB.......BB","Bb.......bB","bB.......Bb"];
 /* allié MÉDIC : croix verte, soigne un allié adjacent au lieu de combattre */
 export const JOUEUR_MEDIC=["BB.......BB","BB..VVV..BB","BB.sVSVs.BB","BBbSSVSSbBB","BB.sVSVs.BB","BB..VVV..BB","BB.......BB","Bb.......bB","bB.......Bb"];
-/* mini-navette alliée, larguée par le Transporteur (case libre proche du croiseur, diagonales incluses) */
-export const MINI_NAVETTE_ALLIEE=["..B..",".BBB.","BBCBB",".BBB.","..B.."];
+/* mini-navette alliée, larguée par le Transporteur (case libre proche du croiseur, diagonales
+   incluses) — même structure que tous les vaisseaux alliés (voir JOUEUR ci-dessus, la base
+   structurelle) : cœur circulaire central + deux panneaux latéraux (colonnes B de part et
+   d'autre, resserrés en 'b' tout en bas comme la coque JOUEUR), juste à une échelle réduite
+   plutôt qu'un simple losange sans rapport avec le reste des vaisseaux. */
+export const MINI_NAVETTE_ALLIEE=["B.......B","B..sss..B","B.sSSSs.B","BbSSOSSbB","B.sSSSs.B","B..sss..B","bB.....Bb"];
 
 /* --- Nouveaux sprites basés sur les images uploadées --- */
 export const AILE=[

@@ -71,6 +71,16 @@ hébergé sur GitHub Pages (`pershivas.github.io`). Pas de bundler, pas de dépe
   l'utilisateur le redemande. La page est un aperçu statique autonome (elle ne charge pas
   `index.html`) : toute démonstration doit être recréée avec des extraits de CSS/HTML
   fidèles, pas un simple lien vers le vrai composant.
+- **Structure des sprites de vaisseaux alliés** (`src/sprites.js`) : tous les vaisseaux
+  alliés (`JOUEUR` et ses variantes `JOUEUR_RAPIDE`/`_BOMBER`/`_BOUCLIER`/`_SNIPER`/
+  `_TRANSPORTEUR`/`_MEDIC`, ainsi que `MINI_NAVETTE_ALLIEE`) partagent la même structure :
+  un cœur central (généralement circulaire — losange `s`/`S` avec un accent de couleur au
+  centre —, plus rarement carré) flanqué de **deux panneaux latéraux** (colonnes `B`/`b`
+  de part et d'autre, resserrées en bas façon tuyères). `JOUEUR` (le vaisseau Standard) est
+  la base structurelle : toute nouvelle variante ou tout redesign (mini-navette, futur
+  vaisseau) doit en reprendre le gabarit plutôt qu'inventer une silhouette isolée — c'est
+  la règle qui a été violée par l'ancien sprite de la mini-navette (simple losange sans
+  panneaux latéraux) avant sa refonte.
 - **Titres cohérents** : les titres de type "h1" (accueil, écrans de fin/mission, bannière
   de début d'étape) utilisent tous `--fs-display` et doivent rester centrés et sur une seule
   ligne quand c'est possible (voir `ajusterTitreAccueil()` dans `src/main.js` pour l'exemple
