@@ -8,11 +8,10 @@ une section "Fait" ou simplement supprimée une fois fusionnée sur `main`).
 
 ### Missions sur planète — refonte post-playtest (tension tactique)
 
-**Statut** : conception validée avec l'utilisateur (toutes les décisions
-ci-dessous tranchées), implémentation non démarrée. Fait suite au diagnostic
-de la V1 ci-dessous (section "Missions sur planète — tower attack"),
-implémentée et en production, mais jugée peu intéressante après plusieurs
-parties jouées.
+**Statut** : implémentation complète (8/8 étapes), testée en jeu réel à
+chaque étape, fusionnée sur `main`. Fait suite au diagnostic de la V1
+ci-dessous (section "Missions sur planète — tower attack"), implémentée et
+en production, mais jugée peu intéressante après plusieurs parties jouées.
 
 **Diagnostic (parties réelles jouées, clics simulés, pas de raccourcis)** :
 sur une mission secteur 1/facile, l'escadrille est restée immobile à la
@@ -83,10 +82,10 @@ en premier) :
 3. ✅ Écran de briefing (biome, force de défense approximative, rappel
    d'alerte, choix d'approche optionnel).
 4. ✅ Intentions visibles (tourelles + charge de salve de la base).
-5. Zone de contrôle mobile des tourelles + point faible mobile de la base.
-6. Couverture (ruines) généralisée aux 4 biomes.
-7. Capacité de sabordage (vaisseau rapide, assaut final).
-8. Vérifications transverses : re-playtest complet (parties réelles jouées,
+5. ✅ Zone de contrôle mobile des tourelles + point faible mobile de la base.
+6. ✅ Couverture (ruines) généralisée aux 4 biomes.
+7. ✅ Capacité de sabordage (vaisseau rapide, assaut final).
+8. ✅ Vérifications transverses : re-playtest complet (parties réelles jouées,
    pas de raccourcis), équilibrage des PV/dégâts vs. durée de mission,
    non-régression du combat spatial et du reste des missions planète,
    version + cache du service worker, fusion sur `main`.
