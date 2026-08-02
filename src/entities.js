@@ -6,7 +6,7 @@ import { state, centreCase, decouvrir, afficherDegats } from './state.js';
 import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId, appliquerMetaHero, HEROS } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, ROUGE_SLUM, HERO_ROUGE_OVERRIDES, imgPortraitsHeros, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
-         STATION_PIECE, BARRIERE, RUINE_1, RUINE_2, DEBRIS_FRAGMENT_1, DEBRIS_FRAGMENT_2, DEBRIS_FRAGMENT_3,
+         STATION_PIECE, BARRIERE, RUINE_1, RUINE_2, DEBRIS_FRAGMENT_1, DEBRIS_FRAGMENT_2, DEBRIS_FRAGMENT_3, OVER_DEBRIS_ENNEMI,
          STRONGHOLD, MINI_NAVETTE, MINI_NAVETTE_ALLIEE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
          SABOTEUR, BRULEUR, TITAN, AILE_TRANSPORTEUR } from './sprites.js';
 import { sonRenfort } from './audio.js';
@@ -20,9 +20,6 @@ let imgRougeParHero={};
 let imgStation,imgBarriere,imgRuine1,imgRuine2;
 let imgDebrisVaisseau1,imgDebrisVaisseau2,imgDebrisVaisseau3;
 let imgDebrisEnnemi1,imgDebrisEnnemi2,imgDebrisEnnemi3;
-/* débris ennemi = mêmes fragments que l'épave alliée, teinte rouge (voir DEBRIS_FRAGMENT_*
-   dans sprites.js) — cohérent avec la palette des ailes ennemies (X/R/K). */
-const OVER_DEBRIS_ENNEMI={B:'#5a1420',b:'#8f2b2f',S:'#c94257',s:'#ff8f92'};
 let imgStronghold,imgMiniNavette,imgMiniNavetteAlliee,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
 let imgSaboteur,imgBruleur,imgTitan,imgAileTransporteur;
 let dernierCELL;

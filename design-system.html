@@ -58,6 +58,27 @@
   .volume-row span:nth-child(2){min-width:52px;text-align:left;}
   .volume-row input[type=range]{flex:1;accent-color:#37e0ff;height:14px;}
 
+  /* ===== Icône inline devant un libellé (repris tels quels de index.html) ===== */
+  .ico-slot{display:inline-flex;vertical-align:-4px;margin-right:5px;}
+  .ico-slot canvas,.pixel-ico{image-rendering:pixelated;vertical-align:middle;}
+  .ico-slot-preview{font-family:var(--pixel);font-size:var(--fs-corps);color:#e8eefc;}
+  /* contre-exemple volontairement fautif : icône hors .ico-slot + espace texte manuel, pour
+     illustrer le défaut d'espacement/alignement que le vrai composant corrige. */
+  .ico-slot-preview-faux canvas,.ico-slot-preview-faux .pixel-ico{image-rendering:pixelated;vertical-align:baseline;}
+
+  /* ===== Écran de fin (carrousel 3 pages) — repris tels quels de index.html ===== */
+  .fin-preview{background:rgba(7,11,24,.9);border-radius:var(--radius-lg);padding:20px 16px 16px;display:flex;flex-direction:column;align-items:center;max-width:320px;margin:0 auto;}
+  .fin-preview-body{display:flex;flex-direction:column;align-items:center;gap:var(--space-md);width:100%;}
+  .fin-souscran{font-family:var(--pixel);font-size:var(--fs-modale);margin:0;text-shadow:0 2px 0 #10406a;}
+  .fin-dec-header{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-bottom:2px;}
+  .fin-dots{display:flex;align-items:center;gap:0;}
+  .fin-dot{width:10px;height:10px;border-radius:50%;background:#243048;border:2px solid #3b5aa0;}
+  .fin-dot.on{background:#37e0ff;border-color:#37e0ff;}
+  .fin-line{width:26px;height:2px;background:#3b5aa0;}
+  .fin-line.on{background:#37e0ff;}
+  .fin-footer{display:flex;flex-direction:column;align-items:center;gap:var(--space-sm);width:100%;padding-top:var(--space-md);}
+  .fin-nav{display:flex;gap:var(--space-sm);align-items:center;justify-content:center;}
+
   /* ===== Cartes de choix ===== */
   .cards{display:flex;gap:var(--space-sm);flex-wrap:wrap;}
   .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-lg);
@@ -300,6 +321,65 @@
       <button class="jouer secondaire">Encyclopédie</button>
       <button class="jouer danger">Abandonner</button>
     </div>
+
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Icône inline devant un libellé (classe <code>.ico-slot</code>)</h3>
+    <p class="note">RÈGLE : toute paire icône + texte sur une seule ligne (bouton, titre de modale,
+      titre de section…) utilise <code>&lt;span class="ico-slot" data-ico="…"&gt;&lt;/span&gt;</code> suivi
+      d'un <code>&lt;span&gt;</code> de texte — jamais une icône ajoutée « à la main » (canvas suivi d'un
+      caractère espace, par exemple) : l'espacement (<code>margin-right:5px</code>) et l'alignement vertical
+      sur la ligne de texte (<code>vertical-align:-4px</code>) sont définis une seule fois sur <code>.ico-slot</code>
+      et s'appliquent alors partout — boutons, <code>&lt;h2&gt;</code> de modale, <code>.ach-title</code>… Les
+      emplacements <code>data-ico</code> sont peuplés au démarrage par <code>main.js:poserIcones()</code> ; un
+      élément créé dynamiquement (comme l'en-tête du tableau des scores ci-dessous) doit peupler son
+      <code>.ico-slot</code> lui-même via <code>icone()</code> (voir <code>ui.js</code>) plutôt que reproduire
+      l'assemblage manuel. C'est ce correctif qui a remplacé l'ancien en-tête « icône + espace + texte »,
+      trop serré et mal aligné.</p>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:center;">
+      <div>
+        <div class="ico-slot-preview"><span class="ico-slot" id="dsIcoTrophee"></span><span>Meilleurs scores</span></div>
+        <div class="meta" style="margin-top:6px;">Correct — <code>.ico-slot</code></div>
+      </div>
+      <div>
+        <div class="ico-slot-preview ico-slot-preview-faux"><span id="dsIcoTropheeFaux"></span><span>&nbsp;Meilleurs scores</span></div>
+        <div class="meta" style="margin-top:6px;color:#ff9a9a;">À éviter — icône + espace manuel</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Écran de fin (carrousel 3 pages)</h2>
+    <p class="note">Résultat de combat / bilan / récompenses — trois pages internes
+      (<code>.fin-page</code>) partageant le même conteneur <code>#fin</code>, une seule visible à la fois.
+      Chaque page se découpe en <code>.fin-body</code> (contenu propre à la page, défilant si besoin) et
+      <code>.fin-footer</code> (points de progression + navigation, TOUJOURS les mêmes composants dans le
+      même ordre) ancré en bas d'écran par le flex — pour que les points et les boutons Suivant/Précédent
+      restent à la même hauteur d'une page à l'autre, quelle que soit la quantité de contenu au-dessus
+      (tableau des scores, bilan, vignettes de découvertes…). Placement volontairement bas : plus facile à
+      atteindre au pouce sur mobile. La page 3 fait exception pour ses actions propres (Améliorations,
+      Accueil) : elles vivent dans <code>.fin-body</code>, pas dans le pied — seule l'action principale
+      (Rejouer) prend la place de « Suivant » dans le pied, pour garder exactement la même paire de
+      composants (points + 1-2 boutons de nav) sur les 3 pages.</p>
+    <div class="fin-preview">
+      <div class="fin-preview-body">
+        <div class="fin-souscran" style="color:#37e0ff;">RÉCOMPENSES</div>
+        <div class="fin-dec-header" style="margin-top:8px;">📖 Nouvelles découvertes : 2</div>
+        <div class="cards" style="margin-top:4px;">
+          <div class="guide-card"><div class="nom">Chasseur</div></div>
+          <div class="guide-card"><div class="nom">Bombardier</div></div>
+        </div>
+      </div>
+      <div class="fin-footer">
+        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span></div>
+        <div class="fin-nav">
+          <button class="jouer secondaire" aria-label="Précédent" style="padding:15px 16px;"><span style="display:inline-flex;transform:scaleX(-1);">▶</span></button>
+          <button class="jouer">Rejouer</button>
+        </div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:10px;">Si les vignettes de découvertes sont nombreuses, seul le bloc
+      <code>.fin-dec-cards</code> qui les contient défile (hauteur plafonnée, <code>max-height:30vh</code>) —
+      le titre, le texte des cristaux gagnés, les boutons secondaires et le pied restent visibles sans avoir
+      à parcourir toute la page.</p>
   </section>
 
   <section>
@@ -500,7 +580,7 @@
   </section>
 
 <script type="module">
-import { cuireFit } from './src/sprites.js';
+import { cuireFit, iconCanvas } from './src/sprites.js';
 import * as S from './src/sprites.js';
 import { SKINS_CROISEUR, SKINS_VAISSEAUX, HEROS, ANDROIDE } from './src/config.js';
 
@@ -575,12 +655,11 @@ carte('cat-elites',S.TITAN,'Titan',{elite:true});
 for(const type in S.BOSS_GRIDS) carte('cat-boss',S.BOSS_GRIDS[type],'Boss '+type,{boss:true,taille:96});
 
 // Obstacles & menaces — débris ennemi et épave de vaisseau allié partagent la même forme de
-// fragments (DEBRIS_FRAGMENT_*), seule la palette diffère (voir OVER_DEBRIS_ENNEMI dans
-// entities.js, dupliqué ici puisque cette page n'importe pas entities.js).
-const OVER_DEBRIS_ENNEMI={B:'#5a1420',b:'#8f2b2f',S:'#c94257',s:'#ff8f92'};
-carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Débris (ennemi)',{over:OVER_DEBRIS_ENNEMI,taille:48});
-carte('cat-obstacles',S.DEBRIS_FRAGMENT_2,'Débris (ennemi, variante)',{over:OVER_DEBRIS_ENNEMI,taille:48});
-carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Épave de vaisseau (allié)',{taille:48});
+// fragments (DEBRIS_FRAGMENT_*), seule la palette diffère (OVER_DEBRIS_ENNEMI, exporté par
+// sprites.js pour éviter de la dupliquer ici comme dans entities.js).
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Épave de vaisseau (allié)');
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Débris (ennemi)',{over:S.OVER_DEBRIS_ENNEMI});
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_2,'Débris (ennemi, variante)',{over:S.OVER_DEBRIS_ENNEMI});
 carte('cat-obstacles',S.STATION_PIECE,'Épave de station');
 carte('cat-obstacles',S.BARRIERE,'Barrière');
 carte('cat-obstacles',S.ASTER,'Astéroïde');
@@ -590,6 +669,10 @@ carte('cat-planete',S.ENEMY_BASE,'Base ennemie',{boss:true,taille:110});
 for(const type in S.TOURELLE_GRIDS) carte('cat-planete',S.TOURELLE_GRIDS[type],'Tourelle '+type);
 carte('cat-planete',S.RUINE_1,'Ruine');
 carte('cat-planete',S.RUINE_2,'Ruine (variante)');
+
+// Icône inline (.ico-slot) — vraie icône trophée, même rendu qu'en jeu (iconCanvas)
+document.getElementById('dsIcoTrophee').appendChild(iconCanvas('trophee',16));
+document.getElementById('dsIcoTropheeFaux').appendChild(iconCanvas('trophee',16));
 </script>
 </body>
 </html>

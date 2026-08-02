@@ -58,6 +58,7 @@ function nouvellePartie(){
   state.lockTimer=0; state.flashCroiseur=0; state.flashRecharge=0; state.secousse=0; state.tourCompteur=0; state.ambianceT=0;
   state.prochainAsteroide=3+Math.floor(Math.random()*2); state.prochainBoss=18+Math.floor(Math.random()*6);
   state.comboCount=0; state.comboTimer=0; state.bestCombo=0; state.undoStack=[]; state.paused=false;
+  state.decouvertesRun={};
   state.achievements.asteroid_dodge=(state.achievements.asteroid_dodge||0); state.achievements.boss_slayer=state.achievements.boss_slayer||false; state.achievements.no_turret=state.achievements.no_turret||false; state.achievements.perfect_wave=state.achievements.perfect_wave||false;
   // tutoriel : jauge d'ultime déjà pleine, pour pouvoir démontrer l'ultime sans attendre plusieurs tours de kills
   if(!tutorielVu()) state.ultimeJauge=state.ultimeSeuil;

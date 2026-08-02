@@ -99,7 +99,7 @@ const STRINGS = {
     // Divers
     mission_continuer:'Continuer ▶',
     fin_rejouer:'REJOUER',
-    fin_suivant:'Suivant ▶',
+    fin_suivant:'Suivant',
     fin_bilan_titre:'BILAN',
     fin_recompenses_titre:'RÉCOMPENSES',
     up_titre:'AMÉLIORATION', up_hint:'Choisis une amélioration pour toute la partie',
@@ -345,7 +345,7 @@ const STRINGS = {
     fin_boss_vaincus:'Boss vaincus',
     fin_meilleur_combo:'Meilleur combo',
     fin_succes_debloques:'succès débloqués',
-    fin_encyclopedie:'Encyclopédie :',
+    fin_encyclopedie:'Nouvelles découvertes :',
     fin_cristaux_gagnes:'cristaux gagnés',
     fin_vague:'Vague',
 
@@ -593,7 +593,7 @@ const STRINGS = {
     pause_hint:'P = pause · Esc = undo action',
     mission_continuer:'Continue ▶',
     fin_rejouer:'PLAY AGAIN',
-    fin_suivant:'Next ▶',
+    fin_suivant:'Next',
     fin_bilan_titre:'SUMMARY',
     fin_recompenses_titre:'REWARDS',
     up_titre:'UPGRADE', up_hint:'Choose an upgrade for the whole run',
@@ -824,7 +824,7 @@ const STRINGS = {
     fin_boss_vaincus:'Bosses defeated',
     fin_meilleur_combo:'Best combo',
     fin_succes_debloques:'achievements unlocked',
-    fin_encyclopedie:'Encyclopedia:',
+    fin_encyclopedie:'New discoveries:',
     fin_cristaux_gagnes:'crystals earned',
     fin_vague:'Wave',
 

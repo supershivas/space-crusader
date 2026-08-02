@@ -76,6 +76,11 @@ export const state = {
   // catalogue des entités déjà rencontrées (guide) : clé "categorie:type" -> true
   // (les héros débloqués y figurent sous la catégorie 'heros', même mécanisme que le reste)
   decouvertes:{},
+  // entrées d'encyclopédie NOUVELLEMENT débloquées pendant la partie EN COURS (remis à zéro à
+  // chaque nouvelle partie, voir main.js:nouvellePartie) — sert à n'afficher que les
+  // découvertes récentes sur l'écran de fin (finPage3), par opposition à l'Encyclopédie
+  // complète (ouvrirGuide()) qui reste sur `decouvertes` (tout l'historique).
+  decouvertesRun:{},
 
   damageThisWave:0,
   hoverCell:null, hoverTime:0,
@@ -123,6 +128,7 @@ export function decouvrir(categorie,type){
   const cle=categorie+':'+type;
   if(state.decouvertes[cle]) return;
   state.decouvertes[cle]=true;
+  state.decouvertesRun[cle]=true;   // nouvelle entrée d'encyclopédie débloquée pendant CETTE partie
   try{ localStorage.setItem('dc_decouvertes',JSON.stringify(state.decouvertes)); }catch(e){}
 }
 export function estDecouvert(categorie,type){ return !!state.decouvertes[categorie+':'+type]; }

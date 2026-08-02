@@ -109,8 +109,12 @@ export function addHighscore(){
   state.highscores.push(entry); state.highscores.sort((a,b)=>b.score-a.score); state.highscores=state.highscores.slice(0,5); saveData();
   const tbl=document.getElementById('highscores');
   tbl.innerHTML='';
-  const trHead=document.createElement('tr'); const tdHead=document.createElement('td'); tdHead.colSpan=3; tdHead.style.color='#ffd23d'; tdHead.style.display='flex'; tdHead.style.alignItems='center'; tdHead.style.justifyContent='center';
-  icone(tdHead,'trophee',14); tdHead.appendChild(document.createTextNode(' '+t('succes_meilleurs_scores'))); trHead.appendChild(tdHead); tbl.appendChild(trHead);
+  // icône + libellé : même composant .ico-slot que partout ailleurs dans le jeu (boutons, titres
+  // de modale) plutôt qu'un canvas suivi d'un simple caractère espace — cet ancien assemblage
+  // manuel donnait un espacement trop serré et mal maîtrisé entre l'icône et le texte.
+  const trHead=document.createElement('tr'); const tdHead=document.createElement('td'); tdHead.colSpan=3; tdHead.style.color='#ffd23d';
+  const slotHead=document.createElement('span'); slotHead.className='ico-slot'; tdHead.appendChild(slotHead);
+  icone(slotHead,'trophee',16); tdHead.appendChild(document.createTextNode(t('succes_meilleurs_scores'))); trHead.appendChild(tdHead); tbl.appendChild(trHead);
   tbl.insertAdjacentHTML('beforeend',state.highscores.map((h,i)=>'<tr class="'+(h.score===state.score?'hs-new':'')+'"><td>#'+(i+1)+'</td><td>'+h.score+'</td><td>V'+h.vague+'</td></tr>').join(''));
 }
 
@@ -396,17 +400,21 @@ const GUIDE_BIOMES=[{type:'desert',ico:'alerte'},{type:'glace',ico:'gel'},{type:
    de fin de partie — mêmes listes/images que ouvrirGuide(), sans dupliquer le catalogue.
    Renvoie des descripteurs de carte (img/ico/nomKey/tier), pas juste des noms : l'écran de fin
    affiche les vraies vignettes (non cliquables), pas une liste de texte. */
-function decouvertesResume(){
+/* recentOnly (écran de fin) : ne garde que les entrées débloquées PENDANT la partie qui vient
+   de se terminer (state.decouvertesRun), plutôt que tout l'historique — sinon la 3e page de
+   l'écran de fin réaffichait systématiquement toute l'encyclopédie déjà connue. */
+function decouvertesResume(recentOnly){
   const cartes=[];
+  const vu=(categorie,type)=> estDecouvert(categorie,type) && (!recentOnly || state.decouvertesRun[categorie+':'+type]);
   const imgBonusParType={pv:imgBonusPV,tir:imgBonusTIR,vaisseau:imgBonusVAIS,mimic:getImgMimic()};
-  for(const type of GUIDE_ALLIES) if(estDecouvert('vaisseau',type)) cartes.push({img:imgVaisseau(type),nomKey:'ship_'+type+'_nom'});
-  for(const type of GUIDE_ENNEMIS) if(estDecouvert('aile',type)) cartes.push({img:imgAileGuide(type),nomKey:'ail_'+type+'_nom',tier:RARETE.aile[type]});
-  for(const type of GUIDE_BOSS) if(estDecouvert('boss',type)) cartes.push({img:imgBossGuide(type),nomKey:'boss_'+type+'_nom',tier:RARETE.boss[type]});
-  for(const type of GUIDE_BONUS) if(estDecouvert('bonus',type)) cartes.push({img:imgBonusParType[type],nomKey:'bonus_'+type+'_nom',tier:RARETE.bonus[type]});
-  for(const m of GUIDE_MENACES) if(estDecouvert('menace',m.type)) cartes.push({img:m.img?m.img():null,ico:m.ico,nomKey:m.nomKey,tier:RARETE.menace[m.type]});
-  if(estDecouvert('planete_base','base')) cartes.push({img:imgBaseGuide(),nomKey:'planete_base_guide_nom'});
-  for(const type of GUIDE_TOURELLES) if(estDecouvert('planete_tourelle',type)) cartes.push({img:imgTourelleGuide(type),nomKey:'tourelle_'+type+'_nom'});
-  for(const b of GUIDE_BIOMES) if(estDecouvert('planete_biome',b.type)) cartes.push({ico:b.ico,nomKey:'biome_'+b.type+'_nom'});
+  for(const type of GUIDE_ALLIES) if(vu('vaisseau',type)) cartes.push({img:imgVaisseau(type),nomKey:'ship_'+type+'_nom'});
+  for(const type of GUIDE_ENNEMIS) if(vu('aile',type)) cartes.push({img:imgAileGuide(type),nomKey:'ail_'+type+'_nom',tier:RARETE.aile[type]});
+  for(const type of GUIDE_BOSS) if(vu('boss',type)) cartes.push({img:imgBossGuide(type),nomKey:'boss_'+type+'_nom',tier:RARETE.boss[type]});
+  for(const type of GUIDE_BONUS) if(vu('bonus',type)) cartes.push({img:imgBonusParType[type],nomKey:'bonus_'+type+'_nom',tier:RARETE.bonus[type]});
+  for(const m of GUIDE_MENACES) if(vu('menace',m.type)) cartes.push({img:m.img?m.img():null,ico:m.ico,nomKey:m.nomKey,tier:RARETE.menace[m.type]});
+  if(vu('planete_base','base')) cartes.push({img:imgBaseGuide(),nomKey:'planete_base_guide_nom'});
+  for(const type of GUIDE_TOURELLES) if(vu('planete_tourelle',type)) cartes.push({img:imgTourelleGuide(type),nomKey:'tourelle_'+type+'_nom'});
+  for(const b of GUIDE_BIOMES) if(vu('planete_biome',b.type)) cartes.push({ico:b.ico,nomKey:'biome_'+b.type+'_nom'});
   const total=GUIDE_ALLIES.length+GUIDE_ENNEMIS.length+GUIDE_BOSS.length+GUIDE_BONUS.length+GUIDE_MENACES.length+1+GUIDE_TOURELLES.length+GUIDE_BIOMES.length;
   return {cartes, total};
 }
@@ -596,16 +604,16 @@ export function finPartie(){
     const noms=Object.keys(ACHIEVEMENTS_DEF).filter(id=>state.achievements[id]).map(id=>t('ach_'+id+'_nom'));
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
-  // Encyclopédie découverte (décompte persistant, toutes parties confondues) : les vraies
-  // vignettes (non cliquables — le détail complet reste dans l'Encyclopédie elle-même),
-  // avec un compte en en-tête plutôt qu'une liste de noms en texte.
+  // Encyclopédie : seulement les entrées débloquées PENDANT ce combat (state.decouvertesRun),
+  // pas tout l'historique — les vraies vignettes (non cliquables, le détail complet reste dans
+  // l'Encyclopédie elle-même), avec un compte en en-tête plutôt qu'une liste de noms en texte.
   const dec=document.getElementById('finDecouvertes'); dec.innerHTML='';
-  { const r=decouvertesResume();
+  { const r=decouvertesResume(true);
     if(r.cartes.length){
       const header=document.createElement('div'); header.className='fin-dec-header';
-      header.textContent='📖 '+t('fin_encyclopedie')+' '+r.cartes.length+'/'+r.total;
+      header.textContent='📖 '+t('fin_encyclopedie')+' '+r.cartes.length;
       dec.appendChild(header);
-      const wrap=document.createElement('div'); wrap.className='cards';
+      const wrap=document.createElement('div'); wrap.className='cards fin-dec-cards';
       for(const c of r.cartes) wrap.appendChild(carteGuideMini(c.img,c.ico,c.nomKey,c.tier));
       dec.appendChild(wrap);
     }
