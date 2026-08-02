@@ -163,6 +163,99 @@ passer à la suivante — jamais tout d'un bloc) :
 planète intégralement fonctionnel (4 biomes, base, tourelles, garnison,
 sauvegarde/reprise, habillage, encyclopédie), fusionné sur `main`.
 
+### Ambiance sonore — enrichissement de l'audio procédural
+
+**Statut** : proposition à l'étude, non discutée en détail avec l'utilisateur,
+implémentation non démarrée.
+
+**Contexte technique (état actuel de `src/audio.js`)** : tout le son du jeu
+est **procédural**, généré en direct via la Web Audio API (`OscillatorNode`/
+`GainNode`), sans aucun fichier audio. Deux briques existent :
+- des **bips d'effets** ponctuels (`sonTir`, `sonBoom`, `sonAie`, `sonSelect`,
+  `sonRenfort`, `sonRadar`, `sonVague`, `sonUndo`, `sonPause`,
+  `sonAchievement`, `sonVoix` — ce dernier "parle" en associant une fréquence
+  à chaque lettre d'un mot) ;
+- une **musique d'ambiance générative** (`startMusic`/`stopMusic`/
+  `scheduleMusic`) : nappe grave tenue + notes aléatoires en gamme
+  pentatonique mineure, avec 3 phases (`calme`/`tense`/`boss`) pilotées
+  ailleurs dans le code (`setMusicPhase` appelé depuis `combat.js`, `map.js`,
+  `planete.js` selon le déroulé du combat).
+
+Un seul réglage existe côté joueur : le bouton `#son` (`ui.js`) qui bascule
+tout le son on/off (`toggleSound`). Pas de volume ajustable, pas de séparation
+effets/musique, pas de variation d'ambiance par biome (les 4 biomes des
+missions planète — désert/glace/grotte/villes anciennes, voir plus haut dans
+cette roadmap — sonnent identiquement aujourd'hui).
+
+**Contrainte de conception à respecter** : le jeu est statique, sans build ni
+dépendance npm, hébergé sur GitHub Pages. Pas de fichiers audio volumineux à
+héberger/streamer sans réflexion (poids, cache du service worker, temps de
+chargement mobile) — privilégier autant que possible l'extension de la
+synthèse procédurale existante (comme la police auto-hébergée, tout doit
+rester servi par le jeu lui-même, jamais un CDN externe).
+
+**Propositions (à trier/prioriser avec l'utilisateur avant de chiffrer)** :
+
+1. **Réglage de volume séparé musique / effets** : deux curseurs (ou un
+   curseur + un bouton musique on/off distinct du bouton effets on/off) dans
+   l'écran Paramètres, remplaçant le tout-ou-rien actuel de `#son`. Nécessite
+   un `gainMusique`/`gainEffets` (deux `GainNode` maîtres dans `audio.js` au
+   lieu de connecter chaque oscillateur directement à `AC.destination`),
+   valeurs persistées (`localStorage`, sur le modèle de ce qui existe déjà
+   pour la langue/les autres préférences).
+2. **Ambiance par biome (missions planète)** : `setMusicPhase` accepte déjà un
+   identifiant de phase — étendre le principe à un identifiant de **timbre**
+   par biome plutôt que juste calme/tense/boss : désert (percussif sec, peu
+   de notes, silences longs), glace (harmoniques hautes, `sine` cristallin,
+   reverb simulée par un delay court), grotte (registre grave, `sawtooth`
+   étouffé, très clairsemé — cohérent avec la mécanique d'obscurité déjà
+   existante), villes anciennes (drone plus dense, dissonances légères sur
+   la gamme pentatonique). Réutilise `scheduleMusic`/`PENTA`/`BASSSHIFT`
+   existants, juste de nouveaux jeux de paramètres (bass/mel/type
+   d'oscillateur/densité) sélectionnés selon `state.planete.biome`.
+3. **Spatialisation de la musique elle-même** : `bip()` utilise déjà
+   `StereoPannerNode` pour les effets de tir (`pan` aléatoire gauche/droite) ;
+   `playSoft()` (musique) n'en a pas. Ajouter un panoramique doux et lent
+   (LFO simple modulant `pan.value` dans le temps) donnerait une sensation
+   d'espace sans nouvel asset.
+4. **Réverbe légère procédurale** : un `ConvolverNode` avec une impulse
+   response générée par bruit blanc décroissant (quelques lignes de code,
+   pas de fichier `.wav` à héberger) sur le bus musique, pour sortir du son
+   "bip sec" actuel et donner une texture plus spatiale/aérienne cohérente
+   avec le thème croiseur spatial.
+5. **Sting sonore renforcé aux moments clés** : `sonAchievement` existe déjà
+   pour les hauts faits ; étendre le même principe (petite séquence de notes
+   montantes/descendantes façon `sonVague`) à d'autres moments qui n'ont
+   aujourd'hui qu'un bip unique ou rien : victoire de secteur, victoire de
+   mission planète (PV base à 0), déblocage d'un héros (nœud "Signal de
+   détresse"), amélioration épique tirée. Cohérent avec la hiérarchie de
+   rareté déjà établie visuellement (commun/peu commun/rare/épique) —
+   un sting plus riche pour les événements plus rares.
+6. **Retour haptique mobile en complément** (`navigator.vibrate`), synchronisé
+   sur les effets déjà existants (tir, dégât reçu, boss qui apparaît) — chaque
+   plateforme mobile n'a pas forcément le son activé, la vibration est un
+   canal de feedback complémentaire gratuit à ajouter (déjà dans l'esprit
+   "mobile d'abord" de ce projet).
+7. **Voix de synthèse un peu plus riche pour `sonVoix`** : aujourd'hui chaque
+   lettre déclenche une fréquence fixe indépendamment du contexte (ça "sonne"
+   plus qu'elle ne "parle"). Une version 2 pourrait moduler légèrement le
+   timbre selon le type de message (alerte boss = plus grave/lent, renfort =
+   plus aigu/rapide) pour renforcer la lisibilité sonore sans ajouter de vraie
+   synthèse vocale (hors scope, poids/dépendance externe).
+
+**Non retenu pour l'instant (à documenter si la question revient)** : musique
+enregistrée (fichiers `.mp3`/`.ogg`) plutôt que procédurale — irait à
+l'encontre de la philosophie "tout auto-hébergé, tout léger" du projet et
+ajouterait un poids de téléchargement significatif pour un jeu qui doit
+rester rapide à charger sur mobile ; à ne considérer que si la synthèse
+procédurale montre clairement ses limites après les essais ci-dessus.
+
+**Reste à faire avant de chiffrer un plan d'implémentation détaillé** :
+prioriser avec l'utilisateur laquelle de ces 7 pistes apporte le plus (le
+réglage de volume séparé et l'ambiance par biome semblent les gains les plus
+immédiats pour l'expérience joueur) et valider si toutes doivent être faites
+ou seulement un sous-ensemble.
+
 ### Héros du Vaisseau Rouge
 
 **Statut final** : les 7 lots sont terminés et vérifiés, uniforme commun

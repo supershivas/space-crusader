@@ -480,9 +480,6 @@ export function dessiner(t){
     ctx.restore(); }
   ctx.globalAlpha=1;
 
-  // Combo display
-  if(state.comboCount>1){ ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_combo',{n:state.comboCount}),state.LARGEUR/2,state.GY-12); ctx.textAlign='left'; }
-
   if(state.ondeChoc>0){ const cx=state.LARGEUR/2, cy=state.cruiserY, R=(1-state.ondeChoc)*Math.max(state.LARGEUR,state.HAUTEUR)*1.15; ctx.strokeStyle='rgba(255,210,61,'+(state.ondeChoc*0.85)+')'; ctx.lineWidth=2+10*state.ondeChoc; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke(); ctx.strokeStyle='rgba(255,255,255,'+(state.ondeChoc*0.5)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,R*0.82,0,7); ctx.stroke(); }
 
   ctx.restore();
