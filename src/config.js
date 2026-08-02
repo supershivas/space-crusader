@@ -74,6 +74,7 @@ export const HEROS=[
  {id:'demonokos', nom:'Demonokos', desc:'Aigle aveugle.', rarete:'rare',
   bonus:{id:'portee_brouillage', valeur:1, desc:'+1 portée de tir, immunisé aux effets de brouillage (brouilleur/void)'}},
 ];
+export function heroParId(id){ return HEROS.find(h=>h.id===id)||null; }
 
 /* palettes cosmétiques (débloquées via la méta 'cosmetiques') : recolorent l'accent du croiseur / des vaisseaux alliés */
 export const SKINS_CROISEUR=[

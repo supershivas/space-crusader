@@ -3,7 +3,7 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase, decouvrir, afficherDegats } from './state.js';
-import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete } from './config.js';
+import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE, RUINE_1, RUINE_2,
@@ -43,10 +43,22 @@ export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='medic'?imgVMedic : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
 /* PV de base d'un vaisseau allié, hors améliorations de la partie en cours (encyclopédie) */
 export function hpVaisseauBase(type){ return type==='rouge'?2 : type==='bouclier'?3 : 1; }
+/* bonus passif du héros incarnant CE Vaisseau Rouge (snapshot pris à la création du vaisseau,
+   voir nouveauVaisseau) — null pour l'androïde ou tout autre type de vaisseau. */
+export function bonusRouge(f){ if(!f||f.type!=='rouge'||!f.heroId||f.heroId==='androide') return null;
+  const h=heroParId(f.heroId); return h?h.bonus:null; }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
-  const hp = type==='rouge'?(2+((state.ups&&state.ups.rouge_pv)||0)) : type==='bouclier'?3 : 1;
+  // le héros équipant ce Vaisseau Rouge est figé à sa création (state.heroActif au moment du
+  // spawn) : si ce vaisseau meurt, state.heroActif bascule sur 'androide' (voir tuerFighter)
+  // et c'est CE nouvel androïde qui sera figé sur le prochain Vaisseau Rouge reconstruit.
+  const heroId = type==='rouge' ? (state.heroActif||'androide') : undefined;
+  const heroBonus = (heroId && heroId!=='androide') ? (heroParId(heroId)||{}).bonus : null;
+  const malusPvMax = (heroBonus&&heroBonus.malusPvMax)||0;
+  const hp = type==='rouge'?Math.max(1,2+((state.ups&&state.ups.rouge_pv)||0)-malusPvMax) : type==='bouclier'?3 : 1;
   decouvrir('vaisseau',type);
-  return {c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0}; }
+  const f={c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0};
+  if(type==='rouge') f.heroId=heroId;
+  return f; }
 /* case libre la plus proche d'un point donné (diagonales incluses) — utilisé par la capacité du Transporteur */
 export function caseLibreProche(c0,r0){
   const options=[]; for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++){ if(dc===0&&dr===0) continue; const c=c0+dc,r=r0+dr; if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) options.push({c,r}); }
@@ -72,14 +84,28 @@ export function dansGrille(c,r){ return c>=0&&c<state.COLS&&r>=0&&r<state.RANGS;
 export function trouNoirEn(c,r){ return state.trousNoirs.find(t=>t.c===c&&t.r===r); }
 export function champEn(c){ return state.champs.some(ch=>c>=ch.c0&&c<=ch.c1); }
 
-export function tuerFighter(f){ if(state.fighters.includes(f)){ state.fighters.splice(state.fighters.indexOf(f),1); state.shipsLostThisWave++; } }
+export function tuerFighter(f){ if(state.fighters.includes(f)){ state.fighters.splice(state.fighters.indexOf(f),1); state.shipsLostThisWave++;
+  // le héros équipé est perdu : le prochain Vaisseau Rouge reconstruit sera un androïde
+  // standard neutre, pas un tirage parmi les héros débloqués (voir ROADMAP.md)
+  if(f.type==='rouge') state.heroActif='androide';
+} }
 
 export function estElite(a){ return a.type==='porteur'||a.type==='brouilleur'||a.type==='titan'; }
 export function porteurAura(a){ return state.ailes.some(p=>p.type==='porteur'&&p!==a&&Math.abs(p.c-a.c)<=1&&Math.abs(p.r-a.r)<=1); }
 export function brouilleurAura(a){ return state.ailes.some(p=>p.type==='brouilleur'&&p!==a&&Math.abs(p.c-a.c)<=1&&Math.abs(p.r-a.r)<=1); }
 export function estProtege(a){ return !estElite(a)&&brouilleurAura(a); }
 
-export function blesser(f){ f.hp=(f.hp||1)-1; afficherDegats(f.x,f.y,1); return f.hp<=0; }
+export function blesser(f){
+  const bonus=bonusRouge(f); let deg=1;
+  if(bonus&&bonus.id==='bouclier_premier_tir'){
+    if(!f.boucliersHero){ f.boucliersHero=true; logMsg("🛡 Bouclier de L'Achéen : premier tir absorbé !",'log-grn'); return false; }
+    deg=2; // talon d'Achille : +1 dégât reçu sur tous les tirs suivants ce combat-là
+  }
+  if(bonus&&bonus.id==='evasion_mortelle' && !f.evasionUsee && (f.hp||1)-deg<=0){
+    f.evasionUsee=true; f.hp=1; logMsg('🍀 Odysseus évite le coup fatal !','log-grn'); return false;
+  }
+  f.hp=(f.hp||1)-deg; afficherDegats(f.x,f.y,deg); return f.hp<=0;
+}
 
 /* ---- ennemis & formations ---- */
 export function typeAile(){

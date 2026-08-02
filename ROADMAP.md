@@ -345,9 +345,9 @@ passer à la suivante) :
    `design-system.html` dédiée, incrément `VERSION`/cache SW comme à chaque
    lot livré.
 
-**Prochaine étape** : lot 2 (intégration combat — appliquer réellement le
-bonus passif du héros actif dans `entities.js`/`combat.js`, bascule vers
-`ANDROIDE` après la mort du héros équipé).
+**Prochaine étape** : lot 3 (UI de sélection — écran de choix de héros en
+début de partie ; sans lui, `state.heroActif` reste toujours `'androide'`,
+donc aucun bonus n'est encore observable en jeu réel).
 
 1. ✅ **Fondations données** — catalogue `HEROS`/`ANDROIDE` (`config.js`),
    `state.heroActif` (run en cours, sérialisé dans la sauvegarde),
@@ -356,3 +356,18 @@ bonus passif du héros actif dans `entities.js`/`combat.js`, bascule vers
    tant que l'écran de choix (lot 3) n'existe pas. Aucun écran atteignable
    encore, aucun bonus appliqué en jeu — vérifié sans régression (partie
    lancée de bout en bout jusqu'à la carte de secteur, aucune erreur console).
+2. ✅ **Intégration combat** — `nouveauVaisseau('rouge',…)` fige le héros actif
+   à la création (`f.heroId`) et ajuste ses PV (malus éventuel, ex.
+   Polyphème) ; `tuerFighter` bascule `state.heroActif` sur `'androide'`
+   quand le Vaisseau Rouge meurt. Bonus branchés : Darkor/Polyphème (dégâts
+   du tir de zone, `combat.js:tirer`), Odysseus/L'Achéen (évasion/bouclier
+   du premier coup, `entities.js:blesser`), Slum (régénération du croiseur,
+   `combat.js:finDuTour`), Bar4-bar4 (précision réduite des ailes
+   adjacentes, `combat.js:finDuTour`), Demonokos (portée + immunité au
+   brouillage, `combat.js:analyseTir`). Testé en forçant temporairement
+   `state.heroActif` sur un héros doté d'un bonus : plusieurs tours de
+   combat joués (tirs, dégâts subis, régénération) sans erreur console, puis
+   revérifié avec l'androïde par défaut. **Équilibrage non testé en jeu réel**
+   (pas d'écran de sélection encore) — valeurs à ajuster une fois le lot 3
+   livré et jouable, conformément à la méthode "score théorique → ajustement
+   après tests" définie plus haut.

@@ -6,7 +6,7 @@ import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CA
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn, tourelleEn, baseEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
-         deployerVaisseau, ramasser, getImgAster, nouveauVaisseau, caseLibreProche, caseLargageAllie } from './entities.js';
+         deployerVaisseau, ramasser, getImgAster, nouveauVaisseau, caseLibreProche, caseLargageAllie, bonusRouge } from './entities.js';
 import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
 import { NFRAMES } from './sprites.js';
 import { logMsg, ouvrirBuild, finPartie, checkAchievements, montrerToast } from './ui.js';
@@ -81,17 +81,20 @@ export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0
 /* Visée en ligne de mire : le faisceau monte et s'arrête au 1er obstacle
    (aile/boss = cible ; allié/menace = bloqué). */
 export function analyseTir(f){
-  if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),asteroidesOk:new Set(),mimicsOk:new Set(),tourellesOk:new Set(),base:false,boss:false,beams:[],jam:true};
+  // Demonokos (héros du Vaisseau Rouge) : immunisé aux effets de brouillage — ignore le jam
+  // du champ magnétique ET le bouclier de l'aile brouilleuse (voir plus bas).
+  const bonusDemonokos=(()=>{ const b=bonusRouge(f); return (b&&b.id==='portee_brouillage')?b:null; })();
+  if(champEn(f.c) && !bonusDemonokos) return {ailesOk:new Set(),obstaclesOk:new Set(),asteroidesOk:new Set(),mimicsOk:new Set(),tourellesOk:new Set(),base:false,boss:false,beams:[],jam:true};
   const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); const tourellesOk=new Set(); let bossOk=false; let baseOk=false; const beams=[];
   // biome Grotte (mission planète) : obscurité, portée réduite de 1 (jamais négative)
-  const p=Math.max(0,1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0)-(state.planete&&state.planete.biome==='grotte'?1:0));
+  const p=Math.max(0,1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0)+(bonusDemonokos?bonusDemonokos.valeur:0)-(state.planete&&state.planete.biome==='grotte'?1:0));
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
     for(let rr=start; rr>=0; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
       const tr=state.planete&&tourelleEn(c,rr); if(tr){ if(tr.reveillee===false){ kind='menace'; r1=rr; break; } tourellesOk.add(tr); kind='ennemi'; r1=rr; break; }   // tourelle fixe (mission planète) : destructible comme un obstacle ; invisible/inactive tant que non révélée (camouflage, obscurité)
-      const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
+      const al=aileEn(c,rr); if(al){ if(estProtege(al)&&!bonusDemonokos){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }   // le mimic est ciblable comme un ennemi
       if(bossEn(c,rr)){ bossOk=true; kind='ennemi'; r1=rr; break; }
       if(state.planete&&baseEn(c,rr)){ if(state.planete.base.reveillee===false){ kind='menace'; r1=rr; break; } baseOk=true; kind='ennemi'; r1=rr; break; }   // base ennemie (mission planète)
@@ -231,7 +234,10 @@ export function tirer(f,aile){
   setTimeout(()=>{                          // l'explosion arrive APRÈS le laser
     if(state.actionGen!==gen) return;   // annulé (Échap) pendant le délai avant impact
     if(type==='rouge'){ const rad=1+((state.ups&&state.ups.rouge_range)||0); const zone=state.ailes.filter(a=>a.r>=0&&Math.abs(a.c-cible.c)<=rad&&Math.abs(a.r-cible.r)<=rad); let kills=0;
-      for(const a of zone){ if(frapperAile(a,true)) kills++; }
+      const bonus=bonusRouge(f); let deg=1;
+      if(bonus&&bonus.id==='degats_tir') deg+=bonus.valeur;             // Darkor : +1 dégât de tir permanent
+      else if(bonus&&bonus.id==='degats_pourcent') deg=Math.max(1,Math.round(deg*(1+bonus.valeur))); // Polyphème : +50% dégâts
+      for(const a of zone){ if(frapperAile(a,true,deg)) kills++; }
       f.kills=(f.kills||0)+kills;
       state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
       if(kills>=3) logMsg(kills+' ENNEMIS ! 🔥','log-ylw'); }
@@ -278,9 +284,16 @@ export function finDuTour(){
   setMusicPhase('tense');
   materialiserMenaces();   // les alertes du tour précédent deviennent réelles
 
+  // Bar4-bar4 (héros du Vaisseau Rouge) : aura défensive, les ailes ennemies adjacentes à
+  // elle ont une précision réduite (30% de chance de rater complètement leur tir).
+  const rougeVivant=state.fighters.find(f=>f.type==='rouge');
+  const bonusRougeActif=rougeVivant&&bonusRouge(rougeVivant);
+  const auraBar4=(bonusRougeActif&&bonusRougeActif.id==='aura_precision_ennemie')?rougeVivant:null;
+
   // (1) TIRS des ailes + du boss
   const tirs=state.ailes.map(a=>({a,cb:cibleLaser(a)})).filter(o=>o.cb); let degats=0;
   for(const {a,cb} of tirs){
+    if(auraBar4 && Math.abs(a.c-auraBar4.c)<=1 && Math.abs(a.r-auraBar4.r)<=1 && Math.random()<0.3) continue; // tir complètement raté
     if(cb.type==='multi'){ for(const f of cb.targets){ if(state.fighters.includes(f)){ laserAile(a,f.x,f.y); const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } } continue; }
     const tx=cb.type==='fighter'?cb.f.x:a.x, ty=cb.type==='fighter'?cb.f.y:(state.GRID_BAS+10);
     if(a.type==='bombardier'||a.type==='bruleur'){ state.lasers.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); state.trails.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); }
@@ -379,7 +392,9 @@ export function finDuTour(){
   // (6) menaces uniquement (combat discret : pas de respawn continu)
   state.tourCompteur++;
   if(state.tourCompteur>=state.prochainAsteroide){ programmerMenace(); const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal; state.prochainAsteroide=state.tourCompteur+Math.max(1,3+Math.floor(Math.random()*2)+d.menaceDelta); }
-  if(state.ups.regen>0) state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.02*state.ups.regen));
+  // Slum (héros du Vaisseau Rouge) : +2% PV régénérés par tour, cumulable avec l'amélioration Auto-réparation
+  const regenPct=0.02*state.ups.regen+((bonusRougeActif&&bonusRougeActif.id==='regen_tour')?bonusRougeActif.valeur:0);
+  if(regenPct>0) state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*regenPct));
 
   // (6b) INCENDIE (brûleur) : 1 PV/tour jusqu'à extinction (dure quelques tours, ou soignée via BOUCLIER)
   if(state.enFeu>0){ state.enFeu--; state.hpCruiser=Math.max(0,Math.floor(state.hpCruiser-1)); state.damageThisWave+=1; state.flashCroiseur=1; afficherDegats(state.LARGEUR/2,state.GRID_BAS-24,1); logMsg('🔥 -1 PV (incendie)','log-red'); }
