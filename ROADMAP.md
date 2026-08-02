@@ -319,55 +319,56 @@ marquant, une fois ce premier lot testé.
 **Plan d'implémentation** (chaque étape reste jouable/testable avant de
 passer à la suivante) :
 
-1. **Fondations données** (`config.js`, `state.js`) : catalogue `HEROS` (les
-   7 héros ci-dessus, bonus décrit en donnée mais pas encore branché en
-   combat), `ANDROIDE` (remplaçant neutre), champ `state.heroActif` (run en
-   cours), déblocage permanent via le mécanisme `decouvrir()`/`estDecouvert()`
-   déjà existant (catégorie `'heros'`, pas de nouveau store), squelette de
-   méta par héros persisté. Pas d'écran atteignable encore, juste les
-   fondations — comme pour le lot 1 des missions planète.
-2. **Intégration combat** (`entities.js`, `combat.js`) : `creerVaisseau`
-   applique réellement le bonus passif du héros actif ; bascule vers
-   `ANDROIDE` quand un nouveau Vaisseau Rouge est généré après la mort du
-   héros équipé.
-3. **UI de sélection** (`ui.js`) : écran de choix de héros en début de partie
-   (parmi les héros débloqués, + option aléatoire), réutilisant les patterns
-   de cartes du design system.
-4. **Encyclopédie** (`ui.js`) : section Héros (portrait, bonus, statut
-   verrouillé/débloqué), même pattern que `carteGuide()`/
-   `ouvrirGuideDetail()`.
+1. ✅ **Fondations données** (`config.js`, `state.js`) : catalogue `HEROS`
+   (les 7 héros ci-dessus, bonus décrit en donnée), `ANDROIDE` (remplaçant
+   neutre), champ `state.heroActif` (run en cours, sérialisé dans la
+   sauvegarde), `state.metaHeros` (squelette persisté), déblocage permanent
+   via le mécanisme `decouvrir()`/`estDecouvert()` déjà existant (catégorie
+   `'heros'`, pas de nouveau store). Vérifié sans régression (partie lancée
+   de bout en bout jusqu'à la carte de secteur, aucune erreur console).
+2. ✅ **Intégration combat** (`entities.js`, `combat.js`) : `nouveauVaisseau`
+   fige le héros actif à la création (`f.heroId`) et ajuste ses PV (malus
+   éventuel, ex. Polyphème) ; `tuerFighter` bascule `state.heroActif` sur
+   `'androide'` quand le Vaisseau Rouge meurt. Bonus branchés : Darkor/
+   Polyphème (dégâts du tir de zone, `combat.js:tirer`), Odysseus/L'Achéen
+   (évasion/bouclier du premier coup, `entities.js:blesser`), Slum
+   (régénération du croiseur, `combat.js:finDuTour`), Bar4-bar4 (précision
+   réduite des ailes adjacentes, `combat.js:finDuTour`), Demonokos (portée +
+   immunité au brouillage, `combat.js:analyseTir`). Testé en forçant
+   temporairement `state.heroActif` sur un héros doté d'un bonus : plusieurs
+   tours de combat joués sans erreur, puis revérifié avec l'androïde par
+   défaut.
+3. ✅ **UI de sélection** (`ui.js`, `main.js`) : écran `#heroChoix` affiché
+   après le choix de la difficulté (`demarrerAvecDifficulte`) et avant
+   « Rejouer » (`btnRejouer`) — une carte par héros (icône provisoire tirée
+   de `ICONS`/`sprites.js` en attendant un vrai portrait via
+   `pixel-editor.html`, badge de rareté) + bouton Aléatoire, réutilisant le
+   pattern `.cards`/`.card` du design system. Choisir un héros le marque
+   découvert dans l'Encyclopédie (même logique que `decouvrir('vaisseau',…)`
+   pour les autres types de vaisseaux). **Simplification actuelle** : les 7
+   héros sont tous proposés dès la première partie (rien n'étant encore
+   débloqué avant le lot 5, un filtrage par `estDecouvert` viderait l'écran)
+   — à revoir une fois les événements de récupération/déblocage livrés, pour
+   ne proposer que les héros réellement débloqués + l'aléatoire.
+4. ✅ **Encyclopédie** (`ui.js`) : section « Héros » dans `#guide`
+   (`guideHeros`), même pattern `carteGuide()`/`ouvrirGuideDetail()` que les
+   autres catégories (portrait provisoire, rareté, statut verrouillé/
+   débloqué, fiche détail avec le texte du bonus passif).
+   Testé en jeu (FR et EN) : écran de choix, sélection d'un héros, partie
+   lancée, entrée correspondante débloquée dans l'Encyclopédie avec badge de
+   rareté et détail du bonus — aucune erreur console.
 5. **Événements de carte** (`map.js`) : nouveau type de nœud dédié pour
    récupérer/débloquer un héros.
 6. **Arbre méta par héros** : dépense de cristaux pour booster un héros
    précis, une fois le barème défini.
 7. **Habillage** : portraits réels (via `pixel-editor.html`), variations de
-   sprite de combat par héros, traduction FR/EN complète, section
-   `design-system.html` dédiée, incrément `VERSION`/cache SW comme à chaque
-   lot livré.
+   sprite de combat par héros, section `design-system.html` dédiée,
+   incrément `VERSION`/cache SW comme à chaque lot livré (déjà fait pour les
+   traductions FR/EN, complètes dès le lot 3).
 
-**Prochaine étape** : lot 3 (UI de sélection — écran de choix de héros en
-début de partie ; sans lui, `state.heroActif` reste toujours `'androide'`,
-donc aucun bonus n'est encore observable en jeu réel).
-
-1. ✅ **Fondations données** — catalogue `HEROS`/`ANDROIDE` (`config.js`),
-   `state.heroActif` (run en cours, sérialisé dans la sauvegarde),
-   `state.metaHeros` (squelette persisté), déblocage réutilisant
-   `decouvrir()`/`estDecouvert()` (catégorie `'heros'`). Androïde par défaut
-   tant que l'écran de choix (lot 3) n'existe pas. Aucun écran atteignable
-   encore, aucun bonus appliqué en jeu — vérifié sans régression (partie
-   lancée de bout en bout jusqu'à la carte de secteur, aucune erreur console).
-2. ✅ **Intégration combat** — `nouveauVaisseau('rouge',…)` fige le héros actif
-   à la création (`f.heroId`) et ajuste ses PV (malus éventuel, ex.
-   Polyphème) ; `tuerFighter` bascule `state.heroActif` sur `'androide'`
-   quand le Vaisseau Rouge meurt. Bonus branchés : Darkor/Polyphème (dégâts
-   du tir de zone, `combat.js:tirer`), Odysseus/L'Achéen (évasion/bouclier
-   du premier coup, `entities.js:blesser`), Slum (régénération du croiseur,
-   `combat.js:finDuTour`), Bar4-bar4 (précision réduite des ailes
-   adjacentes, `combat.js:finDuTour`), Demonokos (portée + immunité au
-   brouillage, `combat.js:analyseTir`). Testé en forçant temporairement
-   `state.heroActif` sur un héros doté d'un bonus : plusieurs tours de
-   combat joués (tirs, dégâts subis, régénération) sans erreur console, puis
-   revérifié avec l'androïde par défaut. **Équilibrage non testé en jeu réel**
-   (pas d'écran de sélection encore) — valeurs à ajuster une fois le lot 3
-   livré et jouable, conformément à la méthode "score théorique → ajustement
-   après tests" définie plus haut.
+**Prochaine étape** : lot 5 (événements de carte pour récupérer/débloquer un
+héros) — ou lot 6 (arbre méta par héros) selon la priorité choisie ; les deux
+sont indépendants du reste et peuvent être menés dans l'ordre qui arrange le
+mieux les tests. En l'état, tous les héros restent sélectionnables dès la
+première partie (voir simplification notée à l'étape 3) tant que le lot 5
+n'est pas livré.

@@ -2,8 +2,8 @@
    UI — DOM (modales, infobulle, journal, HUD texte) + entrées
    (souris + clavier)
    ===================================================================== */
-import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES } from './config.js';
+import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert, decouvrir } from './state.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
@@ -150,6 +150,42 @@ export function ouvrirBuild(){ state.choixBuild=true; tooltip.classList.remove('
 }
 function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours,toursInitial:tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
 buildDiv.addEventListener('click',e=>{ if(e.target===buildDiv){ state.choixBuild=false; buildDiv.classList.remove('visible'); } });
+
+/* =====================================================================
+   CHOIX DU HÉROS (Vaisseau Rouge) — écran affiché en début de partie
+   ===================================================================== */
+const heroChoixDiv=document.getElementById('heroChoix'), heroChoixCards=document.getElementById('heroChoixCards');
+let heroChoixCallback=null;
+function carteHero(h,onClick){
+  const b=document.createElement('div'); b.className='card';
+  b.appendChild(divEmo(h.ico));
+  const d=document.createElement('div');
+  d.innerHTML='<div class="nom">'+t('hero_'+h.id+'_nom')+'</div><div class="desc">'+t('hero_'+h.id+'_desc')+'</div>'+badgeRarete(h.rarete);
+  b.appendChild(d);
+  b.onclick=onClick;
+  return b;
+}
+/* callback(heroId) appelé après le choix (bouton ou carte) ; le héros choisi est marqué
+   découvert dans l'Encyclopédie (même logique que decouvrir('vaisseau',type) pour les autres
+   types de vaisseaux — jouer un héros suffit à le révéler, pas besoin d'attendre les
+   événements de récupération de la roadmap). */
+export function ouvrirChoixHero(callback){
+  heroChoixCallback=callback;
+  tooltip.classList.remove('visible');
+  heroChoixCards.innerHTML='';
+  for(const h of HEROS){
+    heroChoixCards.appendChild(carteHero(h,()=>{
+      decouvrir('heros',h.id); heroChoixDiv.classList.remove('visible'); heroChoixCallback=null; callback(h.id);
+    }));
+  }
+  heroChoixDiv.classList.add('visible');
+}
+document.getElementById('btnHeroAleatoire').addEventListener('click',()=>{
+  if(!heroChoixCallback) return;
+  const h=HEROS[Math.floor(Math.random()*HEROS.length)];
+  decouvrir('heros',h.id); heroChoixDiv.classList.remove('visible');
+  const cb=heroChoixCallback; heroChoixCallback=null; cb(h.id);
+});
 
 /* Exécute effet() et récupère le(s) message(s) de journal qu'il a produits pendant son exécution
    (logMsg ajoute une entrée dans #log) : ça donne le résultat RÉEL de l'effet (utile pour les
@@ -364,6 +400,13 @@ export function ouvrirGuide(){
       const cap=CAPACITES[type];
       const stats=[[t('guide_pv'),hpVaisseauBase(type)]]; if(cap) stats.push([t('cap_'+type+'_nom'),t('cap_'+type+'_desc')]);
       ouvrirGuideDetail(img,null,nomKey,descKey,null,stats);
+    })); }
+  const zoneHeros=document.getElementById('guideHeros'); zoneHeros.innerHTML='';
+  for(const h of HEROS){ const dec=estDecouvert('heros',h.id);
+    const nomKey='hero_'+h.id+'_nom', descKey='hero_'+h.id+'_desc';
+    zoneHeros.appendChild(carteGuide(null,h.ico,nomKey,descKey,dec,h.rarete,()=>{
+      const stats=[[t('guide_hero_bonus'),t('hero_'+h.id+'_bonus')]];
+      ouvrirGuideDetail(null,h.ico,nomKey,descKey,h.rarete,stats);
     })); }
   const zoneEnnemis=document.getElementById('guideEnnemis'); zoneEnnemis.innerHTML='';
   for(const type of GUIDE_ENNEMIS){ const dec=estDecouvert('aile',type), img=imgAileGuide(type), tier=RARETE.aile[type];

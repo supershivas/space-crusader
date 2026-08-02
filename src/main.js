@@ -11,7 +11,7 @@ import { demarrerTourJoueur, animer } from './combat.js';
 import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
-import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil } from './ui.js';
+import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil, ouvrirChoixHero } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
 import { t, chargerLangue, langueSuivante, appliquerLangue } from './i18n.js';
 import { tutorielVu, demarrer as demarrerTuto, relancer as relancerTuto, mettreAJour as mettreAJourTuto } from './tuto.js';
@@ -146,8 +146,11 @@ function demarrerAvecDifficulte(diff){
   initAudio(); loadData(); effacerSauvegarde();
   const premiereFois=!tutorielVu();
   definirDifficultePreferee(diff);
-  nouvellePartie();
-  if(premiereFois) demarrerTuto();
+  ouvrirChoixHero(heroId=>{
+    state.heroActif=heroId;
+    nouvellePartie();
+    if(premiereFois) demarrerTuto();
+  });
 }
 document.getElementById('btnJouer').addEventListener('click',()=>{ initAudio(); ouvrirDifficulte(); });
 document.getElementById('btnDiffAnnuler').addEventListener('click',()=>{ document.getElementById('difficulte').classList.remove('visible'); });
@@ -193,7 +196,7 @@ document.getElementById('btnPauseAccueil').addEventListener('click',()=>{ retour
 document.getElementById('btnPauseAbandonner').addEventListener('click',()=>{ demanderConfirmation(t('pause_abandonner_confirm'),abandonnerPartie); });
 document.getElementById('pauseBtn').addEventListener('click',()=>{ if(state.phase!=='accueil'&&state.phase!=='fin'&&state.phase!=='attente') togglePause(); });
 
-document.getElementById('btnRejouer').addEventListener('click',()=>{ initAudio(); state.difficulte=state.difficultePreferee; nouvellePartie(); });
+document.getElementById('btnRejouer').addEventListener('click',()=>{ initAudio(); state.difficulte=state.difficultePreferee; ouvrirChoixHero(heroId=>{ state.heroActif=heroId; nouvellePartie(); }); });
 document.getElementById('btnMeta').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnMeta2').addEventListener('click',()=>{ ouvrirMeta(); });
 document.getElementById('btnFinAccueil').addEventListener('click',()=>{ retourAccueil(); });

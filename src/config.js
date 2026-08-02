@@ -51,27 +51,29 @@ export const ANDROIDE={
   desc:'Remplace un héros perdu au combat : aucun visage distinctif, aucun bonus passif.',
   bonus:null,
 };
+/* `ico` référence une clé de ICONS (sprites.js) — icône de remplacement le temps qu'un vrai
+   portrait pixel-art (pixel-editor.html) soit dessiné pour chaque héros. */
 export const HEROS=[
  // score 2/0/3/0=5 → rare
- {id:'darkor', nom:'Darkor', desc:'Casqué tout noir, reflets brillants.', rarete:'rare',
+ {id:'darkor', nom:'Darkor', desc:'Casqué tout noir, reflets brillants.', rarete:'rare', ico:'crane',
   bonus:{id:'degats_tir', valeur:1, desc:'+1 dégât de tir, en permanence'}},
  // score 3/0/2/0=5 → rare
- {id:'odysseus', nom:'Odysseus', desc:'Barbu, yeux clairs, peau claire.', rarete:'rare',
+ {id:'odysseus', nom:'Odysseus', desc:'Barbu, yeux clairs, peau claire.', rarete:'rare', ico:'carte',
   bonus:{id:'evasion_mortelle', desc:"Évite automatiquement une attaque qui l'aurait détruit, une fois par combat"}},
  // score 2/0/2/-1=3 → peu_commun
- {id:'acheen', nom:"L'Achéen", desc:"Cheveux blonds bouclés, peau claire, boucle d'oreille dorée.", rarete:'peu_commun',
+ {id:'acheen', nom:"L'Achéen", desc:"Cheveux blonds bouclés, peau claire, boucle d'oreille dorée.", rarete:'peu_commun', ico:'epee',
   bonus:{id:'bouclier_premier_tir', desc:'Immunisé au premier tir subi à chaque combat, mais +1 dégât reçu sur tous les tirs suivants ce combat-là'}},
  // score 3/0/3/-1=5 → rare
- {id:'polypheme', nom:'Polyphème', desc:'Cyclope, force brute.', rarete:'rare',
+ {id:'polypheme', nom:'Polyphème', desc:'Cyclope, force brute.', rarete:'rare', ico:'explosion',
   bonus:{id:'degats_pourcent', valeur:0.5, malusPvMax:1, desc:'+50% dégâts de tir, -1 PV max'}},
  // score 1/0/3/0=4 → peu_commun
- {id:'slum', nom:'Slum', desc:'Peau verte gluante, deux yeux globuleux.', rarete:'peu_commun',
+ {id:'slum', nom:'Slum', desc:'Peau verte gluante, deux yeux globuleux.', rarete:'peu_commun', ico:'aimant',
   bonus:{id:'regen_tour', valeur:0.02, desc:'+2% PV régénérés par tour, en permanence'}},
  // score 1/2/3/0=6 → rare
- {id:'bar4bar4', nom:'Bar4-bar4', desc:'Femme brune, peau mate.', rarete:'rare',
+ {id:'bar4bar4', nom:'Bar4-bar4', desc:'Femme brune, peau mate.', rarete:'rare', ico:'gemme',
   bonus:{id:'aura_precision_ennemie', desc:'Les ailes ennemies adjacentes à elle ont une précision réduite'}},
  // score 2/0/3/0=5 → rare
- {id:'demonokos', nom:'Demonokos', desc:'Aigle aveugle.', rarete:'rare',
+ {id:'demonokos', nom:'Demonokos', desc:'Aigle aveugle.', rarete:'rare', ico:'vent',
   bonus:{id:'portee_brouillage', valeur:1, desc:'+1 portée de tir, immunisé aux effets de brouillage (brouilleur/void)'}},
 ];
 export function heroParId(id){ return HEROS.find(h=>h.id===id)||null; }
