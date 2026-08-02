@@ -224,7 +224,7 @@ export function toucherBoss(deg,px,py){ if(!state.boss) return;
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
     state.secousse=18; state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null;
-    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast('🏆 '+t('toast_forteresse_detruite'),'gold'); sonVoix('BOSS');
+    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast('🏆 '+t('toast_forteresse_detruite'),'gold'); sonVoix('BOSS','victoire');
     checkAchievements();
   } }
 

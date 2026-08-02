@@ -208,21 +208,20 @@ export const AILE_TRANSPORTEUR=["....W....",".W.WGW.W.","WGWGWGWGW","WGWWWWWGW",
 export const TITAN=[".ZZ...ZZ.","ZZZZ.ZZZZ","ZZsSSSsZZ","ZsSSeSSsZ","ZsSeMeSsZ","ZsSeMeSsZ","ZsSSeSSsZ","ZZsSSSsZZ",".ZZSSSZZ.","..ZSSSZ..","..ZSeSZ..","...ZeZ...","...ZeZ...","....e...."];
 
 /* ---- OBSTACLES (Lot 1) ---- */
-export const DEBRIS_1=[".nNNn.","NmWmmN","NmmmWn","nWmmmN","NmmWmN",".nNNn."];
-export const DEBRIS_2=["..NNn.",".NmWmN","NmWmmn","nmmWmN","NmWmN.","nNNn.."];
 export const STATION_PIECE=["bBBBBBBBb","BSWssWSB.","BsCiiCsBB","BSiOOOiSB","BsCiiCsB.","BSWssWSBb","bBB..BBb.",".b..bB..."];
 export const BARRIERE=["WDDDDDW","DCiCiCD","DiCiCiD","DCiCiCD","DiCiCiD","DCiCiCD","WDDDDDW"];
 /* ruine (mission planète, biome Villes anciennes) : pierre ancienne effritée — palette T/t
    dédiée (tons terre cuite), distincte des débris métalliques (N/n/m) */
 export const RUINE_1=[".TTTT.","TtTTtT","TTttTT","TtTTtT","TTTTTT",".TTTT."];
 export const RUINE_2=["TTTTTT",".TtTt.","TTTTTT",".tTTt.","TTTTTT",".TTTT."];
-/* épave de vaisseau (allié détruit) : 3 petits bouts de coque, palette bleu-gris du Vaisseau
-   Standard (B/b/S/s, voir JOUEUR) — distincte de la palette terreuse des débris classiques
-   (N/n/m) pour bien lire "morceau de vaisseau" et non "caillasse spatiale". Recuits à échelle
-   réduite (voir cuireUnites) pour rester nettement plus petits que DEBRIS_1/2. */
-export const DEBRIS_VAISSEAU_1=["Bb.","bSs",".sB"];
-export const DEBRIS_VAISSEAU_2=[".Bb","Ssb","b.."];
-export const DEBRIS_VAISSEAU_3=["sB.",".bS","B.b"];
+/* épave de vaisseau (allié ou ennemi détruit) : 3 petits bouts de coque éparpillés, recuits à
+   échelle réduite (voir cuireUnites) pour rester nettement plus petits que les anciens débris
+   pleine cellule. Grille de forme unique, partagée par les deux camps — seule la palette
+   change à la cuisson : bleu-gris par défaut (B/b/S/s, voir JOUEUR) pour les vaisseaux alliés,
+   override rouge (voir OVER_DEBRIS_ENNEMI dans entities.js) pour les ailes ennemies. */
+export const DEBRIS_FRAGMENT_1=["Bb.","bSs",".sB"];
+export const DEBRIS_FRAGMENT_2=[".Bb","Ssb","b.."];
+export const DEBRIS_FRAGMENT_3=["sB.",".bS","B.b"];
 
 /* ---- MISSION PLANÈTE : base ennemie + tourelles fixes ---- */
 /* base ennemie : bastion fortifié (3×2 cases, même gabarit qu'un boss), noyau d'énergie violet

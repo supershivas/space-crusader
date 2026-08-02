@@ -52,6 +52,12 @@
   .menu-vertical{display:flex;flex-direction:column;gap:var(--space-sm);align-items:center;}
   .menu-vertical button.jouer{width:min(78vw,260px);}
 
+  /* ===== Réglage de volume (Paramètres) ===== */
+  .volume-bloc{display:flex;flex-direction:column;gap:10px;width:100%;max-width:260px;margin-bottom:var(--space-md);}
+  .volume-row{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:var(--fs-petit);color:var(--texte);}
+  .volume-row span:nth-child(2){min-width:52px;text-align:left;}
+  .volume-row input[type=range]{flex:1;accent-color:#37e0ff;height:14px;}
+
   /* ===== Cartes de choix ===== */
   .cards{display:flex;gap:var(--space-sm);flex-wrap:wrap;}
   .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-lg);
@@ -293,6 +299,18 @@
       <button class="jouer secondaire">Options</button>
       <button class="jouer secondaire">Encyclopédie</button>
       <button class="jouer danger">Abandonner</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Réglage de volume (Paramètres)</h2>
+    <p class="note">Deux curseurs indépendants (musique / effets) dans l'écran Paramètres,
+      remplaçant le tout-ou-rien du bouton son du HUD. <code>accent-color</code> reprend le cyan
+      d'accent du jeu ; icône + libellé + curseur, même famille que <code>.volume-row</code>
+      dans <code>index.html</code>.</p>
+    <div class="volume-bloc">
+      <div class="volume-row"><span>🔊</span><span>Musique</span><input type="range" min="0" max="100" value="80"></div>
+      <div class="volume-row"><span>🔊</span><span>Effets</span><input type="range" min="0" max="100" value="65"></div>
     </div>
   </section>
 
@@ -556,9 +574,13 @@ carte('cat-elites',S.TITAN,'Titan',{elite:true});
 // Boss
 for(const type in S.BOSS_GRIDS) carte('cat-boss',S.BOSS_GRIDS[type],'Boss '+type,{boss:true,taille:96});
 
-// Obstacles & menaces
-carte('cat-obstacles',S.DEBRIS_1,'Débris');
-carte('cat-obstacles',S.DEBRIS_2,'Débris (variante)');
+// Obstacles & menaces — débris ennemi et épave de vaisseau allié partagent la même forme de
+// fragments (DEBRIS_FRAGMENT_*), seule la palette diffère (voir OVER_DEBRIS_ENNEMI dans
+// entities.js, dupliqué ici puisque cette page n'importe pas entities.js).
+const OVER_DEBRIS_ENNEMI={B:'#5a1420',b:'#8f2b2f',S:'#c94257',s:'#ff8f92'};
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Débris (ennemi)',{over:OVER_DEBRIS_ENNEMI,taille:48});
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_2,'Débris (ennemi, variante)',{over:OVER_DEBRIS_ENNEMI,taille:48});
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Épave de vaisseau (allié)',{taille:48});
 carte('cat-obstacles',S.STATION_PIECE,'Épave de station');
 carte('cat-obstacles',S.BARRIERE,'Barrière');
 carte('cat-obstacles',S.ASTER,'Astéroïde');

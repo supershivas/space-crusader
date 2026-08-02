@@ -72,6 +72,8 @@ const STRINGS = {
     diff_annuler:'Retour',
     // Paramètres (menu)
     params_titre:'PARAMÈTRES',
+    params_vol_musique:'Musique',
+    params_vol_effets:'Effets',
     params_infos:'Comment jouer',
     params_checkupdate:'Vérifier les mises à jour',
     params_checkupdate_recherche:'Recherche de mise à jour…',
@@ -544,6 +546,8 @@ const STRINGS = {
     diff_difficile:'Hard',    diff_difficile_d:'Fragile cruiser, many tough enemies.',
     diff_annuler:'Back',
     params_titre:'SETTINGS',
+    params_vol_musique:'Music',
+    params_vol_effets:'Sound effects',
     params_infos:'How to play',
     params_checkupdate:'Check for updates',
     params_checkupdate_recherche:'Checking for updates…',
