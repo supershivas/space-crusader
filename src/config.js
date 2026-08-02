@@ -182,6 +182,15 @@ export function basePvMax(secteur,difficulte){
   return Math.round((30+secteur*12)*d.baseHpMult);
 }
 
+/* estimation grossière de la force de défense (nombre de tourelles) pour le briefing de mission
+   — même formule que creerTourelles (planete.js) mais sans générer les tourelles elles-mêmes,
+   volontairement floue ("légère/moyenne/lourde") plutôt qu'un compte exact (voir ROADMAP.md). */
+export function forceDefensePlanete(secteur,difficulte){
+  const d=DIFFICULTES[difficulte]||DIFFICULTES.normal;
+  const nb=Math.max(2,2+Math.floor(secteur/2)+(d.squadDelta||0));
+  return nb<=2?'legere':nb<=4?'moyenne':'lourde';
+}
+
 /* ===== JAUGE D'ALERTE (mission planète, refonte) =====
    Monte tant que l'escadrille ne progresse pas vers la base — jamais un chrono dur : elle
    redescend à 0 dès qu'un vaisseau bat son propre record de rapprochement (voir planete.js,

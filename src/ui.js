@@ -3,7 +3,7 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert, decouvrir } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS, META_HEROS_MAX, coutMetaHero } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS, META_HEROS_MAX, coutMetaHero, BIOMES, forceDefensePlanete } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
@@ -12,7 +12,7 @@ import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRen
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
-import { finDuTourPlanete, appliquerGlissade, verifierCamouflage } from './planete.js';
+import { finDuTourPlanete, appliquerGlissade, verifierCamouflage, demarrerMissionPlanete } from './planete.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
 import { iconCanvas, imgBonusPV, imgBonusTIR, imgBonusVAIS } from './sprites.js';
 import { t } from './i18n.js';
@@ -29,6 +29,9 @@ const pauseDiv=document.getElementById('pause'), achieveDiv=document.getElementB
 const upgradeDiv=document.getElementById('upgrade'), upgradeCards=document.getElementById('upgradeCards');
 const buildDiv=document.getElementById('build'), buildCards=document.getElementById('buildCards');
 const eventDiv=document.getElementById('event'), eventTitre=document.getElementById('eventTitre'), eventDesc=document.getElementById('eventDesc'), eventCards=document.getElementById('eventCards');
+const briefingDiv=document.getElementById('planeteBriefing'), briefingBiomeNom=document.getElementById('briefingBiomeNom'),
+  briefingMecanique=document.getElementById('briefingMecanique'), briefingForce=document.getElementById('briefingForce'),
+  briefingAlerte=document.getElementById('briefingAlerte'), briefingCards=document.getElementById('briefingCards');
 const carteDiv=document.getElementById('carte'), carteChoixDiv=document.getElementById('carteChoix');
 const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionObjectif=document.getElementById('missionObjectif'),
   missionRecap=document.getElementById('missionRecap'), missionScoreVal=document.getElementById('missionScoreVal'), missionScoreLigne=document.getElementById('missionScoreLigne'), missionInfos=document.getElementById('missionInfos');
@@ -270,6 +273,34 @@ export function ouvrirScenePlanete(scene){
     };
     eventCards.appendChild(b); }
   eventDiv.classList.add('visible');
+}
+
+/* briefing de mission planète (étape 3 de la refonte) : affiché avant la bannière d'engagement,
+   au moment d'entrer sur le nœud — le biome est tiré ici (pas dans demarrerMissionPlanete) pour
+   que le texte affiché corresponde exactement à la mission qui démarrera. Force de défense
+   volontairement floue (légère/moyenne/lourde, voir forceDefensePlanete) plutôt qu'un compte
+   exact de tourelles, pour garder un peu de brouillard de guerre (cf. ROADMAP.md). Le choix
+   d'approche (façon FTL, léger) est géré par demarrerMissionPlanete lui-même. */
+export function ouvrirBriefingPlanete(){
+  state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
+  tooltip.classList.remove('visible');
+  const biome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
+  const force=forceDefensePlanete(state.secteur,state.difficulte);
+  briefingBiomeNom.textContent=t('biome_'+biome.id+'_nom');
+  briefingMecanique.textContent=t('biome_'+biome.id+'_desc');
+  briefingForce.innerHTML=''; icone(briefingForce,'cible',12); briefingForce.appendChild(document.createTextNode(' '+t('briefing_force_label')+' : '+t('briefing_force_'+force)));
+  briefingAlerte.innerHTML=''; icone(briefingAlerte,'alerte',12); briefingAlerte.appendChild(document.createTextNode(' '+t('briefing_alerte_rappel')));
+  briefingCards.innerHTML='';
+  const approches=[
+    {ico:'cle',  nom:t('briefing_approche_standard_nom'),  desc:t('briefing_approche_standard_desc'),  approche:'standard'},
+    {ico:'epee', nom:t('briefing_approche_agressive_nom'), desc:t('briefing_approche_agressive_desc'), approche:'agressive'},
+  ];
+  for(const ap of approches){ const b=document.createElement('div'); b.className='card';
+    b.appendChild(divEmo(ap.ico));
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+ap.nom+'</div><div class="desc">'+ap.desc+'</div>'; b.appendChild(d);
+    b.onclick=()=>{ briefingDiv.classList.remove('visible'); demarrerMissionPlanete(biome.id,ap.approche); };
+    briefingCards.appendChild(b); }
+  briefingDiv.classList.add('visible');
 }
 export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' '+t('meta_cristaux')+' : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;

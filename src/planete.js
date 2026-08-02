@@ -211,14 +211,21 @@ function appliquerZoneHostile(pl,niveau){
 
 /* ===== FLUX DE MISSION ===== */
 
-/* démarrage d'une mission planète : tire un biome, crée la base et les tourelles, repositionne
-   l'escadrille sur les 2 dernières rangées (reorganiserVaisseaux, comme secteurSuivant()) et
-   ouvre le premier tour joueur. state.enCombat reste volontairement à false pendant toute la
-   mission : le check de victoire automatique de combat.js (gagnerCombat) est réservé au combat
-   spatial (ailes.length===0), ce qui n'a pas de sens ici (les ailes sont la garnison, produite
-   progressivement, pas une vague fixe à épuiser). */
-export function demarrerMissionPlanete(){
-  const biome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
+/* démarrage d'une mission planète : crée la base et les tourelles sur le biome choisi au
+   briefing (voir ouvrirBriefingPlanete, ui.js), repositionne l'escadrille sur les 2 dernières
+   rangées (reorganiserVaisseaux, comme secteurSuivant()) et ouvre le premier tour joueur.
+   state.enCombat reste volontairement à false pendant toute la mission : le check de victoire
+   automatique de combat.js (gagnerCombat) est réservé au combat spatial (ailes.length===0), ce
+   qui n'a pas de sens ici (les ailes sont la garnison, produite progressivement, pas une vague
+   fixe à épuiser).
+   biomeId : imposé par le briefing (choisi avant que le joueur ne voie l'écran) — jamais tiré
+   ici, pour que la description du briefing corresponde exactement à la mission qui démarre.
+   approche : 'standard' (défaut) ou 'agressive' — choix léger façon FTL fait au briefing :
+   l'escadrille gagne une rangée d'avance immédiate, mais la jauge d'alerte démarre déjà proche
+   de son premier palier (à 1 tour de l'avertissement, jamais l'activation directe — toujours
+   télégraphié, cf. doctrine du jeu). */
+export function demarrerMissionPlanete(biomeId,approche){
+  const biome=BIOMES.find(b=>b.id===biomeId)||BIOMES[Math.floor(Math.random()*BIOMES.length)];
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   const base=creerBase(state.secteur,state.difficulte); base.reveillee=true;
   decouvrir('planete_biome',biome.id); decouvrir('planete_base','base');
@@ -235,6 +242,10 @@ export function demarrerMissionPlanete(){
   state.killsThisWave=0; state.scoreAvantVague=state.score; state.onObstacleDetruit=null;
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; f.gele=0; }
   reorganiserVaisseaux();
+  if(approche==='agressive'){
+    for(const f of state.fighters) f.r=Math.max(0,f.r-1);
+    state.planete.alerte=Math.max(0,ALERTE_PALIER1-2);
+  }
   state.planete.meilleureDistance=meilleureDistanceActuelle(state.planete);
   appliquerMecaniqueBiome(biome.id);
   annoncerMissionPlanete(biome.id);

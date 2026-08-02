@@ -240,6 +240,15 @@ const STRINGS = {
     tourelle_canon_nom:'Tourelle canon', tourelle_canon_desc:'Tourelle fixe standard, portée courte.',
     tourelle_sniper_nom:'Tourelle sniper', tourelle_sniper_desc:'Tourelle fixe à longue portée, peu de PV.',
     tourelle_lourde_nom:'Tourelle lourde', tourelle_lourde_desc:'Tourelle fixe blindée, dégâts élevés.',
+
+    // ===== Missions planète : briefing (étape 3 de la refonte) =====
+    briefing_force_label:'Défenses estimées',
+    briefing_force_legere:'Légères', briefing_force_moyenne:'Moyennes', briefing_force_lourde:'Lourdes',
+    briefing_alerte_rappel:'Rester immobile trop longtemps alerte la garnison, puis rend l\'arrière du champ de bataille hostile — avance régulièrement pour désamorcer la jauge.',
+    briefing_approche_standard_nom:'Approche prudente',
+    briefing_approche_standard_desc:'Départ normal, aucun risque ajouté.',
+    briefing_approche_agressive_nom:'Poussée agressive',
+    briefing_approche_agressive_desc:'L\'escadrille s\'élance d\'une rangée dès le départ, mais la garnison est déjà en alerte.',
     planete_base_guide_nom:'Base ennemie', planete_base_guide_desc:'Objectif des missions planète : la détruire remporte la mission.',
 
     // ===== Objectifs de vague =====
@@ -708,6 +717,15 @@ const STRINGS = {
     tourelle_sniper_nom:'Sniper turret', tourelle_sniper_desc:'Long-range fixed turret, low HP.',
     tourelle_lourde_nom:'Heavy turret', tourelle_lourde_desc:'Armored fixed turret, high damage.',
     planete_base_guide_nom:'Enemy base', planete_base_guide_desc:'Planet mission objective: destroy it to win the mission.',
+
+    // ===== Planet missions: briefing (refonte step 3) =====
+    briefing_force_label:'Estimated defenses',
+    briefing_force_legere:'Light', briefing_force_moyenne:'Moderate', briefing_force_lourde:'Heavy',
+    briefing_alerte_rappel:'Staying put too long alerts the garrison, then turns the rear of the battlefield hostile — keep advancing to defuse the gauge.',
+    briefing_approche_standard_nom:'Cautious approach',
+    briefing_approche_standard_desc:'Normal start, no added risk.',
+    briefing_approche_agressive_nom:'Aggressive push',
+    briefing_approche_agressive_desc:'The squadron surges forward one row at the start, but the garrison is already on alert.',
 
     objectif_secondaire:'Secondary objective',
     obj_sansdegat:'No damage to the cruiser',
