@@ -6,7 +6,7 @@ import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauveg
 import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS, META_HEROS_MAX, coutMetaHero, BIOMES, forceDefensePlanete } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
-         imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
+         imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase, imgHeroPortrait } from './entities.js';
 import { rafraichirSkinCroiseur, imgBossGuide, imgBaseGuide, imgTourelleGuide, randomiserAccueil } from './render.js';
 import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRenfort, startMusic, stopMusic, toggleSound } from './audio.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
@@ -21,6 +21,16 @@ import { t } from './i18n.js';
 function icone(container,ico,px=18){ if(!ico) return; const cv=iconCanvas(ico,px); cv.className='pixel-ico'; container.appendChild(cv); }
 /* div .emo contenant une icône pixel-art, pour les cartes de choix (améliorations/événements) */
 function divEmo(ico){ const d=document.createElement('div'); d.className='emo'; icone(d,ico||'point',26); return d; }
+/* portrait pixel-art d'un héros (voir imgHeroPortrait), mis à l'échelle en CSS plutôt qu'en le
+   recuisant à chaque appel — même canvas source réutilisé par la sélection, l'encyclopédie et
+   l'infobulle de combat. */
+function canvasPortrait(heroId,taillePx){
+  const img=imgHeroPortrait(heroId);
+  const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
+  cv.style.imageRendering='pixelated'; cv.style.width=taillePx+'px'; cv.style.height=(taillePx*img.height/img.width)+'px';
+  cv.getContext('2d').drawImage(img,0,0);
+  return cv;
+}
 
 const canvas=document.getElementById('jeu');
 const scene=document.getElementById('scene');
@@ -166,7 +176,7 @@ const heroChoixDiv=document.getElementById('heroChoix'), heroChoixCards=document
 let heroChoixCallback=null;
 function carteHero(h,onClick){
   const b=document.createElement('div'); b.className='card';
-  b.appendChild(divEmo(h.ico));
+  b.appendChild(canvasPortrait(h.id,52));
   const d=document.createElement('div');
   d.innerHTML='<div class="nom">'+t('hero_'+h.id+'_nom')+'</div><div class="desc">'+t('hero_'+h.id+'_desc')+'</div>'+badgeRarete(h.rarete);
   b.appendChild(d);
@@ -365,6 +375,7 @@ const GUIDE_BONUS=['pv','tir','vaisseau','mimic'];
    (imgObstacle/getImgAster) quand elles existent, sinon un pictogramme générique thématique. */
 const GUIDE_MENACES=[
   {type:'debris',    nomKey:'obs_debris_nom',    descKey:'obs_debris_desc',    img:()=>imgObstacle({type:'debris',variante:false})},
+  {type:'debris_vaisseau', nomKey:'obs_debris_vaisseau_nom', descKey:'obs_debris_vaisseau_desc', img:()=>imgObstacle({type:'debris_vaisseau'})},
   {type:'station',   nomKey:'obs_station_nom',   descKey:'obs_station_desc',   img:()=>imgObstacle({type:'station'})},
   {type:'barriere',  nomKey:'obs_barriere_nom',  descKey:'obs_barriere_desc',  img:()=>imgObstacle({type:'barriere'})},
   {type:'mines',     nomKey:'obs_mines_nom',     descKey:'obs_mines_desc',     ico:'alerte'},
@@ -402,10 +413,14 @@ function decouvertesResume(){
 /* Carte d'encyclopédie non cliquable (récap de fin de partie) : même rendu visuel que
    carteGuide() mais sans état verrouillé (toujours découverte) ni interaction — le détail
    complet reste consultable dans l'Encyclopédie elle-même. */
+/* les cartes/vignettes de l'encyclopédie sont dimensionnées pour les sprites de jeu (~40-60px) ;
+   les portraits de héros sont cuits bien plus grands (voir imgPortraitsHeros) — plafonné en CSS
+   pour tenir dans une carte sans toucher les autres images, dessinées à leur taille native. */
+function dessinerVignette(cv,img){ cv.width=img.width; cv.height=img.height; cv.getContext('2d').drawImage(img,0,0);
+  if(img.width>44){ cv.style.imageRendering='pixelated'; cv.style.width='40px'; cv.style.height=(40*img.height/img.width)+'px'; } }
 function carteGuideMini(img,ico,nomKey,tier){
   const b=document.createElement('div'); b.className='guide-card guide-card-mini';
-  if(img){ const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
-    cv.getContext('2d').drawImage(img,0,0); b.appendChild(cv); }
+  if(img){ const cv=document.createElement('canvas'); dessinerVignette(cv,img); b.appendChild(cv); }
   else if(ico) icone(b,ico,22);
   const d=document.createElement('div');
   d.innerHTML='<div class="nom">'+t(nomKey)+'</div>'+(tier?badgeRarete(tier):'');
@@ -419,8 +434,7 @@ function badgeRarete(tier){
 }
 function carteGuide(img,ico,nomKey,descKey,decouvert,tier,onClick){
   const b=document.createElement('div'); b.className='guide-card'+(decouvert?'':' verrouille');
-  if(decouvert && img){ const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
-    cv.getContext('2d').drawImage(img,0,0); b.appendChild(cv); }
+  if(decouvert && img){ const cv=document.createElement('canvas'); dessinerVignette(cv,img); b.appendChild(cv); }
   else if(decouvert && ico){ icone(b,ico,22); }
   else { icone(b,'point',22); }
   const d=document.createElement('div');
@@ -460,11 +474,11 @@ export function ouvrirGuide(){
       ouvrirGuideDetail(img,null,nomKey,descKey,null,stats);
     })); }
   const zoneHeros=document.getElementById('guideHeros'); zoneHeros.innerHTML='';
-  for(const h of HEROS){ const dec=estDecouvert('heros',h.id);
+  for(const h of HEROS){ const dec=estDecouvert('heros',h.id), portrait=imgHeroPortrait(h.id);
     const nomKey='hero_'+h.id+'_nom', descKey='hero_'+h.id+'_desc';
-    zoneHeros.appendChild(carteGuide(null,h.ico,nomKey,descKey,dec,h.rarete,()=>{
+    zoneHeros.appendChild(carteGuide(portrait,h.ico,nomKey,descKey,dec,h.rarete,()=>{
       const stats=[[t('guide_hero_bonus'),t('hero_'+h.id+'_bonus')]];
-      ouvrirGuideDetail(null,h.ico,nomKey,descKey,h.rarete,stats);
+      ouvrirGuideDetail(portrait,h.ico,nomKey,descKey,h.rarete,stats);
     })); }
   const zoneEnnemis=document.getElementById('guideEnnemis'); zoneEnnemis.innerHTML='';
   for(const type of GUIDE_ENNEMIS){ const dec=estDecouvert('aile',type), img=imgAileGuide(type), tier=RARETE.aile[type];
@@ -690,6 +704,10 @@ function updateTooltip(x,y){
     { const k=f.kills||0, grade=k>=15?'★ '+t('tt_grade_as'):k>=10?'••• '+t('tt_grade_veteran'):k>=5?'•• '+t('tt_grade_confirme'):k>=1?'• '+t('tt_grade_recrue'):t('tt_grade_bleu'); html+='<div class="tt-spd" style="color:#ffe14d">'+t('tt_grade')+' : '+grade+' ('+t('tt_kills_fmt',{n:k})+')</div>'; }
     const cap=CAPACITES[f.type];
     if(cap) html+='<div class="tt-spd" style="color:#ffd23d">⚡ '+t('cap_'+f.type+'_nom')+' — '+(f.capUsed?'déjà utilisée':t('cap_'+f.type+'_desc')+' (2e appui)')+'</div>';
+    if(f.type==='rouge' && f.heroId && f.heroId!=='androide'){
+      html+='<div class="tt-name" style="font-size:9px;color:#ffd23d">'+t('hero_'+f.heroId+'_nom')+'</div>';
+      html+='<div class="tt-spd" style="color:#7fd0b0">'+t('hero_'+f.heroId+'_bonus')+'</div>';
+    }
   } else if(b){
     if(b.type==='mimic'){
       html='<div class="tt-name" style="color:#ff8f92">'+t('bonus_mimic_nom')+'</div>';
@@ -716,7 +734,15 @@ function updateTooltip(x,y){
     html='<div class="tt-name">'+t('tt_boss')+' — '+(state.boss?t('boss_'+state.boss.type+'_nom')+' · '+t('boss_'+state.boss.type+'_desc'):'')+'</div>';
     html+='<div class="tt-hp">'+t('tt_pv')+': '+(state.boss?state.boss.hp+'/'+state.boss.maxhp:'?')+'</div>';
   }
-  if(html){ tooltip.innerHTML=html; tooltip.classList.add('visible'); }
+  if(html){ tooltip.innerHTML=html; tooltip.classList.add('visible');
+    // portrait du héros (survol du Vaisseau Rouge) : image, pas de la construction en chaîne
+    // du reste de l'infobulle — insérée en tête après coup, comme le nom du nœud de carte
+    // plus bas (voir tooltipCarte) qui utilise déjà appendChild pour la même raison.
+    if(f && f.type==='rouge' && f.heroId && f.heroId!=='androide'){
+      const cv=canvasPortrait(f.heroId,44); cv.style.display='block'; cv.style.margin='0 auto 6px';
+      tooltip.insertBefore(cv,tooltip.firstChild);
+    }
+  }
   else tooltip.classList.remove('visible');
 }
 /* infobulle de la carte des secteurs : type + description au survol d'une planète */

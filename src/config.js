@@ -154,6 +154,7 @@ export const OBSTACLES = {
   gravite:  { nom:'Champ de gravité', desc:'Traversable. Ralentit les ennemis (vitesse 1).',     bloque:false, destructible:false, hp:0, champ:'gravite', col:'#4aa3ff' },
   glace:    { nom:'Plaque de glace',  desc:'Traversable. Fait glisser d\'une case de plus dans le sens du déplacement (mission planète, biome Glace).', bloque:false, destructible:false, hp:0, champ:'glace', col:'#bfe9ff' },
   ruine:    { nom:'Ruine',            desc:'Bloque tirs et déplacements. Destructible (1 PV). Peut dissimuler une tourelle (mission planète, biome Villes anciennes).', bloque:true, destructible:true, hp:1, col:'#c9a97a' },
+  debris_vaisseau: { nom:'Épave de vaisseau', desc:'Bloque tirs et déplacements. Destructible (1 PV). Laissée parfois par un vaisseau allié détruit.', bloque:true, destructible:true, hp:1, col:'#474e5c' },
 };
 
 /* ===== MISSIONS PLANÈTE =====

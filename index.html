@@ -247,6 +247,12 @@
   /* h2 en flex (icône + texte) : l'espacement vient du gap, pas de la marge de l'icône */
   .modal h2 .ico-slot,#pause h2 .ico-slot{margin-right:0;}
   .modal .hint{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;line-height:var(--lh-normal);margin-bottom:14px;}
+  /* Réglage de volume (Paramètres) : icône + libellé + curseur, un par bus (musique/effets).
+     accent-color reprend le cyan d'accent du jeu, cohérent avec les autres composants. */
+  .volume-bloc{display:flex;flex-direction:column;gap:10px;width:100%;max-width:260px;margin-bottom:var(--space-md);}
+  .volume-row{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:var(--fs-petit);color:var(--texte);}
+  .volume-row span:nth-child(2){min-width:52px;text-align:left;}
+  .volume-row input[type=range]{flex:1;accent-color:#37e0ff;height:14px;}
   .cards{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:100%;}
   .card{font-family:var(--pixel);width:118px;min-height:132px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-lg);
     padding:12px 8px;cursor:pointer;color:#e8eefc;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
@@ -376,6 +382,10 @@
       <div class="cards" id="heroChoixCards"></div>
       <button class="jouer secondaire" id="btnHeroAleatoire" style="margin-top:14px;"><span class="ico-slot" data-ico="de"></span><span data-i18n="hero_aleatoire">ALÉATOIRE</span></button></div>
     <div id="params" class="modal"><h2><span class="ico-slot" data-ico="engrenage"></span><span data-i18n="params_titre">PARAMÈTRES</span></h2>
+      <div class="volume-bloc">
+        <div class="volume-row"><span class="ico-slot" data-ico="son_on"></span><span data-i18n="params_vol_musique">Musique</span><input type="range" id="volMusiqueSlider" min="0" max="100" value="80"></div>
+        <div class="volume-row"><span class="ico-slot" data-ico="son_on"></span><span data-i18n="params_vol_effets">Effets</span><input type="range" id="volEffetsSlider" min="0" max="100" value="80"></div>
+      </div>
       <div class="menu-vertical" style="margin-top:6px;">
       <button class="jouer secondaire" id="btnParamsInfos"><span class="ico-slot" data-ico="info"></span><span data-i18n="params_infos">Comment jouer</span></button>
       <button class="jouer secondaire" id="btnParamsLangue"><span class="ico-slot" data-ico="globe"></span><span id="langueLabel">Langue : Français</span></button>

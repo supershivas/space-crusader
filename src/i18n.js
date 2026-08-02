@@ -72,6 +72,8 @@ const STRINGS = {
     diff_annuler:'Retour',
     // Paramètres (menu)
     params_titre:'PARAMÈTRES',
+    params_vol_musique:'Musique',
+    params_vol_effets:'Effets',
     params_infos:'Comment jouer',
     params_checkupdate:'Vérifier les mises à jour',
     params_checkupdate_recherche:'Recherche de mise à jour…',
@@ -170,6 +172,7 @@ const STRINGS = {
     obs_mines_nom:'Champ de mines', obs_mines_desc:'Explose en zone (dégâts 2) si détruit.',
     obs_gaz_nom:'Gaz toxique', obs_gaz_desc:'Traversable. 1 dégât/tour aux unités dedans.',
     obs_gravite_nom:'Champ de gravité', obs_gravite_desc:'Traversable. Ralentit les ennemis (vitesse 1).',
+    obs_debris_vaisseau_nom:'Épave de vaisseau', obs_debris_vaisseau_desc:'Bloque tirs et déplacements. Destructible (1 PV). Laissée parfois par un vaisseau allié détruit.',
 
     // ===== HUD de combat (boutons d'action, statut, canvas) =====
     hud_vaisseau:'VAISSEAU',
@@ -566,6 +569,8 @@ const STRINGS = {
     diff_difficile:'Hard',    diff_difficile_d:'Fragile cruiser, many tough enemies.',
     diff_annuler:'Back',
     params_titre:'SETTINGS',
+    params_vol_musique:'Music',
+    params_vol_effets:'Sound effects',
     params_infos:'How to play',
     params_checkupdate:'Check for updates',
     params_checkupdate_recherche:'Checking for updates…',
@@ -655,6 +660,7 @@ const STRINGS = {
     obs_mines_nom:'Minefield', obs_mines_desc:'Explodes in an area (2 damage) when destroyed.',
     obs_gaz_nom:'Toxic Gas', obs_gaz_desc:'Passable. 1 damage/turn to units inside.',
     obs_gravite_nom:'Gravity Field', obs_gravite_desc:'Passable. Slows enemies down (speed 1).',
+    obs_debris_vaisseau_nom:'Ship wreckage', obs_debris_vaisseau_desc:'Blocks fire and movement. Destructible (1 HP). Sometimes left behind by a destroyed ally ship.',
 
     // ===== Combat HUD (action buttons, status, canvas) =====
     hud_vaisseau:'SHIP',

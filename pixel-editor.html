@@ -72,10 +72,13 @@
 <body>
 
 <h1>Éditeur pixel art</h1>
-<p class="sous">Outil de production autonome — n'est chargé ni par le jeu, ni par le service worker. Édite des grilles
-  compatibles avec la palette <code>PAL</code> de <code>src/sprites.js</code> ; le résultat s'exporte en JS prêt à coller
-  dans le code du jeu. Pensé pour les portraits de héros, mais réutilisable tel quel pour les sprites de vaisseaux et,
-  plus largement, tout élément pixel-art du jeu.</p>
+<p class="sous">Outil de production autonome — n'est chargé ni par le jeu, ni par le service worker. Charge un sprite du
+  catalogue (à gauche), édite-le, puis <strong>Publier</strong> : il devient la version active de ce sprite dans TOUT
+  le jeu (combat, encyclopédie, écran de choix, design-system…), sans toucher au code — la publication est stockée
+  dans ce navigateur, avec l'historique de chaque version pour pouvoir revenir en arrière à tout moment. Pour un
+  sprite pas encore dans le jeu, dessine-le librement (colonne "Projet libre") et récupère l'export JS prêt à coller
+  dans <code>sprites.js</code> à la main. Actuellement dans le catalogue : portraits de héros et uniforme commun —
+  vaisseaux, tuiles de décor, menaces et icônes suivront.</p>
 <p class="liens"><a href="index.html">← Le jeu</a><a href="design-system.html" target="_blank" rel="noopener">Design system</a></p>
 
 <div class="layout">
@@ -83,7 +86,27 @@
   <!-- ===== Colonne gauche : projet + toile ===== -->
   <div>
     <fieldset>
-      <legend>Projet</legend>
+      <legend>Sprite du jeu (catalogue)</legend>
+      <p class="avert" style="display:block;color:#9fb0d8;">Charge un sprite réellement utilisé par le jeu, édite-le, puis
+        <strong>Publier</strong> pour en faire la nouvelle version active — visible partout (combat, encyclopédie, écran
+        de choix…) au prochain rechargement de ces pages. Rien n'est jamais perdu : chaque publication garde l'ancienne
+        version dans l'historique.</p>
+      <label for="selSpriteJeu">Sprite</label>
+      <select id="selSpriteJeu"></select>
+      <p class="avert" id="spriteJeuStatut" style="display:none;"></p>
+      <div class="row" style="margin-top:8px;">
+        <button class="jouer secondaire" id="btnChargerSpriteJeu" style="font-size:6.5px;">Charger</button>
+        <button class="jouer" id="btnPublierSpriteJeu" style="font-size:6.5px;">Publier</button>
+      </div>
+      <button class="jouer danger" id="btnReinitialiserSpriteJeu" style="width:100%;margin-top:8px;font-size:6.5px;">Réinitialiser (version d'usine)</button>
+      <label style="margin-top:10px;">Historique (sprite chargé)</label>
+      <div id="historiqueListe" style="display:flex;flex-direction:column;gap:6px;max-height:240px;overflow-y:auto;"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Projet libre</legend>
+      <p class="avert" style="display:block;color:#9fb0d8;">Pour dessiner un nouveau sprite (pas encore dans le jeu) ou
+        un brouillon de travail — sans lien avec le catalogue ci-dessus.</p>
       <label for="selCategorie">Catégorie</label>
       <select id="selCategorie">
         <option value="portrait">Portrait de héros</option>
@@ -118,7 +141,7 @@
       <button class="tool-btn" data-outil="gomme" title="Gomme">▢</button>
       <button class="tool-btn" data-outil="pot" title="Pot de peinture (remplissage)">▨</button>
       <button class="tool-btn" data-outil="pipette" title="Pipette">◎</button>
-      <button class="toggle-btn" id="btnMiroir">Miroir H</button>
+      <button class="toggle-btn actif" id="btnMiroir">Miroir H</button>
       <button class="toggle-btn actif" id="btnGrille">Grille</button>
       <button class="jouer secondaire" id="btnAnnuler" style="font-size:6.5px;">Annuler</button>
       <button class="jouer secondaire" id="btnRefaire" style="font-size:6.5px;">Refaire</button>
@@ -172,7 +195,7 @@
 </div>
 
 <script type="module">
-import { PAL, cuire } from './src/sprites.js';
+import { PAL, cuire, REGISTRE_SPRITES, grilleEffective, publierSprite, reinitialiserSprite, historiqueDe } from './src/sprites.js';
 
 /* =====================================================================
    MODÈLE — grille = tableau de chaînes (mêmes conventions que sprites.js) :
@@ -192,10 +215,15 @@ let largeur=20, hauteur=22;
 let cells=grilleVide(largeur,hauteur);
 let outil='crayon';
 let couleurActive=Object.keys(PAL).find(k=>PAL[k])||'W';
-let miroir=false, grilleVisible=true, cellPx=24;
+// miroir horizontal actif par défaut : la plupart des sprites du jeu (visages, vaisseaux,
+// icônes...) sont symétriques — décochable au besoin pour les rares cas qui ne le sont pas.
+let miroir=true, grilleVisible=true, cellPx=24;
 let customPal=chargerCustomPal();
 let undoStack=[], redoStack=[];
 let peinture=false;
+// id du sprite du catalogue actuellement chargé (ex. 'portrait:darkor'), ou null si la toile
+// contient un dessin libre sans lien avec le jeu — le bouton Publier n'agit que sur un id chargé.
+let spriteJeuActif=null;
 
 function grilleVide(w,h){ return Array.from({length:h},()=>'.'.repeat(w)); }
 function chargerCustomPal(){ try{ return JSON.parse(localStorage.getItem(CUSTOM_KEY))||{}; }catch(e){ return {}; } }
@@ -207,11 +235,29 @@ function paletteComplete(){ return {...PAL,...customPal}; }
    ===================================================================== */
 const paletteGrid=document.getElementById('paletteGrid');
 const avertCustom=document.getElementById('avertCustom');
+/* teinte/saturation/luminosité d'une couleur hex — sert à classer la palette par teinte plutôt
+   que par ordre d'insertion dans PAL (arbitraire et difficile à parcourir visuellement). */
+function hexVersHSL(hex){
+  const r=parseInt(hex.slice(1,3),16)/255, g=parseInt(hex.slice(3,5),16)/255, b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b), min=Math.min(r,g,b), l=(max+min)/2; let h=0,s=0;
+  if(max!==min){ const d=max-min; s=l>0.5?d/(2-max-min):d/(max+min);
+    if(max===r) h=((g-b)/d+(g<b?6:0)); else if(max===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60; }
+  return {h,s,l};
+}
+/* ordre : couleurs par teinte croissante (puis du plus sombre au plus clair à teinte égale),
+   les gris/neutres (faible saturation) regroupés à part, à la fin. */
+function comparerCouleurs(hexA,hexB){
+  const a=hexVersHSL(hexA), b=hexVersHSL(hexB);
+  const grisA=a.s<0.08, grisB=b.s<0.08;
+  if(grisA!==grisB) return grisA?1:-1;
+  if(grisA&&grisB) return a.l-b.l;
+  return (a.h-b.h)||(a.l-b.l);
+}
 function dessinerPalette(){
   paletteGrid.innerHTML='';
   const pal=paletteComplete();
-  for(const code in pal){
-    if(!pal[code]) continue; // '.' = transparent, pas une couleur choisissable (la gomme s'en charge)
+  const codes=Object.keys(pal).filter(c=>pal[c]).sort((a,b)=>comparerCouleurs(pal[a],pal[b]));
+  for(const code of codes){
     const sw=document.createElement('div');
     sw.className='swatch'+(code===couleurActive?' actif':'')+(customPal[code]?' custom':'');
     sw.style.background=pal[code];
@@ -386,7 +432,85 @@ document.getElementById('btnImporter').onclick=()=>{
   largeur=w; hauteur=arr.length;
   cells=arr.map(l=>l.padEnd(w,'.'));
   inLargeur.value=largeur; inHauteur.value=hauteur;
+  spriteJeuActif=null; majStatutSpriteJeu(); rafraichirHistorique();
   redimensionnerCanvas(); majApercus(); majExport();
+};
+
+/* =====================================================================
+   CATALOGUE DU JEU — charger/publier/réinitialiser un sprite réellement
+   utilisé par le jeu (voir REGISTRE_SPRITES/grilleEffective dans sprites.js).
+   Publier écrit dans localStorage (dc_sprite_overrides) : ça ne modifie
+   jamais src/sprites.js lui-même, mais toute page du jeu qui se recharge
+   ensuite lira la version publiée à la place du défaut d'usine.
+   ===================================================================== */
+const selSpriteJeu=document.getElementById('selSpriteJeu'), statutSpriteJeu=document.getElementById('spriteJeuStatut'), historiqueListe=document.getElementById('historiqueListe');
+(function remplirSelectSpriteJeu(){
+  const groupes={};
+  for(const id in REGISTRE_SPRITES){ const cat=id.split(':')[0]; (groupes[cat]=groupes[cat]||[]).push(id); }
+  for(const cat in groupes){
+    const og=document.createElement('optgroup'); og.label=cat;
+    for(const id of groupes[cat]){ const opt=document.createElement('option'); opt.value=id; opt.textContent=id; og.appendChild(opt); }
+    selSpriteJeu.appendChild(og);
+  }
+})();
+function overrideActif(id){ try{ return !!(JSON.parse(localStorage.getItem('dc_sprite_overrides')||'{}')[id]); }catch(e){ return false; } }
+function majStatutSpriteJeu(){
+  if(!spriteJeuActif){ statutSpriteJeu.style.display='none'; return; }
+  const perso=overrideActif(spriteJeuActif);
+  statutSpriteJeu.style.display='block'; statutSpriteJeu.style.color=perso?'#7fd0b0':'#9fb0d8';
+  statutSpriteJeu.textContent=perso?'Version personnalisée active pour "'+spriteJeuActif+'".':'Version d\'usine (jamais modifiée) pour "'+spriteJeuActif+'".';
+}
+function chargerGrilleDansToile(grille){
+  const w=Math.max(...grille.map(l=>l.length));
+  largeur=w; hauteur=grille.length; cells=grille.map(l=>l.padEnd(w,'.'));
+  inLargeur.value=largeur; inHauteur.value=hauteur;
+  undoStack=[]; redoStack=[]; majBoutonsUndo();
+  redimensionnerCanvas(); majApercus(); majExport();
+}
+function rafraichirHistorique(){
+  historiqueListe.innerHTML='';
+  if(!spriteJeuActif) return;
+  const hist=historiqueDe(spriteJeuActif).slice().reverse();
+  if(!hist.length){ historiqueListe.innerHTML='<p class="avert" style="display:block;">Aucune version antérieure enregistrée pour ce sprite.</p>'; return; }
+  for(const entree of hist){
+    const row=document.createElement('div'); row.style.cssText='display:flex;align-items:center;gap:8px;';
+    const off=cuireAvecPalette(entree.grille,3,paletteComplete());
+    const cv=document.createElement('canvas'); cv.width=off.width; cv.height=off.height;
+    cv.style.cssText='image-rendering:pixelated;background:#0c1428;border-radius:4px;flex-shrink:0;';
+    cv.getContext('2d').drawImage(off,0,0);
+    const lbl=document.createElement('div'); lbl.style.cssText='font-size:6px;color:#9fb0d8;flex:1;';
+    lbl.textContent=new Date(entree.at).toLocaleString();
+    const btn=document.createElement('button'); btn.className='jouer secondaire'; btn.style.fontSize='6px'; btn.textContent='Restaurer';
+    btn.onclick=()=>{
+      if(!confirm('Republier cette version comme version active de "'+spriteJeuActif+'" ?')) return;
+      publierSprite(spriteJeuActif,entree.grille);
+      chargerGrilleDansToile(entree.grille);
+      majStatutSpriteJeu(); rafraichirHistorique();
+    };
+    row.appendChild(cv); row.appendChild(lbl); row.appendChild(btn);
+    historiqueListe.appendChild(row);
+  }
+}
+document.getElementById('btnChargerSpriteJeu').onclick=()=>{
+  const id=selSpriteJeu.value; if(!id) return;
+  if(cells.some(l=>l.replace(/\./g,'').length) && !confirm('Charger ce sprite efface la toile actuelle (non enregistrée). Continuer ?')) return;
+  const grille=grilleEffective(id); if(!grille) return;
+  spriteJeuActif=id; inNom.value=id.replace(/[^A-Za-z0-9]/g,'_').toUpperCase();
+  chargerGrilleDansToile(grille);
+  majStatutSpriteJeu(); rafraichirHistorique();
+};
+document.getElementById('btnPublierSpriteJeu').onclick=()=>{
+  if(!spriteJeuActif){ alert('Charge d\'abord un sprite du catalogue à gauche.'); return; }
+  if(!confirm('Publier cette version comme nouveau sprite actif de "'+spriteJeuActif+'" ?\n\nElle deviendra visible partout dans le jeu (combat, encyclopédie, écran de choix…) au prochain rechargement de ces pages. L\'ancienne version part dans l\'historique, rien n\'est perdu.')) return;
+  publierSprite(spriteJeuActif,cells.slice());
+  majStatutSpriteJeu(); rafraichirHistorique();
+};
+document.getElementById('btnReinitialiserSpriteJeu').onclick=()=>{
+  if(!spriteJeuActif) return;
+  if(!confirm('Revenir à la version d\'usine de "'+spriteJeuActif+'" ? (ta version personnalisée part dans l\'historique, pas perdue)')) return;
+  reinitialiserSprite(spriteJeuActif);
+  chargerGrilleDansToile(grilleEffective(spriteJeuActif));
+  majStatutSpriteJeu(); rafraichirHistorique();
 };
 
 /* =====================================================================
@@ -403,6 +527,7 @@ document.getElementById('btnNouveau').onclick=()=>{
   if(cells.some(l=>l.replace(/\./g,'').length) && !confirm('Repartir d’une toile vide ? Le projet non enregistré sera perdu.')) return;
   const p=PRESETS[selCategorie.value]; largeur=p.w; hauteur=p.h; inLargeur.value=p.w; inHauteur.value=p.h;
   cells=grilleVide(largeur,hauteur); undoStack=[]; redoStack=[]; majBoutonsUndo();
+  spriteJeuActif=null; majStatutSpriteJeu(); rafraichirHistorique();
   redimensionnerCanvas(); majApercus(); majExport();
 };
 document.getElementById('btnEnregistrer').onclick=()=>{
@@ -420,6 +545,7 @@ document.getElementById('btnCharger').onclick=()=>{
   largeur=p.largeur; hauteur=p.hauteur; cells=p.cells.slice(); inLargeur.value=largeur; inHauteur.value=hauteur;
   inNom.value=p.nom; selCategorie.value=p.categorie; customPal={...customPal,...(p.customPal||{})}; sauverCustomPal();
   undoStack=[]; redoStack=[]; majBoutonsUndo();
+  spriteJeuActif=null; majStatutSpriteJeu(); rafraichirHistorique();
   dessinerPalette(); redimensionnerCanvas(); majApercus(); majExport();
 };
 document.getElementById('btnSupprimer').onclick=()=>{

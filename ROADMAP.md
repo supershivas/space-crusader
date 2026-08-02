@@ -254,10 +254,150 @@ post-playtest" ci-dessus, qui prend le relais) — cette section reste comme
 trace de la V1 livrée, mais le développement actif se poursuit dans la
 section de refonte.
 
+### Ambiance sonore — enrichissement de l'audio procédural
+
+**Statut** : lots 1, 2, 3, 5 livrés et vérifiés (aucune erreur console, testé
+via Playwright headless — chargement, curseurs de volume, persistance après
+rechargement, appel de toutes les nouvelles fonctions d'`audio.js`) ; lot 7
+livré à titre d'**essai** (voir note dédiée plus bas) ; lots 4 et 6 restent à
+l'étude, non implémentés.
+
+**Contexte technique (état actuel de `src/audio.js`)** : tout le son du jeu
+est **procédural**, généré en direct via la Web Audio API (`OscillatorNode`/
+`GainNode`), sans aucun fichier audio. Deux briques existent :
+- des **bips d'effets** ponctuels (`sonTir`, `sonBoom`, `sonAie`, `sonSelect`,
+  `sonRenfort`, `sonRadar`, `sonVague`, `sonUndo`, `sonPause`,
+  `sonAchievement`, `sonVoix` — ce dernier "parle" en associant une fréquence
+  à chaque lettre d'un mot) ;
+- une **musique d'ambiance générative** (`startMusic`/`stopMusic`/
+  `scheduleMusic`) : nappe grave tenue + notes aléatoires en gamme
+  pentatonique mineure, avec 3 phases (`calme`/`tense`/`boss`) pilotées
+  ailleurs dans le code (`setMusicPhase` appelé depuis `combat.js`, `map.js`,
+  `planete.js` selon le déroulé du combat).
+
+Un seul réglage existe côté joueur : le bouton `#son` (`ui.js`) qui bascule
+tout le son on/off (`toggleSound`). Pas de volume ajustable, pas de séparation
+effets/musique, pas de variation d'ambiance par biome (les 4 biomes des
+missions planète — désert/glace/grotte/villes anciennes, voir plus haut dans
+cette roadmap — sonnent identiquement aujourd'hui).
+
+**Contrainte de conception à respecter** : le jeu est statique, sans build ni
+dépendance npm, hébergé sur GitHub Pages. Pas de fichiers audio volumineux à
+héberger/streamer sans réflexion (poids, cache du service worker, temps de
+chargement mobile) — privilégier autant que possible l'extension de la
+synthèse procédurale existante (comme la police auto-hébergée, tout doit
+rester servi par le jeu lui-même, jamais un CDN externe).
+
+**Propositions (à trier/prioriser avec l'utilisateur avant de chiffrer)** :
+
+1. ✅ **Réglage de volume séparé musique / effets** : deux curseurs dans
+   l'écran Paramètres (`#params`, `index.html`), remplaçant le tout-ou-rien
+   du bouton `#son` du HUD (qui reste le coupe-son global). Deux `GainNode`
+   maîtres (`gainEffets`/`gainMusique`) créés dans `initAudio()`, tous les
+   `bip()`/`playSoft()` reroutés dessus au lieu de `AC.destination`
+   directement. Valeurs persistées (`dc_vol_musique`/`dc_vol_effets` dans
+   `localStorage`, lues dès le chargement du module `audio.js`). Nouveau
+   composant `.volume-bloc`/`.volume-row` documenté dans
+   `design-system.html`. Testé : curseurs déplacés, valeur persistée après
+   rechargement complet de la page, aucune erreur console.
+2. ✅ **Ambiance par biome (missions planète)** : nouvelle fonction
+   `setMusicBiome(biomeId)` dans `audio.js`, table `BIOME_SONORE` (bass/mel/
+   type d'oscillateur/densité/dissonance par biome) qui prend le pas sur les
+   paramètres calme/tense/boss dans `scheduleMusic` dès qu'une mission
+   planète est active — désert clairsemé (`triangle`), glace scintillante
+   (`sine`, plus d'octaves hautes), grotte grave et étouffée (`sawtooth`,
+   très peu de notes, cohérent avec sa mécanique d'obscurité), villes
+   anciennes plus dense avec une pointe de dissonance (frottement d'un demi-
+   ton/triton par-dessus la gamme pentatonique). Appelée dans
+   `demarrerMissionPlanete()` (`planete.js`) et réinitialisée à `null` dans
+   `finMissionPlanete()` et `demarrerCombat()` (`map.js`, au cas où une
+   reprise de partie interromprait une mission planète). Le calme/tense de
+   `setMusicPhase` continue d'agir par-dessus (tempo), sans conflit.
+3. ✅ **Spatialisation de la musique** : `playSoft()` (musique) prend
+   désormais un panoramique lent calculé par une pseudo-LFO
+   (`Math.sin(Date.now()/6000)`, recalculée à chaque note plutôt qu'un nœud
+   audio dédié vu la brièveté des notes) — la nappe grave et la mélodie
+   errent doucement dans le champ stéréo, l'harmonie secondaire prenant le
+   côté opposé pour une sensation d'espace.
+4. **Réverbe légère procédurale** (non fait) : un `ConvolverNode` avec une
+   impulse response générée par bruit blanc décroissant (quelques lignes de
+   code, pas de fichier `.wav` à héberger) sur le bus musique, pour sortir du
+   son "bip sec" actuel et donner une texture plus spatiale/aérienne
+   cohérente avec le thème croiseur spatial.
+5. ✅ **Stings renforcés aux moments clés** : 4 nouvelles fanfares dans
+   `audio.js` (`sonVictoireSecteur`, `sonVictoirePlanete`, `sonHerosDebloque`,
+   `sonEpique`), branchées respectivement sur la victoire de secteur (boss
+   vaincu, `gagnerCombat()` dans `map.js` — remplace le simple `sonVague()`
+   pour ce cas précis, les autres vagues gardent `sonVague()`), la victoire
+   de mission planète (`finMissionPlanete(true)`, `planete.js`), le
+   déblocage d'un héros via le nœud "Signal de détresse" (`map.js`), et
+   l'apparition d'un boss de rareté épique (`miroir`/`forge`/`eclipse`,
+   vérifié via `RARETE.boss` déjà présent dans `config.js`). Pas
+   d'équivalent "amélioration épique" trouvé côté `UPGRADES` (aucune n'a de
+   palier de rareté dans le code actuel) : le sting épique a donc été posé
+   sur l'élément du jeu qui porte réellement cette rareté aujourd'hui, le
+   boss, plutôt que d'inventer une rareté d'amélioration qui n'existe pas.
+6. **Retour haptique mobile en complément** (non fait) : `navigator.vibrate`
+   synchronisé sur les effets déjà existants (tir, dégât reçu, boss qui
+   apparaît) — chaque plateforme mobile n'a pas forcément le son activé, la
+   vibration est un canal de feedback complémentaire gratuit à ajouter.
+7. ✅ **Voix de synthèse contextuelle pour `sonVoix` (essai)** : `sonVoix`
+   accepte désormais un 2ᵉ paramètre de contexte (`'alerte'`/`'victoire'`/
+   `'normal'`, ce dernier par défaut = comportement d'origine inchangé) qui
+   module multiplicateur de fréquence/type d'oscillateur/tempo — plus grave,
+   `sawtooth` et plus lent pour l'alerte boss (`map.js`, apparition), plus
+   aigu, `square` et plus rapide pour la victoire (`combat.js`, boss
+   détruit). **Marqué "essai"** : avec seulement ces deux appels existants
+   dans le jeu (le mot "BOSS" dans les deux cas), la différence de timbre
+   est le principal levier testable pour l'instant — à réévaluer en jeu
+   avant d'étendre le principe à d'autres messages vocaux futurs.
+
+**Autres boucles sonores proposées** (au-delà des 7 pistes ci-dessus, pour
+prochaine itération) :
+
+- **Boucle "hangar"** : un timbre calme et mécanique dédié à l'écran de choix
+  de vaisseau (`#build`) et à l'attente en hangar, distinct de l'ambiance de
+  combat — actuellement la musique ne change pas d'état pendant ces pauses.
+- **Boucle "carte de secteur"** : ambiance propre à l'écran `#carte` (choix de
+  destination) et à la marche entre les nœuds, plus aérienne/exploratoire que
+  le combat, pour marquer la transition qu'apporte déjà visuellement la carte.
+- **Boucle "défaite / game over"** : aujourd'hui la fin de partie n'a pas de
+  traitement musical dédié (retour à `calme` comme un combat normal) ; un
+  thème descendant, plus lent, en mineur plus marqué, renforcerait le poids
+  de l'écran de fin.
+- **Boucle "montée en tension progressive de secteur"** : plutôt qu'un
+  binaire calme/tense/boss, faire dériver légèrement le tempo/la densité de
+  `scheduleMusic` selon `state.vague` au sein d'un même secteur (de plus en
+  plus dense à mesure qu'on approche du boss), sans nouvelle phase explicite
+  à gérer ailleurs dans le code.
+- **Boucle "victoire de run" (fin de partie réussie)** : un thème de
+  cadence complète (progression d'accords qui se résout, contrairement aux
+  fanfares courtes de `sonVictoireSecteur`/`sonVictoirePlanete`), pour
+  distinguer une fin de run pleinement réussie d'une simple victoire de
+  combat.
+- **Variation de boucle par difficulté choisie** (`state.difficulte`) : un
+  soupçon de tempo/densité en plus en difficulté élevée dès le début de
+  partie, pas seulement pendant les combats de boss — cohérent avec
+  `DIFFICULTES` qui pilote déjà plusieurs autres paramètres du jeu.
+
+**Non retenu pour l'instant (à documenter si la question revient)** : musique
+enregistrée (fichiers `.mp3`/`.ogg`) plutôt que procédurale — irait à
+l'encontre de la philosophie "tout auto-hébergé, tout léger" du projet et
+ajouterait un poids de téléchargement significatif pour un jeu qui doit
+rester rapide à charger sur mobile ; à ne considérer que si la synthèse
+procédurale montre clairement ses limites après les essais ci-dessus.
+
+**Reste à faire avant de chiffrer un plan d'implémentation détaillé** :
+prioriser avec l'utilisateur laquelle de ces 7 pistes apporte le plus (le
+réglage de volume séparé et l'ambiance par biome semblent les gains les plus
+immédiats pour l'expérience joueur) et valider si toutes doivent être faites
+ou seulement un sous-ensemble.
+
 ### Héros du Vaisseau Rouge
 
-**Statut** : conception validée avec l'utilisateur (toutes les décisions
-ci-dessous tranchées), implémentation non démarrée.
+**Statut final** : les 7 lots sont terminés et vérifiés, uniforme commun
+dynamique inclus. Système entièrement fonctionnel (sélection, bonus en
+combat, déblocage, arbre méta, habillage), fusionné sur `main`.
 
 **Pitch** : le Vaisseau Rouge (`SHIP_ROUGE`, `src/config.js`) devient incarné
 par un **héros** : un personnage avec un visage/casque, un caractère, un
@@ -475,13 +615,97 @@ passer à la suivante) :
    pour ne jamais couper son contenu sur petit écran. Testé : investissement
    d'un niveau sur Darkor (cristaux décomptés, palier affiché, persisté),
    aucune erreur console.
-7. **Habillage** : portraits réels (via `pixel-editor.html`), variations de
-   sprite de combat par héros, section `design-system.html` dédiée,
-   incrément `VERSION`/cache SW comme à chaque lot livré (déjà fait pour les
-   traductions FR/EN, complètes dès le lot 3).
+7. ✅ **Habillage** (`sprites.js`, `entities.js`, `ui.js`, `design-system.html`) :
+   - 8 portraits pixel-art (15×19, `PORTRAIT_*`/`PORTRAITS_HEROS`) — les 7
+     héros + l'androïde standard, dessinés à la main (silhouette de tête
+     partagée, traits distinctifs par héros : visière de Darkor, barbe
+     d'Odysseus, boucles blondes + boucle d'oreille de L'Achéen, œil unique
+     de Polyphème, coulures de bave de Slum, chevelure de Bar4-bar4, bec
+     crochu de Demonokos). Cuits une fois (`imgPortraitsHeros`), affichés à
+     l'écran de choix du héros, dans l'Encyclopédie et dans l'infobulle au
+     survol du Vaisseau Rouge en combat (nom + bonus passif inclus).
+   - Variation du sprite de combat par héros : même gabarit que `ROUGE` pour
+     tous, seul l'accent central change de couleur
+     (`HERO_ROUGE_OVERRIDES`) — sauf Slum, seul à casser aussi la silhouette
+     (`ROUGE_SLUM`, coulures de bave qui débordent sous la coque), comme
+     évoqué dans le brainstorming initial. L'androïde garde la couleur par
+     défaut, neutre.
+   - Nouvelle section « Héros du Vaisseau Rouge » dans `design-system.html`
+     (sprite de combat + portraits, synchronisés en direct avec `sprites.js`
+     comme le reste de la page).
+   - Au passage : mode miroir horizontal activé par défaut dans
+     `pixel-editor.html` (la plupart des sprites du jeu sont symétriques).
+   Testé en jeu : écran de choix (portraits affichés), combat avec Slum
+   (variante de sprite + infobulle avec portrait/nom/bonus), page
+   design-system (16 cartes : 8 sprites + 8 portraits) — aucune erreur
+   console.
+   → **Complété ensuite par l'uniforme commun dynamique** (demandé après
+   coup) : bandeau épaules/costume noir partagé par tous les héros
+   (`UNIFORME_HEROS`, `grillePortraitComplet()` dans `sprites.js`), accolé
+   sous chaque tête. Le nombre de médailles dorées (0 à 3) reflète en direct
+   le niveau investi dans l'arbre méta de CE héros (`state.metaHeros`,
+   lot 6) — recuit une fois par niveau possible (`imgPortraitsHeros[id]` =
+   tableau de 4 images), `imgHeroPortrait()` choisit la bonne selon le
+   niveau courant. Nouvelle section dédiée dans `design-system.html`
+   (Darkor aux 4 niveaux + l'androïde, toujours à 0 médaille). Testé :
+   écran de choix avec un héros pré-chargé à un niveau méta non nul
+   (médailles visibles immédiatement), page design-system — aucune erreur
+   console.
 
-**Prochaine étape** : lot 7 (habillage — portraits réels, variations de
-sprite, section design-system). C'est le dernier lot du plan initial ; les
-7 héros sont maintenant entièrement fonctionnels (bonus, sélection,
-déblocage, progression méta), seul l'aspect visuel reste provisoire (icônes
-`ICONS` génériques en attendant de vrais portraits pixel-art).
+**Les 7 lots de la roadmap "Héros du Vaisseau Rouge" sont maintenant tous
+livrés**, uniforme commun inclus. Reste ouvert pour une itération future
+(notés comme simplifications assumées en cours de route) :
+- le déblocage se fait uniquement en jouant un héros (choix libre dès la
+  première partie) ou via le nœud "Signal de détresse" — pas encore de
+  distinction stricte "héros non débloqué = non sélectionnable" à l'écran
+  de choix (étape 3) ;
+- la mission spéciale solo (champ d'astéroïdes, vaisseau héros seul) évoquée
+  dans le brainstorming initial n'a jamais été chiffrée (notée non
+  prioritaire dès le départ).
+
+### Édition en direct des sprites (pixel-editor.html → jeu)
+
+**Statut** : livré pour les portraits de héros + l'uniforme commun ; prévu
+ensuite pour les vaisseaux, tuiles de décor, menaces et icônes.
+
+**Pitch** : jusqu'ici, modifier un sprite dans `pixel-editor.html` voulait
+dire copier l'export à la main dans `sprites.js`. Désormais, un sprite du
+"catalogue" (`REGISTRE_SPRITES` dans `sprites.js`) peut être chargé, édité,
+puis **publié** directement depuis l'éditeur — il devient la version active
+de ce sprite dans **tout** le jeu (combat, encyclopédie, écran de choix,
+`design-system.html`) au prochain rechargement de ces pages, sans toucher au
+code.
+
+**Comment ça marche** :
+- `grilleEffective(id)` (`sprites.js`) renvoie la version personnalisée
+  stockée en `localStorage` (`dc_sprite_overrides`) si elle existe, sinon le
+  défaut d'usine (`REGISTRE_SPRITES[id]`). Tout le code qui affiche un
+  sprite du catalogue passe par cette fonction plutôt que de lire les
+  constantes `PORTRAIT_*`/`UNIFORME_HEROS` directement — c'est ce qui fait
+  qu'une publication se répercute partout.
+- `publierSprite(id, grille)` écrit la nouvelle version active et pousse
+  l'ancienne dans un historique (`dc_sprite_historique`, 20 versions max par
+  sprite, jamais écrasées silencieusement).
+- `reinitialiserSprite(id)` retire la version personnalisée (retour au
+  défaut d'usine), en gardant elle aussi une trace dans l'historique.
+- Côté éditeur : sélecteur du sprite à charger (regroupé par catégorie —
+  `portrait:`, `uniforme:` pour l'instant), boutons Charger/Publier/
+  Réinitialiser, et une liste d'historique avec vignette + date + bouton
+  Restaurer par version. La colonne "Projet libre" (dessin depuis zéro,
+  export JS à coller à la main) reste disponible pour un sprite pas encore
+  dans le jeu.
+- **Limite assumée** : la publication est stockée en `localStorage`, donc
+  propre à CE navigateur — elle ne modifie jamais `src/sprites.js` sur le
+  disque et n'est pas partagée avec d'autres joueurs. Pour que ça devienne
+  la version livrée à tout le monde, il faut encore répercuter le contenu
+  publié dans `sprites.js` et déployer (étape manuelle, hors de portée d'une
+  page statique sans backend).
+- Au passage : palette de l'éditeur triée par teinte (au lieu de l'ordre
+  d'insertion dans `PAL`) — beaucoup plus facile à parcourir visuellement.
+
+Testé : chargement de `portrait:darkor`, édition, publication, vérifié
+visible après rechargement dans `pixel-editor.html` lui-même, dans
+`design-system.html` et dans l'écran de choix du jeu réel (même navigateur,
+onglets différents) ; réinitialisation vérifiée (retour au défaut, ancienne
+version conservée dans l'historique) — aucune erreur console sur aucune des
+trois pages.

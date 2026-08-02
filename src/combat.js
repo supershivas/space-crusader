@@ -36,6 +36,8 @@ export function casesMouvementCapacite(f){ const out=[],p=porteeDep(f)+2; for(le
   const c=f.c+dc,r=f.r+dr; if(dansGrille(c,r)&&!occupe(c,r)&&!asterEn(c,r)&&!trouNoirEn(c,r)) out.push({c,r}); } return out; }
 /* petite modale (toast) annonçant le coup spécial déclenché par le 2e appui sur un vaisseau */
 function annoncerCapacite(type){ if(CAPACITES[type]) montrerToast(t('cap_'+type+'_nom')+' — '+t('cap_'+type+'_desc'),'gold'); state.capacitesJoueurTotal=(state.capacitesJoueurTotal||0)+1; }
+/* annonce le combo en cours via le système de toast (remplace l'ancien texte flottant sur le canvas, peu lisible) */
+function annoncerCombo(){ if(state.comboCount>1) montrerToast(t('hud_combo',{n:state.comboCount}),'gold'); }
 export function activerCapacite(f){
   if(!peutActiverCapacite(f)) return false;
   if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); annoncerCapacite(f.type); return true; }
@@ -76,7 +78,7 @@ export function tirerCharge(f,cible){
     const col=state.ailes.filter(a=>a.r>=0&&(a.c===cible.c||a.c===c2)); let kills=0;
     for(const a of col){ if(frapperAile(a,true)) kills++; }
     f.kills=(f.kills||0)+kills;
-    state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
+    state.secousse=Math.max(state.secousse,10); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; annoncerCombo();
     if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw');
     sonBoom(); checkAchievements();
   }, 130);
@@ -234,7 +236,7 @@ export function tirerTourelle(a){
   setTimeout(()=>{
     if(state.actionGen!==gen) return;   // annulé (Échap) pendant le délai avant impact
     if(state.ailes.includes(cible)){
-      if(frapperAile(cible,true,2)){ state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; }
+      if(frapperAile(cible,true,2)){ state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; annoncerCombo(); }
       sonBoom(); checkAchievements();
     }
   }, 120);
@@ -247,7 +249,7 @@ export function toucherBoss(deg,px,py){ if(!state.boss) return;
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
     state.secousse=18; state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null;
-    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast('🏆 '+t('toast_forteresse_detruite'),'gold'); sonVoix('BOSS');
+    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast('🏆 '+t('toast_forteresse_detruite'),'gold'); sonVoix('BOSS','victoire');
     checkAchievements();
   } }
 
@@ -264,14 +266,14 @@ export function tirer(f,aile){
       else if(bonus&&bonus.id==='degats_pourcent') deg=Math.max(1,Math.round(deg*(1+bonus.valeur))); // Polyphème : +50% dégâts
       for(const a of zone){ if(frapperAile(a,true,deg)) kills++; }
       f.kills=(f.kills||0)+kills;
-      state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
+      state.secousse=Math.max(state.secousse,9); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; annoncerCombo();
       if(kills>=3) logMsg(kills+' ENNEMIS ! 🔥','log-ylw'); }
     else if(type==='bombardier'){ const col=state.ailes.filter(a=>a.c===cible.c&&a.r>=0); let kills=0;
       for(const a of col){ if(frapperAile(a,true)) kills++; }
       f.kills=(f.kills||0)+kills;
-      state.secousse=Math.max(state.secousse,8); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount;
+      state.secousse=Math.max(state.secousse,8); state.comboCount+=kills; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; annoncerCombo();
       if(kills>=3) logMsg(kills+' EN LIGNE ! 💥','log-ylw'); }
-    else if(state.ailes.includes(cible)){ if(frapperAile(cible,false)){ f.kills=(f.kills||0)+1; state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; } }
+    else if(state.ailes.includes(cible)){ if(frapperAile(cible,false)){ f.kills=(f.kills||0)+1; state.comboCount++; state.comboTimer=2; if(state.comboCount>state.bestCombo) state.bestCombo=state.comboCount; if(state.comboCount>(state.bestComboThisWave||0)) state.bestComboThisWave=state.comboCount; annoncerCombo(); } }
     sonBoom(); checkAchievements();
   }, 130);
 }

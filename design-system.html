@@ -52,6 +52,12 @@
   .menu-vertical{display:flex;flex-direction:column;gap:var(--space-sm);align-items:center;}
   .menu-vertical button.jouer{width:min(78vw,260px);}
 
+  /* ===== Réglage de volume (Paramètres) ===== */
+  .volume-bloc{display:flex;flex-direction:column;gap:10px;width:100%;max-width:260px;margin-bottom:var(--space-md);}
+  .volume-row{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:var(--fs-petit);color:var(--texte);}
+  .volume-row span:nth-child(2){min-width:52px;text-align:left;}
+  .volume-row input[type=range]{flex:1;accent-color:#37e0ff;height:14px;}
+
   /* ===== Cartes de choix ===== */
   .cards{display:flex;gap:var(--space-sm);flex-wrap:wrap;}
   .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-lg);
@@ -297,6 +303,18 @@
   </section>
 
   <section>
+    <h2>Réglage de volume (Paramètres)</h2>
+    <p class="note">Deux curseurs indépendants (musique / effets) dans l'écran Paramètres,
+      remplaçant le tout-ou-rien du bouton son du HUD. <code>accent-color</code> reprend le cyan
+      d'accent du jeu ; icône + libellé + curseur, même famille que <code>.volume-row</code>
+      dans <code>index.html</code>.</p>
+    <div class="volume-bloc">
+      <div class="volume-row"><span>🔊</span><span>Musique</span><input type="range" min="0" max="100" value="80"></div>
+      <div class="volume-row"><span>🔊</span><span>Effets</span><input type="range" min="0" max="100" value="65"></div>
+    </div>
+  </section>
+
+  <section>
     <h2>Swatches de skin (cosmétiques méta)</h2>
     <p class="note">Sélecteur de couleur dans "AMÉLIORATIONS" → cosmétiques : chaque pastille est une
       couleur de skin cliquable, sélection = bordure or (<code>--radius-sm</code>, 40×40px pour une
@@ -413,6 +431,27 @@
       en reprend le gabarit plutôt que d'inventer une forme isolée.</p>
     <div class="cards" id="cat-allies"></div>
 
+    <h3 class="sub">Héros du Vaisseau Rouge — sprite de combat par héros</h3>
+    <p class="note" style="margin-top:0;">Même gabarit que <code>Vaisseau Rouge</code> ci-dessus pour tous, sauf Slum
+      (coulures de bave ajoutées) — seul l'accent central change de couleur pour les autres
+      (<code>HERO_ROUGE_OVERRIDES</code>, <code>sprites.js</code>). L'androïde neutre garde la couleur par défaut.</p>
+    <div class="cards" id="cat-heros-vaisseau"></div>
+
+    <h3 class="sub">Héros du Vaisseau Rouge — portraits</h3>
+    <p class="note" style="margin-top:0;">Grille plus grande et plus détaillée que les sprites de vaisseaux
+      (<code>PORTRAIT_*</code>, <code>sprites.js</code>) — affichée au survol du Vaisseau Rouge en combat, sur
+      l'écran de choix du héros et dans l'Encyclopédie. Modifiable directement dans
+      <a href="pixel-editor.html">l'éditeur pixel art</a> : une version publiée y remplace le défaut d'usine
+      partout, y compris sur cette page (<code>grilleEffective()</code>, <code>sprites.js</code>).</p>
+    <div class="cards" id="cat-heros-portrait"></div>
+
+    <h3 class="sub">Héros du Vaisseau Rouge — uniforme commun (arbre méta)</h3>
+    <p class="note" style="margin-top:0;">Bandeau épaules/costume noir partagé par tous les héros
+      (<code>grillePortraitComplet()</code>, <code>sprites.js</code>) — dessiné une seule fois, jamais dupliqué par
+      héros. Le nombre de médailles dorées reflète le niveau investi dans l'arbre méta de ce héros
+      (<code>state.metaHeros</code>, 0 à <code>META_HEROS_MAX</code> = 3, <code>config.js</code>).</p>
+    <div class="cards" id="cat-heros-uniforme"></div>
+
     <h3 class="sub">Navettes</h3>
     <div class="cards" id="cat-navettes"></div>
 
@@ -463,7 +502,7 @@
 <script type="module">
 import { cuireFit } from './src/sprites.js';
 import * as S from './src/sprites.js';
-import { SKINS_CROISEUR, SKINS_VAISSEAUX } from './src/config.js';
+import { SKINS_CROISEUR, SKINS_VAISSEAUX, HEROS, ANDROIDE } from './src/config.js';
 
 /* taille de rendu uniforme (CELL fictif) quelle que soit la taille native de la grille —
    même fonction que le jeu utilise pour caser un sprite dans une case (entities.js). */
@@ -496,6 +535,16 @@ carte('cat-allies',S.JOUEUR_TRANSPORTEUR,'Transporteur');
 carte('cat-allies',S.JOUEUR_MEDIC,'Médic');
 for(const skin of SKINS_VAISSEAUX) if(skin.id!=='defaut') carte('cat-allies',S.JOUEUR,'Skin '+skin.nom,{over:skin.over});
 
+// Héros : sprite de combat (variante du Vaisseau Rouge) + portrait
+for(const h of HEROS) carte('cat-heros-vaisseau',h.id==='slum'?S.ROUGE_SLUM:S.ROUGE,h.nom,{over:S.HERO_ROUGE_OVERRIDES[h.id]});
+carte('cat-heros-vaisseau',S.ROUGE,ANDROIDE.nom);
+for(const h of HEROS) carte('cat-heros-portrait',S.grilleEffective('portrait:'+h.id),h.nom,{taille:140});
+carte('cat-heros-portrait',S.grilleEffective('portrait:androide'),ANDROIDE.nom,{taille:140});
+
+// Uniforme + médailles : un même héros (Darkor) aux 4 niveaux, puis l'androïde (jamais de médaille)
+for(let niv=0;niv<=3;niv++) carte('cat-heros-uniforme',S.grillePortraitComplet('darkor',niv),'Darkor — niveau '+niv,{taille:130});
+carte('cat-heros-uniforme',S.grillePortraitComplet('androide',0),ANDROIDE.nom,{taille:130});
+
 // Navettes
 carte('cat-navettes',S.MINI_NAVETTE_ALLIEE,'Mini-navette alliée',{taille:TAILLE*0.62}); // vraiment miniature, voir entities.js:cuireUnites
 carte('cat-navettes',S.MINI_NAVETTE,'Mini-navette ennemie');
@@ -525,9 +574,13 @@ carte('cat-elites',S.TITAN,'Titan',{elite:true});
 // Boss
 for(const type in S.BOSS_GRIDS) carte('cat-boss',S.BOSS_GRIDS[type],'Boss '+type,{boss:true,taille:96});
 
-// Obstacles & menaces
-carte('cat-obstacles',S.DEBRIS_1,'Débris');
-carte('cat-obstacles',S.DEBRIS_2,'Débris (variante)');
+// Obstacles & menaces — débris ennemi et épave de vaisseau allié partagent la même forme de
+// fragments (DEBRIS_FRAGMENT_*), seule la palette diffère (voir OVER_DEBRIS_ENNEMI dans
+// entities.js, dupliqué ici puisque cette page n'importe pas entities.js).
+const OVER_DEBRIS_ENNEMI={B:'#5a1420',b:'#8f2b2f',S:'#c94257',s:'#ff8f92'};
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Débris (ennemi)',{over:OVER_DEBRIS_ENNEMI,taille:48});
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_2,'Débris (ennemi, variante)',{over:OVER_DEBRIS_ENNEMI,taille:48});
+carte('cat-obstacles',S.DEBRIS_FRAGMENT_1,'Épave de vaisseau (allié)',{taille:48});
 carte('cat-obstacles',S.STATION_PIECE,'Épave de station');
 carte('cat-obstacles',S.BARRIERE,'Barrière');
 carte('cat-obstacles',S.ASTER,'Astéroïde');

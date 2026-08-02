@@ -3,9 +3,9 @@
    événements aléatoires entre les vagues
    ===================================================================== */
 import { state, centreCase, sauvegarderPartie, decouvrir, estDecouvert } from './state.js';
-import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX, HEROS } from './config.js';
+import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX, HEROS, RARETE } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
-import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
+import { setMusicPhase, setMusicBiome, sonVoix, sonRenfort, sonVague, sonVictoireSecteur, sonHerosDebloque, sonEpique } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
 import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner, ouvrirBriefingPlanete } from './ui.js';
 import { t, L } from './i18n.js';
@@ -113,6 +113,7 @@ function construireScene(type){
       {ico:'coeur',nom:t('heros_secourir_nom'),desc:t('heros_secourir_desc'),effet:()=>{
         state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9));
         decouvrir('heros',cible.id);
+        sonHerosDebloque();
         montrerToast('★ '+t('hero_'+cible.id+'_nom'),'gold');
         logMsg(t('evt_heros_secouru',{nom:t('hero_'+cible.id+'_nom')}),'log-ylw');
       }},
@@ -124,6 +125,7 @@ function construireScene(type){
   return {kind:'marche',titre:'✦ '+L(ev.titre),suite,choix:ev.choix.map(ch=>({...ch,nom:L(ch.nom),desc:L(ch.desc)}))};
 }
 export function demarrerCombat(type){
+  setMusicBiome(null);   // au cas où une mission planète aurait été interrompue (reprise de partie)
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   state.ailes=[]; state.asteroides=[]; state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.bonus=[]; if(type!=='boss') state.boss=null;
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; }
@@ -135,7 +137,7 @@ export function demarrerCombat(type){
   const squads=Math.max(1, 2+Math.round(diff)+(type==='elite'?2:0)+d.squadDelta);
   for(let s=0;s<squads;s++) apparaitreEscadrille();
   if(type==='elite'){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,Math.random()<0.5?'porteur':'brouilleur'); }
-  if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS'); logMsg(t('log_forteresse'),'log-red'); montrerToast('⚠ '+t('toast_forteresse_approche'),'bad'); }
+  if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS','alerte'); if(RARETE.boss[state.boss.type]==='epique') sonEpique(); logMsg(t('log_forteresse'),'log-red'); montrerToast('⚠ '+t('toast_forteresse_approche'),'bad'); }
   // Pas d'objectif secondaire "détruire le boss" pendant un combat de boss : c'est déjà
   // l'objectif PRINCIPAL (obligatoire pour passer à la suite), un faux objectif secondaire
   // toujours réussi sinon. assignerObjectif() exclut ce cas.
@@ -163,8 +165,8 @@ export function gagnerCombat(){ state.enCombat=false;
   if(state.bossKilledThisWave) lignes.push({label:t('mission_recap_boss'), points:5});
   if(reussi){ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.12)); state.score+=3; lignes.push({label:t('mission_recap_objectif'), points:3}); }
   const recap={avant:state.scoreAvantVague, apres:state.score, lignes};
-  state.vague++; sonVague(); setMusicPhase('calme'); checkAchievements();
   const type=state.noeudActuel?state.noeudActuel.type:'combat';
+  state.vague++; if(type==='boss') sonVictoireSecteur(); else sonVague(); setMusicPhase('calme'); checkAchievements();
   state.suiteMission=()=>{ if(type==='boss'){ state.suiteAmelioration=secteurSuivant; ouvrirAmelioration(); }
     else if(type==='elite'){ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); } else ouvrirCarte(); };
   ouvrirMission(type,reussi,recap); }
