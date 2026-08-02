@@ -138,17 +138,22 @@ function apercuVaisseau(type){
   c.drawImage(src,(box-w)/2,(box-h)/2,w,h);
   return cv;
 }
+// Coût de construction (en tours) par type de vaisseau — varié (1 à 4) selon la puissance/
+// l'utilité plutôt qu'un simple "1 tour pour Standard, 2 pour tout le reste" : les vaisseaux
+// les plus impactants (zone, soin) coûtent plus cher à faire sortir du hangar.
+const TOURS_CONSTRUCTION={normal:1,rapide:2,sniper:2,bombardier:3,bouclier:3,transporteur:3,medic:4,rouge:2};
+function toursConstruction(type){ return TOURS_CONSTRUCTION[type]||2; }
 export function ouvrirBuild(){ state.choixBuild=true; tooltip.classList.remove('visible'); buildCards.innerHTML='';
   const liste=SHIPS.filter(s=>!s.metaRequis||(state.meta[s.metaRequis]||0)>0);
   if(!state.fighters.some(f=>f.type==='rouge')) liste.push(SHIP_ROUGE);   // reconstruire le rouge s'il est détruit
   for(const s of liste){ const b=document.createElement('div'); b.className='card';
     b.appendChild(apercuVaisseau(s.id));
-    const tours=(s.id==='normal')?1:2;
+    const tours=toursConstruction(s.id);
     const d=document.createElement('div'); d.innerHTML='<div class="nom">'+t('ship_'+s.id+'_nom')+'</div><div class="desc">'+t('ship_'+s.id+'_desc')+'</div><div class="card-tours">'+t('build_tours',{n:tours})+'</div>'; b.appendChild(d);
     b.onclick=()=>choisirBuild(s.id); buildCards.appendChild(b); }
   buildDiv.classList.add('visible');
 }
-function choisirBuild(type){ const tours=(type==='normal')?1:2; state.hangar={type,tours,toursInitial:tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
+function choisirBuild(type){ const tours=toursConstruction(type); state.hangar={type,tours,toursInitial:tours}; state.actionFaite=true; state.modeTourelle=false; state.choixBuild=false; buildDiv.classList.remove('visible'); sonRenfort(); logMsg(t('log_hangar')+' '+t('ship_'+type+'_nom'),'log-grn'); }
 buildDiv.addEventListener('click',e=>{ if(e.target===buildDiv){ state.choixBuild=false; buildDiv.classList.remove('visible'); } });
 
 /* =====================================================================

@@ -28,7 +28,11 @@ export function cuireUnites(CELL){
   imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL); imgLourd=cuireFit(AILE_LOURD,CELL);
   imgDebris1=cuireFit(DEBRIS_1,CELL); imgDebris2=cuireFit(DEBRIS_2,CELL); imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
   imgRuine1=cuireFit(RUINE_1,CELL); imgRuine2=cuireFit(RUINE_2,CELL);
-  imgStronghold=cuireFit(STRONGHOLD,CELL); imgMiniNavette=cuireFit(MINI_NAVETTE,CELL); imgMiniNavetteAlliee=cuireFit(MINI_NAVETTE_ALLIEE,CELL); imgRegen=cuireFit(REGENERATEUR,CELL); imgMiniSniper=cuireFit(MINI_SNIPER,CELL);
+  // "Mini"-navette alliée : vraiment miniature (échelle réduite), pas juste un vaisseau standard
+  // au design plus simple — cuireFit(...,CELL) seul l'aurait rendue à la même taille à l'écran
+  // que n'importe quel autre vaisseau (elle remplit la case comme les autres), grille plus
+  // petite ou pas.
+  imgStronghold=cuireFit(STRONGHOLD,CELL); imgMiniNavette=cuireFit(MINI_NAVETTE,CELL); imgMiniNavetteAlliee=cuireFit(MINI_NAVETTE_ALLIEE,CELL*0.62); imgRegen=cuireFit(REGENERATEUR,CELL); imgMiniSniper=cuireFit(MINI_SNIPER,CELL);
   imgDiagD=cuireFit(DIAGONAL_D,CELL); imgDiagG=cuireFit(DIAGONAL_G,CELL); imgMimic=cuireFit(MIMIC,CELL); imgVoid=cuireFit(VOID,CELL);
   imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL); imgAileTransporteur=cuireFit(AILE_TRANSPORTEUR,CELL);
 }
