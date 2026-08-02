@@ -77,7 +77,7 @@ qu'une garnison n'arrive à temps. Trois causes identifiées dans le code :
 **Plan d'implémentation envisagé** (mêmes principes que la V1 : chaque étape
 testable avant la suivante, ordre pensé pour tester le correctif fondateur
 en premier) :
-1. Correctif de portée (limite de distance réelle) — seul, pour valider que
+1. ✅ Correctif de portée (limite de distance réelle) — seul, pour valider que
    l'avance redevient nécessaire, avant d'ajouter la couche de pression.
 2. Jauge d'alerte (2 paliers, télégraphiée, habillée par biome).
 3. Écran de briefing (biome, force de défense approximative, rappel
