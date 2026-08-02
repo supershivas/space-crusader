@@ -42,8 +42,12 @@
   #illusImpact{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;
     z-index:2;pointer-events:none;}
   .accueil-contenu{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:14px;}
+  /* overflow-y:auto : filet de sécurité si le contenu d'un écran dépasse la hauteur dispo (petit
+     téléphone, liste longue) — le défilement reste CONTENU dans le cadre du jeu plutôt que de
+     pousser la page entière (ce qui faisait défiler la barre d'adresse du navigateur avec elle et
+     coupait le haut/bas du contenu, cf. écran de fin trop chargé avant découpage en pages). */
   .ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
-         gap:var(--space-md);padding:var(--space-lg);text-align:center;background:rgba(7,11,24,.87);backdrop-filter:blur(2px);border-radius:var(--radius-md);}
+         gap:var(--space-md);padding:var(--space-lg);text-align:center;background:rgba(7,11,24,.87);backdrop-filter:blur(2px);border-radius:var(--radius-md);overflow-y:auto;}
   /* L'accueil n'est pas une pause sur la partie en cours : il ne doit jamais laisser voir le
      canvas de jeu (étoiles/vaisseaux animés en fond) à travers — fond opaque, sans flou.
      Titre + menu remontés (justify-content:flex-start + un padding-top mesuré) plutôt que
@@ -51,6 +55,11 @@
      (croiseur + alliés + chasseurs abattus), qui se sentait à l'étroit collée juste sous les
      boutons quand tout le bloc était centré. */
   #accueil{background:var(--espace);backdrop-filter:none;justify-content:flex-start;padding-top:8vh;}
+  /* Comme l'accueil : la partie est bel et bien terminée derrière (croiseur détruit ou vague
+     gagnée), plus la peine de laisser deviner la scène de jeu figée à travers le flou — fond
+     opaque, sans flou, sinon le dernier décor de combat (ennemis, obstacles…) fantômait
+     derrière le texte du bilan. */
+  #fin{background:var(--espace);backdrop-filter:none;}
   .cache{display:none;}
   h1{font-size:var(--fs-titre);line-height:var(--lh-normal);margin:0;color:#37e0ff;text-shadow:0 3px 0 #10406a;}
   /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que
@@ -87,6 +96,16 @@
   }
   .sous{font-size:var(--fs-souligne);line-height:var(--lh-loose);opacity:.92;max-width:36ch;}
   .score-fin{font-size:clamp(11px,3.2vmin,18px);color:#ffd23d;}
+  /* Écran de fin découpé en pages successives (résultat / bilan / récompenses) : trop
+     d'informations d'un coup (stats, succès, encyclopédie, cristaux…) sur un seul écran
+     débordait largement de la hauteur dispo sur mobile, poussait toute la page (barre
+     d'adresse comprise) et pouvait couper une ligne de score en plein milieu. Chaque page
+     tient seule sur un écran, jamais coupée, avec un "Suivant" jusqu'aux boutons d'action
+     sur la dernière. */
+  .fin-page{display:flex;flex-direction:column;align-items:center;gap:var(--space-md);width:100%;}
+  .fin-page.cache{display:none;}
+  .fin-souscran{font-family:var(--pixel);color:#37e0ff;font-size:var(--fs-modale);margin:0;text-shadow:0 2px 0 #10406a;}
+  .fin-page-num{font-family:var(--pixel);font-size:var(--fs-petit);color:#5b6580;margin:0;}
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
     border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:var(--radius-md);cursor:pointer;box-shadow:0 6px 22px rgba(47,214,160,.35);
     display:inline-flex;align-items:center;justify-content:center;gap:8px;}
@@ -392,18 +411,31 @@
       </div>
     </div>
     <div id="fin" class="ecran cache">
-      <h1 style="color:#e5484d" data-i18n="fin_titre">CROISEUR HORS-SERVICE</h1>
-      <p class="sous" data-i18n="fin_sous_titre">Il a besoin de réparations !</p>
-      <p class="score-fin" id="scoreFin">Score : 0</p>
-      <div id="finStats" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:2px"></div>
-      <table id="highscores"></table>
-      <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
-      <div id="finDecouvertes" style="font-size:7px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
-      <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
-      <div class="menu-vertical">
-        <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
-        <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="gemme"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
-        <button class="jouer secondaire" id="btnFinAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+      <div class="fin-page" id="finPage1">
+        <h1 style="color:#e5484d" data-i18n="fin_titre">CROISEUR HORS-SERVICE</h1>
+        <p class="sous" data-i18n="fin_sous_titre">Il a besoin de réparations !</p>
+        <p class="score-fin" id="scoreFin">Score : 0</p>
+        <table id="highscores"></table>
+        <p class="fin-page-num">1 / 3</p>
+        <button class="jouer" id="btnFinSuivant1"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+      </div>
+      <div class="fin-page cache" id="finPage2">
+        <h2 class="fin-souscran" data-i18n="fin_bilan_titre">BILAN</h2>
+        <div id="finStats" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:2px"></div>
+        <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
+        <p class="fin-page-num">2 / 3</p>
+        <button class="jouer" id="btnFinSuivant2"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+      </div>
+      <div class="fin-page cache" id="finPage3">
+        <h2 class="fin-souscran" data-i18n="fin_recompenses_titre">RÉCOMPENSES</h2>
+        <div id="finDecouvertes" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
+        <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
+        <p class="fin-page-num">3 / 3</p>
+        <div class="menu-vertical">
+          <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
+          <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="gemme"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+          <button class="jouer secondaire" id="btnFinAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+        </div>
       </div>
     </div>
   </div>

@@ -464,14 +464,29 @@ export function finPartie(){
     const noms=Object.keys(ACHIEVEMENTS_DEF).filter(id=>state.achievements[id]).map(id=>t('ach_'+id+'_nom'));
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
-  // Encyclopédie découverte pendant la partie (toutes parties confondues, décomptes persistants)
+  // Encyclopédie découverte (décompte persistant, toutes parties confondues) : le compte
+  // seul, pas la liste complète des noms (jusqu'à 60+ entrées) — le détail est déjà consultable
+  // dans l'Encyclopédie elle-même, l'écran de fin n'a pas besoin de la dupliquer en entier.
   const dec=document.getElementById('finDecouvertes');
   if(dec){ const r=decouvertesResume();
-    dec.innerHTML = r.noms.length ? '📖 '+t('fin_encyclopedie')+' '+r.noms.length+'/'+r.total+' — '+r.noms.join(' · ') : '';
+    dec.innerHTML = r.noms.length ? '📖 '+t('fin_encyclopedie')+' '+r.noms.length+'/'+r.total : '';
   }
+  // Toujours revenir à la 1ère page (résultat + score) : une partie précédente peut avoir laissé
+  // l'écran de fin sur sa dernière page consultée.
+  document.getElementById('finPage1').classList.remove('cache');
+  document.getElementById('finPage2').classList.add('cache');
+  document.getElementById('finPage3').classList.add('cache');
   document.getElementById('fin').classList.remove('cache');
   ajusterTitreModale(document.querySelector('#fin h1'));
 }
+document.getElementById('btnFinSuivant1').addEventListener('click',()=>{
+  document.getElementById('finPage1').classList.add('cache');
+  document.getElementById('finPage2').classList.remove('cache');
+});
+document.getElementById('btnFinSuivant2').addEventListener('click',()=>{
+  document.getElementById('finPage2').classList.add('cache');
+  document.getElementById('finPage3').classList.remove('cache');
+});
 
 /* Meilleur score déjà réalisé, affiché sur l'accueil (juste sous le titre) pour donner un
    objectif immédiat sans devoir ouvrir les Améliorations. Rien à afficher tant qu'aucune
