@@ -33,6 +33,9 @@ export const state = {
   scenePlanete:null,
 
   ultimeJauge:undefined, ondeChoc:undefined,
+  // héros équipant le Vaisseau Rouge pour la run en cours : id de HEROS, ou 'androide'
+  // (remplaçant neutre) une fois le héros choisi mort et régénéré — voir ROADMAP.md.
+  heroActif:undefined,
   hpCruiser:undefined, score:undefined, phase:undefined, selection:undefined, vague:undefined,
   actionFaite:undefined, modeTourelle:undefined, modeCapacite:null, hangar:undefined, tirsGratuits:undefined,
   boucliersRestants:undefined, ultimeSeuil:undefined,
@@ -54,7 +57,12 @@ export const state = {
   // persistant (localStorage)
   achievements:{}, highscores:[],
   meta:{cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0},
+  // arbre de méta-progression par héros (cristaux dépensés pour booster durablement un héros
+  // précis) : clé = id du héros (HEROS dans config.js), valeur = niveau atteint. Squelette
+  // posé par le lot 1 de la roadmap "Héros du Vaisseau Rouge" ; barème/effets pas encore définis.
+  metaHeros:{},
   // catalogue des entités déjà rencontrées (guide) : clé "categorie:type" -> true
+  // (les héros débloqués y figurent sous la catégorie 'heros', même mécanisme que le reste)
   decouvertes:{},
 
   damageThisWave:0,
@@ -92,8 +100,8 @@ export const ACHIEVEMENTS_DEF = {
   'asteroid_dodge': {name:'Esquive', desc:'Survivre à 5 astéroïdes', check:()=>state.achievements.asteroid_dodge>=5},
 };
 
-export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; const d=localStorage.getItem('dc_decouvertes'); if(d) state.decouvertes=JSON.parse(d); }catch(e){} }
-export function saveData(){ try{ localStorage.setItem('dc_highscores',JSON.stringify(state.highscores)); localStorage.setItem('dc_achievements',JSON.stringify(state.achievements)); localStorage.setItem('dc_meta',JSON.stringify(state.meta)); }catch(e){} }
+export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; const mh=localStorage.getItem('dc_meta_heros'); if(mh) state.metaHeros=JSON.parse(mh); const d=localStorage.getItem('dc_decouvertes'); if(d) state.decouvertes=JSON.parse(d); }catch(e){} }
+export function saveData(){ try{ localStorage.setItem('dc_highscores',JSON.stringify(state.highscores)); localStorage.setItem('dc_achievements',JSON.stringify(state.achievements)); localStorage.setItem('dc_meta',JSON.stringify(state.meta)); localStorage.setItem('dc_meta_heros',JSON.stringify(state.metaHeros)); }catch(e){} }
 
 /* ===== GUIDE : catalogue des vaisseaux/ailes/boss/bonus déjà rencontrés en jeu =====
    Persisté séparément (petites écritures fréquentes) : chaque nouvelle découverte est
@@ -144,7 +152,7 @@ const SAVE_KEY='dc_partie';
 export function sauvegarderPartie(serialiserCarte){
   if(state.phase==='fin'||state.phase==='accueil') return;
   try{ localStorage.setItem(SAVE_KEY, JSON.stringify({
-    v:1, secteur:state.secteur, vague:state.vague, score:state.score, hpCruiser:state.hpCruiser, HP_MAX:state.HP_MAX, ups:state.ups, ultimeJauge:state.ultimeJauge, tourCompteur:state.tourCompteur, prochainAsteroide:state.prochainAsteroide,
+    v:1, secteur:state.secteur, vague:state.vague, score:state.score, hpCruiser:state.hpCruiser, HP_MAX:state.HP_MAX, ups:state.ups, ultimeJauge:state.ultimeJauge, tourCompteur:state.tourCompteur, prochainAsteroide:state.prochainAsteroide, heroActif:state.heroActif,
     enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave, scoreAvantVague:state.scoreAvantVague,
     hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte, rerollsRestants:state.rerollsRestants,
     boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil, enFeu:state.enFeu||0,

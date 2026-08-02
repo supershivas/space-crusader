@@ -215,17 +215,82 @@ de vaisseau générique.
      `sprites.js` actuels), indépendant du premier.
   Les deux exportent une chaîne/grille compatible `PAL` à coller dans
   `sprites.js`.
+  → **Premier jet livré** : `pixel-editor.html` (dessin pixel libre, taille de
+  grille configurable, palette réelle importée de `src/sprites.js`, export
+  JS prêt à coller, projets sauvegardés en `localStorage`). Sert déjà aux
+  portraits ET aux sprites de vaisseaux (un seul outil générique plutôt que
+  deux, plus simple à maintenir qu'anticipé). L'évolution **paramétrique**
+  ci-dessous (traits assemblables plutôt que pixel libre) reste à construire
+  par-dessus, en V2 de l'outil.
+
+**Éditeur — évolution paramétrique (V2, pas encore construite)** : au-delà du
+dessin pixel libre, produire un héros par **assemblage de traits** plutôt que
+de redessiner un portrait complet à chaque fois :
+- forme de crâne (silhouette de tête, plusieurs presets) ;
+- couleur de peau, y compris des teintes extraterrestres (vert, bleu, gris…
+  au-delà des carnations réalistes) ;
+- pilosité : cheveux / barbe / moustache, chacun avec plusieurs styles et
+  couleurs, activables indépendamment (un héros peut n'avoir aucune pilosité) ;
+- accessoires : bijoux, chapeau, casque — superposés par-dessus la base ;
+- caractéristiques spéciales : traits hors gabarit standard (ex. un seul œil
+  pour Polyphème, pas d'yeux pour Demonokos, peau gluante avec reflets pour
+  Slum) — nécessite que le gabarit de base reste assez flexible pour ces cas
+  qui cassent le moule "visage humanoïde standard".
+- **Uniforme commun** : costume noir de base partagé par tous les héros, avec
+  un nombre de médailles/décorations qui reflète l'avancement de la
+  méta-progression du héros (arbre par héros décrit plus haut) — dessiné une
+  seule fois puis réutilisé, seule la tête/le visage change par héros.
+
+**Catalogue initial des héros (bonus proposés + rareté théorique)** :
+
+Méthode de notation (à réutiliser pour tout futur héros ajouté à l'éditeur) :
+score sur 4 axes, chacun noté 0 à 3, sauf la contrepartie qui retire des
+points :
+- **Puissance brute** : comparée aux barèmes déjà en jeu (`UPGRADES` :
+  `rouge_pv`/`rouge_range`/`rouge_back`) — même ordre de grandeur = 1,
+  un cran au-dessus = 2, transformateur = 3.
+- **Portée d'effet** : le héros seul (0-1), toute l'escadrille (2), escadrille
+  + croiseur (3).
+- **Uptime / conditions** : permanent sans condition = 3, déclenché souvent
+  (à chaque kill…) = 2, conditionné à une situation rare = 1, usage unique
+  par combat = 0.
+- **Contrepartie** : un bonus avec inconvénient retire 1 point ; pur upside
+  ne retire rien.
+
+Score total → palier : 0-2 `commun`, 3-4 `peu_commun`, 5-6 `rare`, 7-9
+`epique`. Ce score est un **point de départ théorique** : le champ `rarete`
+reste modifiable à la main dans `config.js` après tests en jeu, comme
+n'importe quelle autre donnée d'équilibrage du jeu — le score sert de
+justification traçable, pas de calcul figé.
+
+| Héros | Portrait (brief visuel) | Bonus passif proposé | Score (puiss./portée/uptime/contrepartie) | Rareté théorique |
+|---|---|---|---|---|
+| Darkor | Casqué tout noir, reflets brillants (façon Vador) | +1 dégât de tir, permanent | 2/0/3/0 = 5 | rare |
+| Odysseus | Barbu, yeux clairs, peau claire | Évite automatiquement une attaque qui l'aurait détruit, une fois par combat | 3/0/2/0 = 5 | rare |
+| L'Achéen | Cheveux blonds bouclés, peau claire, boucle d'oreille dorée (façon Achille) | Immunisé au premier tir subi chaque combat, mais +1 dégât reçu sur tous les tirs suivants ce combat-là (référence au talon d'Achille) | 2/0/2/-1 = 3 | peu_commun |
+| Polyphème | Cyclope, force brute | +50% dégâts de tir, -1 PV max | 3/0/3/-1 = 5 | rare |
+| Slum | Peau verte gluante, deux yeux globuleux | +2% PV régénérés par tour, en permanence (équivalent d'un palier gratuit de l'amélioration Auto-réparation) | 1/0/3/0 = 4 | peu_commun |
+| Bar4-bar4 | Femme brune, peau mate | Aura défensive : les ailes ennemies adjacentes à elle ont une précision réduite | 1/2/3/0 = 6 | rare |
+| Demonokos | Aigle aveugle | +1 portée de tir, immunisé aux effets de brouillage (brouilleur/void) | 2/0/3/0 = 5 | rare |
+| *Androïde standard* (remplaçant neutre, hors tirage) | Uniforme sans visage distinctif | Aucun bonus passif | — | `commun` (fixe, pas de rareté tirée) |
+
+Répartition obtenue : 1 `commun` (androïde, hors pool), 2 `peu_commun`,
+5 `rare`, 0 `epique` — cohérent avec un premier lot de héros solides mais pas
+tous exceptionnels ; l'`epique` reste à débloquer par un futur héros plus
+marquant, une fois ce premier lot testé.
 
 **Reste à préciser avant chiffrage détaillé** :
-- Liste des premiers héros (nom, caractère, bonus passif, variation visuelle
-  éventuelle du sprite de combat) — ex. "Slimy" cité en exemple.
-- Barème de l'arbre méta par héros (coût en cristaux, paliers, effets).
+- Barème de l'arbre méta par héros (coût en cristaux, paliers, effets) —
+  les bonus passifs ci-dessus sont figés pour la V1, seul leur *ampleur*
+  évoluerait avec l'arbre méta (ex. Darkor : +1 dégât → +2 à un palier
+  ultérieur), formule à définir.
 - Contenu exact des événements de récupération (sauvetage / escorte / combat
   spécial) et taux d'apparition sur la carte.
 - Icône/couleur du nouveau type de nœud sur la carte de secteur.
 - Contenu de la section Encyclopédie dédiée aux héros (cartes, stats, lore,
   état verrouillé/débloqué — même pattern que `carteGuide()`/
   `ouvrirGuideDetail()` dans `src/ui.js`).
+- Ajustement des raretés théoriques ci-dessus après premiers tests en jeu.
 
 **Impacts techniques identifiés** :
 - `config.js` : catalogue `HEROS` (remplace/étend `SHIP_ROUGE`) + entrées
@@ -248,3 +313,46 @@ de vaisseau générique.
 - Deux nouveaux fichiers HTML autonomes (éditeurs pixel-art
   portraits/vaisseaux), hors chaîne de build, non référencés par
   `index.html`/`sw.js`.
+  → Réalisé sous forme d'un seul outil générique, `pixel-editor.html`
+  (voir plus haut).
+
+**Plan d'implémentation** (chaque étape reste jouable/testable avant de
+passer à la suivante) :
+
+1. **Fondations données** (`config.js`, `state.js`) : catalogue `HEROS` (les
+   7 héros ci-dessus, bonus décrit en donnée mais pas encore branché en
+   combat), `ANDROIDE` (remplaçant neutre), champ `state.heroActif` (run en
+   cours), déblocage permanent via le mécanisme `decouvrir()`/`estDecouvert()`
+   déjà existant (catégorie `'heros'`, pas de nouveau store), squelette de
+   méta par héros persisté. Pas d'écran atteignable encore, juste les
+   fondations — comme pour le lot 1 des missions planète.
+2. **Intégration combat** (`entities.js`, `combat.js`) : `creerVaisseau`
+   applique réellement le bonus passif du héros actif ; bascule vers
+   `ANDROIDE` quand un nouveau Vaisseau Rouge est généré après la mort du
+   héros équipé.
+3. **UI de sélection** (`ui.js`) : écran de choix de héros en début de partie
+   (parmi les héros débloqués, + option aléatoire), réutilisant les patterns
+   de cartes du design system.
+4. **Encyclopédie** (`ui.js`) : section Héros (portrait, bonus, statut
+   verrouillé/débloqué), même pattern que `carteGuide()`/
+   `ouvrirGuideDetail()`.
+5. **Événements de carte** (`map.js`) : nouveau type de nœud dédié pour
+   récupérer/débloquer un héros.
+6. **Arbre méta par héros** : dépense de cristaux pour booster un héros
+   précis, une fois le barème défini.
+7. **Habillage** : portraits réels (via `pixel-editor.html`), variations de
+   sprite de combat par héros, traduction FR/EN complète, section
+   `design-system.html` dédiée, incrément `VERSION`/cache SW comme à chaque
+   lot livré.
+
+**Prochaine étape** : lot 2 (intégration combat — appliquer réellement le
+bonus passif du héros actif dans `entities.js`/`combat.js`, bascule vers
+`ANDROIDE` après la mort du héros équipé).
+
+1. ✅ **Fondations données** — catalogue `HEROS`/`ANDROIDE` (`config.js`),
+   `state.heroActif` (run en cours, sérialisé dans la sauvegarde),
+   `state.metaHeros` (squelette persisté), déblocage réutilisant
+   `decouvrir()`/`estDecouvert()` (catégorie `'heros'`). Androïde par défaut
+   tant que l'écran de choix (lot 3) n'existe pas. Aucun écran atteignable
+   encore, aucun bonus appliqué en jeu — vérifié sans régression (partie
+   lancée de bout en bout jusqu'à la carte de secteur, aucune erreur console).

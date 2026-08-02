@@ -25,6 +25,9 @@ function etatVide(){
   state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
   state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.enFeu=0;state.rerollsRestants=0;
   state.comboCount=0;state.comboTimer=0;state.bestCombo=0;state.undoStack=[];state.paused=false;
+  // héros du Vaisseau Rouge : pas encore d'écran de choix (lot 3 de la roadmap "Héros du
+  // Vaisseau Rouge") — androïde neutre par défaut en attendant.
+  state.heroActif='androide';
   randomiserAccueil();
 }
 
@@ -67,7 +70,7 @@ function reprendrePartie(){
   if(!d) return false;
   etatVide(); configurer();
   state.secteur=d.secteur; state.vague=d.vague; state.score=d.score; state.HP_MAX=d.HP_MAX; state.hpCruiser=d.hpCruiser;
-  state.ups=d.ups||state.ups; state.ultimeJauge=d.ultimeJauge||0; state.tourCompteur=d.tourCompteur||0; state.prochainAsteroide=d.prochainAsteroide||4;
+  state.ups=d.ups||state.ups; state.ultimeJauge=d.ultimeJauge||0; state.tourCompteur=d.tourCompteur||0; state.prochainAsteroide=d.prochainAsteroide||4; state.heroActif=d.heroActif;
   state.enCombat=!!d.enCombat; state.objectifVague=d.objectifVague||null; state.killsThisWave=d.killsThisWave||0;
   state.shipsLostThisWave=d.shipsLostThisWave||0; state.bossKilledThisWave=!!d.bossKilledThisWave; state.damageThisWave=d.damageThisWave||0;
   state.scoreAvantVague=(d.scoreAvantVague!==undefined)?d.scoreAvantVague:state.score;

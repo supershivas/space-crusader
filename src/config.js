@@ -35,6 +35,46 @@ export const SHIPS=[
 ];
 export const SHIP_ROUGE={id:'rouge', nom:'Vaisseau Rouge', desc:'Tir de zone · 2 PV · prend 2 tours'};
 
+/* ===== HÉROS DU VAISSEAU ROUGE (roadmap "Héros du Vaisseau Rouge") =====
+   Chaque héros équipe le Vaisseau Rouge pour la durée d'une run (bonus passif
+   fixe, pas de montée en puissance en cours de partie — voir ROADMAP.md).
+   Le déblocage permanent réutilise le mécanisme générique decouvrir()/
+   estDecouvert() de state.js avec la catégorie 'heros' (pas de nouveau
+   store). `bonus.id` sera lu par entities.js/combat.js une fois le lot
+   "Intégration combat" de la roadmap réalisé — pour l'instant c'est une
+   donnée descriptive, pas encore appliquée en jeu.
+   `rarete` est un score théorique (grille à 4 axes détaillée dans
+   ROADMAP.md) servant de point de départ — à réajuster à la main après
+   tests, comme n'importe quelle autre donnée d'équilibrage. */
+export const ANDROIDE={
+  id:'androide', nom:'Androïde standard',
+  desc:'Remplace un héros perdu au combat : aucun visage distinctif, aucun bonus passif.',
+  bonus:null,
+};
+export const HEROS=[
+ // score 2/0/3/0=5 → rare
+ {id:'darkor', nom:'Darkor', desc:'Casqué tout noir, reflets brillants.', rarete:'rare',
+  bonus:{id:'degats_tir', valeur:1, desc:'+1 dégât de tir, en permanence'}},
+ // score 3/0/2/0=5 → rare
+ {id:'odysseus', nom:'Odysseus', desc:'Barbu, yeux clairs, peau claire.', rarete:'rare',
+  bonus:{id:'evasion_mortelle', desc:"Évite automatiquement une attaque qui l'aurait détruit, une fois par combat"}},
+ // score 2/0/2/-1=3 → peu_commun
+ {id:'acheen', nom:"L'Achéen", desc:"Cheveux blonds bouclés, peau claire, boucle d'oreille dorée.", rarete:'peu_commun',
+  bonus:{id:'bouclier_premier_tir', desc:'Immunisé au premier tir subi à chaque combat, mais +1 dégât reçu sur tous les tirs suivants ce combat-là'}},
+ // score 3/0/3/-1=5 → rare
+ {id:'polypheme', nom:'Polyphème', desc:'Cyclope, force brute.', rarete:'rare',
+  bonus:{id:'degats_pourcent', valeur:0.5, malusPvMax:1, desc:'+50% dégâts de tir, -1 PV max'}},
+ // score 1/0/3/0=4 → peu_commun
+ {id:'slum', nom:'Slum', desc:'Peau verte gluante, deux yeux globuleux.', rarete:'peu_commun',
+  bonus:{id:'regen_tour', valeur:0.02, desc:'+2% PV régénérés par tour, en permanence'}},
+ // score 1/2/3/0=6 → rare
+ {id:'bar4bar4', nom:'Bar4-bar4', desc:'Femme brune, peau mate.', rarete:'rare',
+  bonus:{id:'aura_precision_ennemie', desc:'Les ailes ennemies adjacentes à elle ont une précision réduite'}},
+ // score 2/0/3/0=5 → rare
+ {id:'demonokos', nom:'Demonokos', desc:'Aigle aveugle.', rarete:'rare',
+  bonus:{id:'portee_brouillage', valeur:1, desc:'+1 portée de tir, immunisé aux effets de brouillage (brouilleur/void)'}},
+];
+
 /* palettes cosmétiques (débloquées via la méta 'cosmetiques') : recolorent l'accent du croiseur / des vaisseaux alliés */
 export const SKINS_CROISEUR=[
  {id:'defaut',   nom:'Défaut',   over:{}},
