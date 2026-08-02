@@ -185,6 +185,7 @@ export function sauvegarderPartie(serialiserCarte){
       base: {c:state.planete.base.c, r:state.planete.base.r, w:state.planete.base.w, h:state.planete.base.h, hp:state.planete.base.hp, maxhp:state.planete.base.maxhp, reveillee:state.planete.base.reveillee},
       tourelles: state.planete.tourelles.map(tr=>({id:tr.id, ico:tr.ico, c:tr.c, r:tr.r, hp:tr.hp, maxhp:tr.maxhp, portee:tr.portee, degats:tr.degats, camouflee:tr.camouflee, reveillee:tr.reveillee, cachette: tr.cachette?{c:tr.cachette.c,r:tr.cachette.r}:null})),
       tourCompteur: state.planete.tourCompteur, prochaineGarnison: state.planete.prochaineGarnison, prochaineTempete: state.planete.prochaineTempete,
+      alerte: state.planete.alerte, meilleureDistance: state.planete.meilleureDistance,
     } : null,
     carte: serialiserCarte()
   })); }catch(e){}

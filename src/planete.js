@@ -2,7 +2,7 @@
    MISSIONS PLANÈTE — entités, boucle de tour dédiée, victoire/échec
    ===================================================================== */
 import { state, centreCase, sauvegarderPartie, decouvrir } from './state.js';
-import { DIFFICULTES, TOURELLES, BIOMES, OBSTACLES, basePvMax } from './config.js';
+import { DIFFICULTES, TOURELLES, BIOMES, OBSTACLES, basePvMax, ALERTE_PALIER1, ALERTE_PALIER2, ALERTE_ZONE_RANGS } from './config.js';
 import { faireAile, aileEn, tourelleEn, fighterEn, blesser, tuerFighter,
          champObstacleEn, champEn, obstacleEn, dansGrille, occupe } from './entities.js';
 import { exploser } from './combat.js';
@@ -167,6 +167,48 @@ function appliquerMecaniqueBiome(biomeId){
   activerRappelsBiome(biomeId);
 }
 
+/* ===== JAUGE D'ALERTE (refonte) ===== */
+
+/* distance (en rangées) entre un vaisseau et la rangée avant de la base — sert de mesure de
+   "progrès vers la base" pour la jauge d'alerte (indépendante de la colonne, contrairement à
+   distanceRect, pour ne pas pénaliser un repositionnement latéral). */
+function distanceFrontBase(f,base){ return Math.max(0,f.r-(base.r+base.h-1)); }
+function meilleureDistanceActuelle(pl){
+  if(!state.fighters.length) return pl.meilleureDistance;
+  return Math.min(...state.fighters.map(f=>distanceFrontBase(f,pl.base)));
+}
+/* met à jour la jauge d'alerte à partir des positions du tour qui vient de s'achever (avant
+   toute résolution ennemie) : progrès réel (nouveau record de rapprochement) -> retombe à 0 ;
+   sinon incrémente. Toujours réversible, jamais un chrono qu'on ne peut pas désamorcer.
+   Retourne le palier atteint (0/1/2) et gère les toasts d'avertissement/activation. */
+function mettreAJourAlerte(pl){
+  const dist=meilleureDistanceActuelle(pl);
+  const progres=dist<pl.meilleureDistance;
+  if(progres){ pl.meilleureDistance=dist; if(pl.alerte>0) montrerToast(t('toast_alerte_apaisee'),'ok'); pl.alerte=0; }
+  else pl.alerte++;
+  if(pl.alerte===ALERTE_PALIER1-1) montrerToast(t('alerte_palier1_avert'),'bad');
+  if(pl.alerte===ALERTE_PALIER2-1) montrerToast(t('alerte_palier2_avert'),'bad');
+  const niveauAvant=pl.alerteNiveau||0;
+  const niveau=pl.alerte>=ALERTE_PALIER2?2:pl.alerte>=ALERTE_PALIER1?1:0;
+  if(niveau>niveauAvant){
+    if(niveau===1) montrerToast(t('alerte_palier1_actif'),'bad');
+    else montrerToast(t('alerte_palier2_actif_'+pl.biome),'bad');
+  }
+  pl.alerteNiveau=niveau;
+  return niveau;
+}
+/* palier 2 : les 2 dernières rangées deviennent hostiles — dégâts de zone (jamais létaux d'un
+   coup, comme les autres champs de dégâts du jeu), habillés par biome mais mécaniquement
+   identiques sur les 4 biomes (voir ROADMAP.md). */
+function appliquerZoneHostile(pl,niveau){
+  if(niveau<2) return;
+  const rMin=state.RANGS-ALERTE_ZONE_RANGS;
+  for(const f of [...state.fighters]){
+    if(f.r<rMin) continue;
+    const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f);
+  }
+}
+
 /* ===== FLUX DE MISSION ===== */
 
 /* démarrage d'une mission planète : tire un biome, crée la base et les tourelles, repositionne
@@ -186,12 +228,14 @@ export function demarrerMissionPlanete(){
     tourelles:creerTourelles(biome.id,state.secteur,state.difficulte),
     tourCompteur:0,
     prochaineGarnison:2+Math.floor(Math.random()*2)+d.garnisonDelta,
+    alerte:0, alerteNiveau:0, meilleureDistance:state.RANGS,
   };
   state.ailes=[]; state.asteroides=[]; state.bonus=[]; state.boss=null; state.obstacles=[];
   state.trousNoirs=[]; state.champs=[]; state.menacesWarn=[]; state.hangar=null; state.tirsGratuits=0;
   state.killsThisWave=0; state.scoreAvantVague=state.score; state.onObstacleDetruit=null;
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; f.gele=0; }
   reorganiserVaisseaux();
+  state.planete.meilleureDistance=meilleureDistanceActuelle(state.planete);
   appliquerMecaniqueBiome(biome.id);
   annoncerMissionPlanete(biome.id);
   state.suiteDemarrerTour=demarrerTourJoueurPlanete;
@@ -229,6 +273,10 @@ export function finDuTourPlanete(){
   state.phase='ennemi'; state.selection=null; state.lockTimer=0.9;
   setMusicPhase('tense');
 
+  // (0) jauge d'alerte : mesurée sur les positions du tour qui vient de s'achever, avant toute
+  // résolution ennemie — reflète uniquement la décision du joueur ce tour-ci.
+  const niveauAlerte=mettreAJourAlerte(pl);
+
   // (1) tourelles fixes : tirent sur le vaisseau le plus proche à portée (distance de Chebyshev),
   // sauf si endormie/camouflée (reveillee===false) ou couverte par une tempête de sable (désert)
   let tirs=false;
@@ -257,8 +305,10 @@ export function finDuTourPlanete(){
     appliquerGlissade(a,0,1);
   }
 
-  // (3) production de garnison par la base, à intervalle régulier (ajusté par la difficulté)
+  // (3) production de garnison par la base, à intervalle régulier (ajusté par la difficulté) —
+  // accélérée dès le palier 1 d'alerte (jamais retardée, seulement rapprochée)
   pl.tourCompteur++;
+  if(niveauAlerte>=1) pl.prochaineGarnison=Math.min(pl.prochaineGarnison,pl.tourCompteur+1);
   if(pl.tourCompteur>=pl.prochaineGarnison){
     produireGarnison(pl.base);
     const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
@@ -268,6 +318,9 @@ export function finDuTourPlanete(){
   // (4) mécaniques de biome : tempête de sable (désert), réveil différé (grotte)
   gererTempeteDesert(pl);
   verifierReveilGrotte(pl);
+
+  // (5) palier 2 d'alerte : zone hostile aux dernières rangées
+  appliquerZoneHostile(pl,niveauAlerte);
 }
 
 /* fin de mission (victoire = base détruite, échec = escadrille détruite) : réutilise l'écran de

@@ -100,6 +100,7 @@ function reprendrePartie(){
         const cachette=tr.cachette?state.obstacles.find(o=>o.c===tr.cachette.c&&o.r===tr.cachette.r&&o.type==='ruine'):null;
         return {id:tr.id,ico:tr.ico,c:tr.c,r:tr.r,hp:tr.hp,maxhp:tr.maxhp,portee:tr.portee,degats:tr.degats,camouflee:tr.camouflee,reveillee:tr.reveillee,cachette,x:p.x,y:p.y}; }),
       tourCompteur:d.planete.tourCompteur||0, prochaineGarnison:d.planete.prochaineGarnison, prochaineTempete:d.planete.prochaineTempete,
+      alerte:d.planete.alerte||0, meilleureDistance:(d.planete.meilleureDistance!=null)?d.planete.meilleureDistance:state.RANGS,
     };
     state.suiteDemarrerTour=demarrerTourJoueurPlanete; state.suiteFinPlanete=finMissionPlanete;
     activerRappelsBiome(state.planete.biome);

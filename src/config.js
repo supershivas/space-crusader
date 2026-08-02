@@ -182,6 +182,14 @@ export function basePvMax(secteur,difficulte){
   return Math.round((30+secteur*12)*d.baseHpMult);
 }
 
+/* ===== JAUGE D'ALERTE (mission planète, refonte) =====
+   Monte tant que l'escadrille ne progresse pas vers la base — jamais un chrono dur : elle
+   redescend à 0 dès qu'un vaisseau bat son propre record de rapprochement (voir planete.js,
+   mettreAJourAlerte). ALERTE_PALIER1 : la garnison est produite plus vite. ALERTE_PALIER2 :
+   les dernières rangées deviennent hostiles (dégâts de zone, jamais létaux d'un coup),
+   toujours télégraphié 1 tour avant. */
+export const ALERTE_PALIER1=3, ALERTE_PALIER2=6, ALERTE_ZONE_RANGS=2;
+
 /* ===== CAPACITÉS ACTIVES DES VAISSEAUX (une fois par combat) =====
    Déclenchées par un second appui sur le vaisseau déjà sélectionné. */
 export const CAPACITES = {

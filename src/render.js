@@ -507,6 +507,10 @@ export function dessiner(t){
       ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
       arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
       ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(trad('hud_base'),pv.x+8,pv.y+pv.h/2+3);
+      // jauge d'alerte : pastille d'avertissement à droite de la barre, palier 1 orange fixe, palier 2 rouge pulsant
+      const niv=state.planete.alerteNiveau||0;
+      if(niv>0){ const coulA=niv===2?'rgba(229,72,77,'+(.6+.4*pulse)+')':'#ff8a3d';
+        ctx.fillStyle=coulA; ctx.font='9px monospace'; ctx.textAlign='right'; ctx.fillText('▲',pv.x+pv.w-8,pv.y+pv.h/2+4); ctx.textAlign='left'; }
     }
   } else { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
     arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
