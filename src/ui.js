@@ -288,19 +288,35 @@ const GUIDE_MENACES=[
 const GUIDE_TOURELLES=['canon','sniper','lourde'];
 const GUIDE_BIOMES=[{type:'desert',ico:'alerte'},{type:'glace',ico:'gel'},{type:'grotte',ico:'demon'},{type:'villes_anciennes',ico:'carte'}];
 /* Résumé des entrées d'encyclopédie découvertes (toutes catégories confondues), pour l'écran
-   de fin de partie — mêmes listes/clés de nom que ouvrirGuide(), sans dupliquer le catalogue. */
+   de fin de partie — mêmes listes/images que ouvrirGuide(), sans dupliquer le catalogue.
+   Renvoie des descripteurs de carte (img/ico/nomKey/tier), pas juste des noms : l'écran de fin
+   affiche les vraies vignettes (non cliquables), pas une liste de texte. */
 function decouvertesResume(){
-  const noms=[];
-  for(const type of GUIDE_ALLIES) if(estDecouvert('vaisseau',type)) noms.push(t('ship_'+type+'_nom'));
-  for(const type of GUIDE_ENNEMIS) if(estDecouvert('aile',type)) noms.push(t('ail_'+type+'_nom'));
-  for(const type of GUIDE_BOSS) if(estDecouvert('boss',type)) noms.push(t('boss_'+type+'_nom'));
-  for(const type of GUIDE_BONUS) if(estDecouvert('bonus',type)) noms.push(t('bonus_'+type+'_nom'));
-  for(const m of GUIDE_MENACES) if(estDecouvert('menace',m.type)) noms.push(t(m.nomKey));
-  if(estDecouvert('planete_base','base')) noms.push(t('planete_base_guide_nom'));
-  for(const type of GUIDE_TOURELLES) if(estDecouvert('planete_tourelle',type)) noms.push(t('tourelle_'+type+'_nom'));
-  for(const b of GUIDE_BIOMES) if(estDecouvert('planete_biome',b.type)) noms.push(t('biome_'+b.type+'_nom'));
+  const cartes=[];
+  const imgBonusParType={pv:imgBonusPV,tir:imgBonusTIR,vaisseau:imgBonusVAIS,mimic:getImgMimic()};
+  for(const type of GUIDE_ALLIES) if(estDecouvert('vaisseau',type)) cartes.push({img:imgVaisseau(type),nomKey:'ship_'+type+'_nom'});
+  for(const type of GUIDE_ENNEMIS) if(estDecouvert('aile',type)) cartes.push({img:imgAileGuide(type),nomKey:'ail_'+type+'_nom',tier:RARETE.aile[type]});
+  for(const type of GUIDE_BOSS) if(estDecouvert('boss',type)) cartes.push({img:imgBossGuide(type),nomKey:'boss_'+type+'_nom',tier:RARETE.boss[type]});
+  for(const type of GUIDE_BONUS) if(estDecouvert('bonus',type)) cartes.push({img:imgBonusParType[type],nomKey:'bonus_'+type+'_nom',tier:RARETE.bonus[type]});
+  for(const m of GUIDE_MENACES) if(estDecouvert('menace',m.type)) cartes.push({img:m.img?m.img():null,ico:m.ico,nomKey:m.nomKey,tier:RARETE.menace[m.type]});
+  if(estDecouvert('planete_base','base')) cartes.push({img:imgBaseGuide(),nomKey:'planete_base_guide_nom'});
+  for(const type of GUIDE_TOURELLES) if(estDecouvert('planete_tourelle',type)) cartes.push({img:imgTourelleGuide(type),nomKey:'tourelle_'+type+'_nom'});
+  for(const b of GUIDE_BIOMES) if(estDecouvert('planete_biome',b.type)) cartes.push({ico:b.ico,nomKey:'biome_'+b.type+'_nom'});
   const total=GUIDE_ALLIES.length+GUIDE_ENNEMIS.length+GUIDE_BOSS.length+GUIDE_BONUS.length+GUIDE_MENACES.length+1+GUIDE_TOURELLES.length+GUIDE_BIOMES.length;
-  return {noms, total};
+  return {cartes, total};
+}
+/* Carte d'encyclopédie non cliquable (récap de fin de partie) : même rendu visuel que
+   carteGuide() mais sans état verrouillé (toujours découverte) ni interaction — le détail
+   complet reste consultable dans l'Encyclopédie elle-même. */
+function carteGuideMini(img,ico,nomKey,tier){
+  const b=document.createElement('div'); b.className='guide-card guide-card-mini';
+  if(img){ const cv=document.createElement('canvas'); cv.width=img.width; cv.height=img.height;
+    cv.getContext('2d').drawImage(img,0,0); b.appendChild(cv); }
+  else if(ico) icone(b,ico,22);
+  const d=document.createElement('div');
+  d.innerHTML='<div class="nom">'+t(nomKey)+'</div>'+(tier?badgeRarete(tier):'');
+  b.appendChild(d);
+  return b;
 }
 function badgeRarete(tier){
   if(!tier) return '';
@@ -464,12 +480,19 @@ export function finPartie(){
     const noms=Object.keys(ACHIEVEMENTS_DEF).filter(id=>state.achievements[id]).map(id=>t('ach_'+id+'_nom'));
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
-  // Encyclopédie découverte (décompte persistant, toutes parties confondues) : le compte
-  // seul, pas la liste complète des noms (jusqu'à 60+ entrées) — le détail est déjà consultable
-  // dans l'Encyclopédie elle-même, l'écran de fin n'a pas besoin de la dupliquer en entier.
-  const dec=document.getElementById('finDecouvertes');
-  if(dec){ const r=decouvertesResume();
-    dec.innerHTML = r.noms.length ? '📖 '+t('fin_encyclopedie')+' '+r.noms.length+'/'+r.total : '';
+  // Encyclopédie découverte (décompte persistant, toutes parties confondues) : les vraies
+  // vignettes (non cliquables — le détail complet reste dans l'Encyclopédie elle-même),
+  // avec un compte en en-tête plutôt qu'une liste de noms en texte.
+  const dec=document.getElementById('finDecouvertes'); dec.innerHTML='';
+  { const r=decouvertesResume();
+    if(r.cartes.length){
+      const header=document.createElement('div'); header.className='fin-dec-header';
+      header.textContent='📖 '+t('fin_encyclopedie')+' '+r.cartes.length+'/'+r.total;
+      dec.appendChild(header);
+      const wrap=document.createElement('div'); wrap.className='cards';
+      for(const c of r.cartes) wrap.appendChild(carteGuideMini(c.img,c.ico,c.nomKey,c.tier));
+      dec.appendChild(wrap);
+    }
   }
   // Toujours revenir à la 1ère page (résultat + score) : une partie précédente peut avoir laissé
   // l'écran de fin sur sa dernière page consultée.
@@ -477,15 +500,21 @@ export function finPartie(){
   document.getElementById('finPage2').classList.add('cache');
   document.getElementById('finPage3').classList.add('cache');
   document.getElementById('fin').classList.remove('cache');
+  document.getElementById('fin').scrollTop=0;
   ajusterTitreModale(document.querySelector('#fin h1'));
 }
+// Les 3 pages partagent le même conteneur défilant (#fin, overflow-y:auto) : sans remise à
+// zéro explicite, la nouvelle page hérite du défilement laissé par la précédente et peut
+// s'afficher entamée au lieu de commencer en haut.
 document.getElementById('btnFinSuivant1').addEventListener('click',()=>{
   document.getElementById('finPage1').classList.add('cache');
   document.getElementById('finPage2').classList.remove('cache');
+  document.getElementById('fin').scrollTop=0;
 });
 document.getElementById('btnFinSuivant2').addEventListener('click',()=>{
   document.getElementById('finPage2').classList.add('cache');
   document.getElementById('finPage3').classList.remove('cache');
+  document.getElementById('fin').scrollTop=0;
 });
 
 /* Meilleur score déjà réalisé, affiché sur l'accueil (juste sous le titre) pour donner un

@@ -45,8 +45,13 @@
   /* overflow-y:auto : filet de sécurité si le contenu d'un écran dépasse la hauteur dispo (petit
      téléphone, liste longue) — le défilement reste CONTENU dans le cadre du jeu plutôt que de
      pousser la page entière (ce qui faisait défiler la barre d'adresse du navigateur avec elle et
-     coupait le haut/bas du contenu, cf. écran de fin trop chargé avant découpage en pages). */
-  .ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+     coupait le haut/bas du contenu, cf. écran de fin trop chargé avant découpage en pages).
+     "safe center" (pas juste "center") : un flexbox centré dont le contenu déborde pousse la
+     moitié du débordement HORS de la zone défilable côté haut (piège classique centrage+overflow
+     — le scrollTop restait à 0 alors que le haut du contenu, lui, était rendu au-dessus, donc
+     inaccessible en scrollant). "safe" retombe sur un alignement au début dès que ça déborde,
+     pour que tout le contenu reste atteignable en défilant. */
+  .ecran{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:safe center;
          gap:var(--space-md);padding:var(--space-lg);text-align:center;background:rgba(7,11,24,.87);backdrop-filter:blur(2px);border-radius:var(--radius-md);overflow-y:auto;}
   /* L'accueil n'est pas une pause sur la partie en cours : il ne doit jamais laisser voir le
      canvas de jeu (étoiles/vaisseaux animés en fond) à travers — fond opaque, sans flou.
@@ -268,6 +273,15 @@
   .guide-card.verrouille .nom{color:#8fa0c8;}
   .guide-card:not(.verrouille){cursor:pointer;}
   .guide-card:not(.verrouille):active{transform:translateY(1px);}
+  /* Vignettes non cliquables de l'écran de fin (récap "Encyclopédie découverte") : même rendu
+     que .guide-card, en un peu plus petit (beaucoup de cartes possibles d'un coup), sans le
+     curseur "cliquable" ni l'effet d'appui puisqu'il n'y a rien à cliquer ici — le détail
+     complet reste dans l'Encyclopédie elle-même. */
+  .guide-card.guide-card-mini{width:60px;min-height:70px;padding:6px 4px;cursor:default;}
+  .guide-card.guide-card-mini:active{transform:none;}
+  .guide-card-mini canvas{max-width:40px;max-height:40px;}
+  .guide-card-mini .nom{font-size:6px;}
+  .fin-dec-header{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;margin-bottom:2px;}
   .rarete{font-size:var(--fs-petit);border:1px solid;border-radius:var(--radius-sm);padding:1px 5px;margin-top:2px;}
   #guideDetail .nom{font-size:11px;color:#ffd23d;}
   #guideDetail .desc{font-size:var(--fs-petit);color:#9fb0d8;line-height:var(--lh-normal);}
@@ -428,7 +442,7 @@
       </div>
       <div class="fin-page cache" id="finPage3">
         <h2 class="fin-souscran" data-i18n="fin_recompenses_titre">RÉCOMPENSES</h2>
-        <div id="finDecouvertes" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
+        <div id="finDecouvertes" style="margin-top:4px;max-width:100%;"></div>
         <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
         <p class="fin-page-num">3 / 3</p>
         <div class="menu-vertical">
