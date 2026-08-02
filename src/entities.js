@@ -3,8 +3,8 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase, decouvrir, afficherDegats } from './state.js';
-import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId, appliquerMetaHero } from './config.js';
-import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
+import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId, appliquerMetaHero, HEROS } from './config.js';
+import { cuireFit, JOUEUR, ROUGE, ROUGE_SLUM, HERO_ROUGE_OVERRIDES, imgPortraitsHeros, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE, RUINE_1, RUINE_2,
          STRONGHOLD, MINI_NAVETTE, MINI_NAVETTE_ALLIEE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
@@ -14,6 +14,9 @@ import { logMsg } from './ui.js';
 
 /* images des unités, recuites à la taille de case courante (voir cuireUnites) */
 let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgVTransporteur,imgVMedic,imgPorteur,imgBrouilleur,imgLourd;
+/* sprite de combat du Vaisseau Rouge, une variante par héros (voir HERO_ROUGE_OVERRIDES/
+   ROUGE_SLUM dans sprites.js) — recuit à chaque changement de taille de case comme imgRouge. */
+let imgRougeParHero={};
 let imgDebris1,imgDebris2,imgStation,imgBarriere,imgRuine1,imgRuine2;
 let imgStronghold,imgMiniNavette,imgMiniNavetteAlliee,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
 let imgSaboteur,imgBruleur,imgTitan,imgAileTransporteur;
@@ -23,6 +26,7 @@ export function cuireUnites(CELL){
   dernierCELL=CELL;
   const skin=(SKINS_VAISSEAUX[(state.meta&&state.meta.skinVaisseaux)||0]||SKINS_VAISSEAUX[0]).over;
   imgJoueur=cuireFit(JOUEUR,CELL,skin); imgRouge=cuireFit(ROUGE,CELL); imgAile=cuireFit(AILE,CELL); imgAster=cuireFit(ASTER,CELL);
+  imgRougeParHero={}; for(const h of HEROS) imgRougeParHero[h.id]=cuireFit(h.id==='slum'?ROUGE_SLUM:ROUGE, CELL, HERO_ROUGE_OVERRIDES[h.id]);
   imgChasseur=cuireFit(CHASSEUR,CELL); imgBomber=cuireFit(BOMBARDIER,CELL); imgEclaireur=cuireFit(ECLAIREUR,CELL);
   imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL,skin); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL,skin); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL,skin); imgVSniper=cuireFit(JOUEUR_SNIPER,CELL,skin); imgVTransporteur=cuireFit(JOUEUR_TRANSPORTEUR,CELL,skin); imgVMedic=cuireFit(JOUEUR_MEDIC,CELL,skin);
   imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL); imgLourd=cuireFit(AILE_LOURD,CELL);
@@ -37,7 +41,13 @@ export function cuireUnites(CELL){
   imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL); imgAileTransporteur=cuireFit(AILE_TRANSPORTEUR,CELL);
 }
 /* ré-applique la teinte cosmétique en cours (après un changement de skin dans le menu méta) */
-export function rafraichirSkinVaisseaux(){ if(dernierCELL){ cuireUnites(dernierCELL); for(const f of state.fighters) f.img=imgVaisseau(f.type); } }
+export function rafraichirSkinVaisseaux(){ if(dernierCELL){ cuireUnites(dernierCELL); for(const f of state.fighters) f.img = f.type==='rouge' ? imgVaisseauRouge(f.heroId) : imgVaisseau(f.type); } }
+/* sprite de combat du Vaisseau Rouge pour un héros donné (repli sur le sprite par défaut pour
+   l'androïde ou un id inconnu) */
+export function imgVaisseauRouge(heroId){ return (heroId && imgRougeParHero[heroId]) || imgRouge; }
+/* portrait détaillé d'un héros (survol en combat, écran de choix, encyclopédie) — repli sur
+   l'androïde si l'id est inconnu/absent */
+export function imgHeroPortrait(heroId){ return imgPortraitsHeros[heroId] || imgPortraitsHeros.androide; }
 function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:type==='transporteur'?imgAileTransporteur:imgAile; }
 export function getImgMimic(){ return imgMimic; }
 /* accès en lecture seule au sprite d'une aile par type, pour le guide (bestiaire) */
@@ -63,7 +73,7 @@ export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); ty
   const malusPvMax = (heroBonus&&heroBonus.malusPvMax)||0;
   const hp = type==='rouge'?Math.max(1,2+((state.ups&&state.ups.rouge_pv)||0)-malusPvMax) : type==='bouclier'?3 : 1;
   decouvrir('vaisseau',type);
-  const f={c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:imgVaisseau(type),capUsed:false,provoque:false,kills:0};
+  const f={c,r,x:p.x,y:depuisBas?p.y+50:p.y,used:false,type,hp,maxhp:hp,img:type==='rouge'?imgVaisseauRouge(heroId):imgVaisseau(type),capUsed:false,provoque:false,kills:0};
   if(type==='rouge') f.heroId=heroId;
   return f; }
 /* case libre la plus proche d'un point donné (diagonales incluses) — utilisé par la capacité du Transporteur */

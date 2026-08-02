@@ -118,7 +118,7 @@
       <button class="tool-btn" data-outil="gomme" title="Gomme">▢</button>
       <button class="tool-btn" data-outil="pot" title="Pot de peinture (remplissage)">▨</button>
       <button class="tool-btn" data-outil="pipette" title="Pipette">◎</button>
-      <button class="toggle-btn" id="btnMiroir">Miroir H</button>
+      <button class="toggle-btn actif" id="btnMiroir">Miroir H</button>
       <button class="toggle-btn actif" id="btnGrille">Grille</button>
       <button class="jouer secondaire" id="btnAnnuler" style="font-size:6.5px;">Annuler</button>
       <button class="jouer secondaire" id="btnRefaire" style="font-size:6.5px;">Refaire</button>
@@ -192,7 +192,9 @@ let largeur=20, hauteur=22;
 let cells=grilleVide(largeur,hauteur);
 let outil='crayon';
 let couleurActive=Object.keys(PAL).find(k=>PAL[k])||'W';
-let miroir=false, grilleVisible=true, cellPx=24;
+// miroir horizontal actif par défaut : la plupart des sprites du jeu (visages, vaisseaux,
+// icônes...) sont symétriques — décochable au besoin pour les rares cas qui ne le sont pas.
+let miroir=true, grilleVisible=true, cellPx=24;
 let customPal=chargerCustomPal();
 let undoStack=[], redoStack=[];
 let peinture=false;

@@ -15,6 +15,39 @@ export const PAL={'.':null,
 export const CROISEUR=["...D...D...D...D...D...D...D...D...D...","..GGG.GGG.GGG.GGG.GGG.GGG.GGG.GGG.GGG..","wWWWWDWWWDWWWDWWWDWWWDWWWDWWWDWWWDWWWWw","WWWWWWWCCWWWWWWWWCCCCCWWWWWWWWCCWWWWWWW","WWDWWWWCWWWDWWWWwWCCCWwWWWWDWWWCWWWDWWW","WWWWWWDWWWWWWDWWWWWDWWWWWDWWWWWWDWWWWWW","WWWWWWDWWWWWWDWWWWWDWWWWWDWWWWWWDWWWWWW","DDWWWWDWWWWWWDWWWWWDWWWWWDWWWWWWDWWWWDD","ADDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDA","A.EeE...EeE...EeE...EeE...EeE...EeE...A"];
 export const JOUEUR=["BB.......BB","BB..sss..BB","BB.sSSSs.BB","BBbSSOSSbBB","BB.sSSSs.BB","BB..sss..BB","BB.......BB","Bb.......bB","bB.......Bb"];
 export const ROUGE=[".R.......R.","RR.......RR","RR..sss..RR","RR.sSSSs.RR","RRKSSESSKRR","RR.sSSSs.RR","RR..sss..RR","RR.......RR",".R.......R."];
+/* variante de sprite de combat pour le héros Slum (peau verte gluante) : mêmes proportions que
+   ROUGE, avec des coulures de bave qui débordent sous la coque — les autres héros gardent le
+   gabarit ROUGE tel quel et se distinguent seulement par la couleur de l'accent central (voir
+   HERO_ROUGE_OVERRIDES plus bas), Slum est le seul à casser aussi la silhouette. */
+export const ROUGE_SLUM=[".R.......R.","RR.......RR","RR..sss..RR","RR.sSSSs.RR","RRKSSESSKRR","RR.sSSSs.RR","RR..sss..RR","RR.......RR",".R..v.v..R.","....v.v...."];
+/* couleur de l'accent central (code 'E' de ROUGE) selon le héros équipé — variation visuelle
+   minimale mais suffisante pour reconnaître qui pilote le Vaisseau Rouge en combat sans
+   redessiner tout le vaisseau à chaque héros. L'androïde (absent d'ici) garde la couleur par
+   défaut de ROUGE, neutre. */
+export const HERO_ROUGE_OVERRIDES={
+  darkor:{E:'#37e0ff'}, odysseus:{E:'#c9a227'}, acheen:{E:'#ffd23d'}, polypheme:{E:'#ff5a3d'},
+  slum:{E:'#8cff5a'}, bar4bar4:{E:'#ff6bb3'}, demonokos:{E:'#8b95a3'},
+};
+
+/* ===== PORTRAITS DES HÉROS (roadmap "Héros du Vaisseau Rouge", lot 7) =====
+   Grille plus grande et plus détaillée que les sprites de vaisseaux (15×19 contre ~11×9) :
+   affichée au survol du Vaisseau Rouge en combat et sur l'écran de choix du héros. Premier jet
+   pensé pour rester simple à faire évoluer via pixel-editor.html (mêmes conventions PAL). */
+export const PORTRAIT_DARKOR=["...BBBBBBBBB...","..BBBBBBBBBBB..",".BBBBBBBBBBBBB.","BBBBBBBBBBBBBBB","BBBBBBBBBBBBBBB","BBBBBBBBBBBBBBB","BBBBBwBBBBBBBBB","BBBkCCCCCCCkBBB","BBBkkkkkkkkkBBB","BBBBBBBBBBBBBBB","BBBBBBBBBBBBBBB",".BBBBBBBBBBBBB.","..BBBBBBBBBBB..","...BBbbbbbBB...","....BbbbbbB....",".....BBBBB.....","......BBB......","...............","..............."];
+export const PORTRAIT_ODYSSEUS=["...nnnnnnnnn...","..nnnnnnnnnnn..",".nnnnnnnnnnnnn.","nnnnnnnnnnnnnnn","nnnnnnnnnnnnnnn","nnnnnnnnnnnnnnn","nnnTTnnnnnTTnnn","nnnkCnnnnnCknnn","nnnnnnnnnnnnnnn","nnnnnnnnnnnnnnn","nnnnnnnnnnnnnnn",".nntttttttttnn.","..ntTTTTTTTtn..","...tTTTTTTTt...","...tTTTTTTTt...","...tTTTTTTTt...","...ttttttttt...","...............","..............."];
+export const PORTRAIT_ACHEEN=["...yyyyyyyyy...","..nyyyyyyyyyn..",".nnyyyyyyyyynn.","nynnnnnnnnnnnyn","nnynnnnnnnnnynn","ynnnnnnnnnnnnny","nynnnnnnnnnnnyn","ynnkCnnnnnCknny","nynnnnnnnnnnnyn","nynnnnnnnnnnnyn","nnynnnnnnnnnynn",".nnnnnnnnnnnPP.","..nnnnnnnnnnPP.","...nnnnnnnnn...","....nnnnnnn....",".....nnnnn.....","......nnn......","...............","..............."];
+export const PORTRAIT_POLYPHEME=["...MMMMMMMMM...","..MMMMMMMMMMM..",".MMMMMMMMMMMMM.","MMMMMMMMMMMMMMM","MMMMTTTTTTTMMMM","MMMMTTTTTTTMMMM","MMMMMkkkkkMMMMM","MMMMMkRRRkMMMMM","MMMMMkkkkkMMMMM","MMMMMMMMMMMMMMM","MMMMMMMMMMMMMMM",".MMMMMMMMMMMMM.","..ooooooooooo..","..ooooooooooo..","..ooooooooooo..","..ooooooooooo..","..ooooooooooo..","...............","..............."];
+export const PORTRAIT_SLUM=["...VVVVVVVVV...","..VVVVVVVVVVV..",".VVVVVVVVVVVVV.","VVVVVVVVVVVVVVV","VVVVVVVVVVVVVVV","VVVVVVVVVVVVVVV","VVvvvvVVVvvvvVV","VVvkkvVVVvkkvVV","VVvkkvVVVvkkvVV","VVvvvvVVVvvvvVV","VVVVVVVVVVVVVVV",".VVVVVVVVVVVVV.","..VVVVVVVJJVV..","...JJVVVVJJV...","...JJVJJVJJ....","...JJVJJVJJ....","...JJ.JJVJJ....","...JJ.JJ.j.....","...j..JJ......."];
+export const PORTRAIT_BAR4BAR4=["...TTTTTTTTT...","..MTTTTTTTTTM..",".MMTTTTTTTTTMM.","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTkkMMMMMkkTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT",".MMMMMMMMMMMMM.","..MMMMMMMMMMM..","...MMMMMMMMM...","....MMMMMMM....",".....MMMMM.....","......MMM......","...............","..............."];
+export const PORTRAIT_DEMONOKOS=[".....SSSSS.....","....SSSSSSS....","...SSSSSSSSS...","...SSSSSSSSS...","ZZSSSSSSSSSSSZZ","ZZSSSSSSSSSSSZZ","ZZSkkkSSSkkkSZZ","ZZSSSSSSSSSSSZZ","ZZSSSSSSSSSSSZZ","ZZSSSeeeeeSSSZZ","..SSSeeeeeSSS..","...SSSMMMSSS...","....SSMMMSS....",".....SooSS.....","......SoSS.....","......SSS......",".......S.......","...............","..............."];
+export const PORTRAIT_ANDROIDE=["...SSSSSSSSS...","..SSSSSSSSSSS..",".SSSSSSSSSSSSS.","SSSSSSSSSSSSSSS","SSSSSSSSSSSSSSS","SSSSSSSSSSSSSSS","SSSDDDDDDDDDSSS","SSSkCDDDDDCkSSS","SSSDDDDDDDDDSSS","SSSDDDDDDDDDSSS","SSSSSSDDDSSSSSS",".SSSSSSSSSSSSS.","..SSSSSSSSSSS..","...SSSSSSSSS...","....SSSSSSS....",".....SSSSS.....","......SSS......","...............","..............."];
+export const PORTRAITS_HEROS={
+  darkor:PORTRAIT_DARKOR, odysseus:PORTRAIT_ODYSSEUS, acheen:PORTRAIT_ACHEEN, polypheme:PORTRAIT_POLYPHEME,
+  slum:PORTRAIT_SLUM, bar4bar4:PORTRAIT_BAR4BAR4, demonokos:PORTRAIT_DEMONOKOS, androide:PORTRAIT_ANDROIDE,
+};
+/* portraits déjà cuits, taille fixe (indépendante de CELL — jamais dessinés sur la grille de
+   jeu, seulement dans des panneaux d'UI : sélection du héros, encyclopédie, infobulle). */
+export const imgPortraitsHeros=Object.fromEntries(Object.entries(PORTRAITS_HEROS).map(([id,g])=>[id,cuire(g,6)]));
 /* vaisseaux alliés à construire : coque de couleur + silhouette différentes */
 export const JOUEUR_RAPIDE=["BB...C...BB","BB..sCs..BB","BB.sSCSs.BB","BBbSSCSSbBB","BB.sSCSs.BB","BB..sCs..BB","BB...C...BB","Bb.......bB",".B.......B."];
 export const JOUEUR_BOMBER=["BB.......BB","BB..sss..BB","BB.sSSSs.BB","BBbSSESSbBB","BB.sSSSs.BB","BB..sEs..BB","BB...E...BB","Bb..EEE..bB","bB.......Bb"];

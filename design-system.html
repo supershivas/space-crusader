@@ -413,6 +413,19 @@
       en reprend le gabarit plutôt que d'inventer une forme isolée.</p>
     <div class="cards" id="cat-allies"></div>
 
+    <h3 class="sub">Héros du Vaisseau Rouge — sprite de combat par héros</h3>
+    <p class="note" style="margin-top:0;">Même gabarit que <code>Vaisseau Rouge</code> ci-dessus pour tous, sauf Slum
+      (coulures de bave ajoutées) — seul l'accent central change de couleur pour les autres
+      (<code>HERO_ROUGE_OVERRIDES</code>, <code>sprites.js</code>). L'androïde neutre garde la couleur par défaut.</p>
+    <div class="cards" id="cat-heros-vaisseau"></div>
+
+    <h3 class="sub">Héros du Vaisseau Rouge — portraits</h3>
+    <p class="note" style="margin-top:0;">Grille plus grande et plus détaillée que les sprites de vaisseaux
+      (<code>PORTRAIT_*</code>, <code>sprites.js</code>) — affichée au survol du Vaisseau Rouge en combat, sur
+      l'écran de choix du héros et dans l'Encyclopédie. Premier jet pensé pour être repris/affiné via
+      <a href="pixel-editor.html">l'éditeur pixel art</a>.</p>
+    <div class="cards" id="cat-heros-portrait"></div>
+
     <h3 class="sub">Navettes</h3>
     <div class="cards" id="cat-navettes"></div>
 
@@ -463,7 +476,7 @@
 <script type="module">
 import { cuireFit } from './src/sprites.js';
 import * as S from './src/sprites.js';
-import { SKINS_CROISEUR, SKINS_VAISSEAUX } from './src/config.js';
+import { SKINS_CROISEUR, SKINS_VAISSEAUX, HEROS, ANDROIDE } from './src/config.js';
 
 /* taille de rendu uniforme (CELL fictif) quelle que soit la taille native de la grille —
    même fonction que le jeu utilise pour caser un sprite dans une case (entities.js). */
@@ -495,6 +508,12 @@ carte('cat-allies',S.JOUEUR_SNIPER,'Tireur');
 carte('cat-allies',S.JOUEUR_TRANSPORTEUR,'Transporteur');
 carte('cat-allies',S.JOUEUR_MEDIC,'Médic');
 for(const skin of SKINS_VAISSEAUX) if(skin.id!=='defaut') carte('cat-allies',S.JOUEUR,'Skin '+skin.nom,{over:skin.over});
+
+// Héros : sprite de combat (variante du Vaisseau Rouge) + portrait
+for(const h of HEROS) carte('cat-heros-vaisseau',h.id==='slum'?S.ROUGE_SLUM:S.ROUGE,h.nom,{over:S.HERO_ROUGE_OVERRIDES[h.id]});
+carte('cat-heros-vaisseau',S.ROUGE,ANDROIDE.nom);
+for(const h of HEROS) carte('cat-heros-portrait',S.PORTRAITS_HEROS[h.id],h.nom,{taille:140});
+carte('cat-heros-portrait',S.PORTRAITS_HEROS.androide,ANDROIDE.nom,{taille:140});
 
 // Navettes
 carte('cat-navettes',S.MINI_NAVETTE_ALLIEE,'Mini-navette alliée',{taille:TAILLE*0.62}); // vraiment miniature, voir entities.js:cuireUnites

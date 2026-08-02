@@ -384,13 +384,40 @@ passer à la suivante) :
    pour ne jamais couper son contenu sur petit écran. Testé : investissement
    d'un niveau sur Darkor (cristaux décomptés, palier affiché, persisté),
    aucune erreur console.
-7. **Habillage** : portraits réels (via `pixel-editor.html`), variations de
-   sprite de combat par héros, section `design-system.html` dédiée,
-   incrément `VERSION`/cache SW comme à chaque lot livré (déjà fait pour les
-   traductions FR/EN, complètes dès le lot 3).
+7. ✅ **Habillage** (`sprites.js`, `entities.js`, `ui.js`, `design-system.html`) :
+   - 8 portraits pixel-art (15×19, `PORTRAIT_*`/`PORTRAITS_HEROS`) — les 7
+     héros + l'androïde standard, dessinés à la main (silhouette de tête
+     partagée, traits distinctifs par héros : visière de Darkor, barbe
+     d'Odysseus, boucles blondes + boucle d'oreille de L'Achéen, œil unique
+     de Polyphème, coulures de bave de Slum, chevelure de Bar4-bar4, bec
+     crochu de Demonokos). Cuits une fois (`imgPortraitsHeros`), affichés à
+     l'écran de choix du héros, dans l'Encyclopédie et dans l'infobulle au
+     survol du Vaisseau Rouge en combat (nom + bonus passif inclus).
+   - Variation du sprite de combat par héros : même gabarit que `ROUGE` pour
+     tous, seul l'accent central change de couleur
+     (`HERO_ROUGE_OVERRIDES`) — sauf Slum, seul à casser aussi la silhouette
+     (`ROUGE_SLUM`, coulures de bave qui débordent sous la coque), comme
+     évoqué dans le brainstorming initial. L'androïde garde la couleur par
+     défaut, neutre.
+   - Nouvelle section « Héros du Vaisseau Rouge » dans `design-system.html`
+     (sprite de combat + portraits, synchronisés en direct avec `sprites.js`
+     comme le reste de la page).
+   - Au passage : mode miroir horizontal activé par défaut dans
+     `pixel-editor.html` (la plupart des sprites du jeu sont symétriques).
+   Testé en jeu : écran de choix (portraits affichés), combat avec Slum
+   (variante de sprite + infobulle avec portrait/nom/bonus), page
+   design-system (16 cartes : 8 sprites + 8 portraits) — aucune erreur
+   console.
 
-**Prochaine étape** : lot 7 (habillage — portraits réels, variations de
-sprite, section design-system). C'est le dernier lot du plan initial ; les
-7 héros sont maintenant entièrement fonctionnels (bonus, sélection,
-déblocage, progression méta), seul l'aspect visuel reste provisoire (icônes
-`ICONS` génériques en attendant de vrais portraits pixel-art).
+**Les 7 lots de la roadmap "Héros du Vaisseau Rouge" sont maintenant tous
+livrés.** Reste ouvert pour une itération future (notés comme
+simplifications assumées en cours de route) :
+- le déblocage se fait uniquement en jouant un héros (choix libre dès la
+  première partie) ou via le nœud "Signal de détresse" — pas encore de
+  distinction stricte "héros non débloqué = non sélectionnable" à l'écran
+  de choix (étape 3) ;
+- les portraits/sprites sont un premier jet pensé pour être repris via
+  `pixel-editor.html`, pas un art final ;
+- la mission spéciale solo (champ d'astéroïdes, vaisseau héros seul) évoquée
+  dans le brainstorming initial n'a jamais été chiffrée (notée non
+  prioritaire dès le départ).
