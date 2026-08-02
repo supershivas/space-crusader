@@ -165,8 +165,9 @@ sauvegarde/reprise, habillage, encyclopédie), fusionné sur `main`.
 
 ### Héros du Vaisseau Rouge
 
-**Statut** : conception validée avec l'utilisateur (toutes les décisions
-ci-dessous tranchées), implémentation non démarrée.
+**Statut final** : les 7 lots sont terminés et vérifiés, uniforme commun
+dynamique inclus. Système entièrement fonctionnel (sélection, bonus en
+combat, déblocage, arbre méta, habillage), fusionné sur `main`.
 
 **Pitch** : le Vaisseau Rouge (`SHIP_ROUGE`, `src/config.js`) devient incarné
 par un **héros** : un personnage avec un visage/casque, un caractère, un
@@ -408,10 +409,22 @@ passer à la suivante) :
    (variante de sprite + infobulle avec portrait/nom/bonus), page
    design-system (16 cartes : 8 sprites + 8 portraits) — aucune erreur
    console.
+   → **Complété ensuite par l'uniforme commun dynamique** (demandé après
+   coup) : bandeau épaules/costume noir partagé par tous les héros
+   (`UNIFORME_HEROS`, `grillePortraitComplet()` dans `sprites.js`), accolé
+   sous chaque tête. Le nombre de médailles dorées (0 à 3) reflète en direct
+   le niveau investi dans l'arbre méta de CE héros (`state.metaHeros`,
+   lot 6) — recuit une fois par niveau possible (`imgPortraitsHeros[id]` =
+   tableau de 4 images), `imgHeroPortrait()` choisit la bonne selon le
+   niveau courant. Nouvelle section dédiée dans `design-system.html`
+   (Darkor aux 4 niveaux + l'androïde, toujours à 0 médaille). Testé :
+   écran de choix avec un héros pré-chargé à un niveau méta non nul
+   (médailles visibles immédiatement), page design-system — aucune erreur
+   console.
 
 **Les 7 lots de la roadmap "Héros du Vaisseau Rouge" sont maintenant tous
-livrés.** Reste ouvert pour une itération future (notés comme
-simplifications assumées en cours de route) :
+livrés**, uniforme commun inclus. Reste ouvert pour une itération future
+(notés comme simplifications assumées en cours de route) :
 - le déblocage se fait uniquement en jouant un héros (choix libre dès la
   première partie) ou via le nœud "Signal de détresse" — pas encore de
   distinction stricte "héros non débloqué = non sélectionnable" à l'écran

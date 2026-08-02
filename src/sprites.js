@@ -45,9 +45,39 @@ export const PORTRAITS_HEROS={
   darkor:PORTRAIT_DARKOR, odysseus:PORTRAIT_ODYSSEUS, acheen:PORTRAIT_ACHEEN, polypheme:PORTRAIT_POLYPHEME,
   slum:PORTRAIT_SLUM, bar4bar4:PORTRAIT_BAR4BAR4, demonokos:PORTRAIT_DEMONOKOS, androide:PORTRAIT_ANDROIDE,
 };
-/* portraits déjà cuits, taille fixe (indépendante de CELL — jamais dessinés sur la grille de
-   jeu, seulement dans des panneaux d'UI : sélection du héros, encyclopédie, infobulle). */
-export const imgPortraitsHeros=Object.fromEntries(Object.entries(PORTRAITS_HEROS).map(([id,g])=>[id,cuire(g,6)]));
+
+/* ===== UNIFORME COMMUN (roadmap "Héros du Vaisseau Rouge") =====
+   Bandeau épaules/costume noir partagé par TOUS les héros — dessiné une seule fois, jamais
+   dupliqué — accolé sous le portrait de tête (voir PORTRAIT_* ci-dessus). Jusqu'à 3 médailles
+   dorées (un '?' par emplacement dans la ligne concernée) apparaissent selon le niveau de
+   l'arbre méta du héros (state.metaHeros[heroId], 0 à META_HEROS_MAX=3 dans config.js — les
+   deux valeurs sont tenues manuellement synchronisées, changer l'une suppose de revoir l'autre). */
+const UNIFORME_HEROS=[
+  "......kkk......",
+  ".....kkkkk.....",
+  "....kkkkkkk....",
+  "...kkkkkkkkk...",
+  "..kkkkkkkkkkk..",
+  ".kkkkkkkkkkkkk.",
+  ".kk?kkk?kkk?kk.",
+  "kkkkkkkkkkkkkkk",
+];
+/* portrait complet (tête + uniforme) d'un héros pour un niveau d'arbre méta donné — grille
+   brute, pas encore cuite (voir composerPortrait pour la version prête à afficher). */
+export function grillePortraitComplet(heroId,niveau){
+  const tete=PORTRAITS_HEROS[heroId]||PORTRAITS_HEROS.androide;
+  let i=-1;
+  const corps=UNIFORME_HEROS.map(row=>row.includes('?')
+    ? row.split('').map(ch=>{ if(ch!=='?') return ch; i++; return i<(niveau||0)?'P':'k'; }).join('')
+    : row);
+  return [...tete, ...corps];
+}
+/* portraits déjà cuits, un jeu par niveau de méta (0 à 3) — taille fixe (indépendante de CELL :
+   jamais dessinés sur la grille de jeu, seulement dans des panneaux d'UI : sélection du héros,
+   encyclopédie, infobulle). Recuits une fois pour toutes les combinaisons possibles plutôt qu'à
+   la volée, comme le reste des sprites du jeu. */
+export const imgPortraitsHeros={};
+for(const id in PORTRAITS_HEROS){ imgPortraitsHeros[id]=[0,1,2,3].map(niv=>cuire(grillePortraitComplet(id,niv),6)); }
 /* vaisseaux alliés à construire : coque de couleur + silhouette différentes */
 export const JOUEUR_RAPIDE=["BB...C...BB","BB..sCs..BB","BB.sSCSs.BB","BBbSSCSSbBB","BB.sSCSs.BB","BB..sCs..BB","BB...C...BB","Bb.......bB",".B.......B."];
 export const JOUEUR_BOMBER=["BB.......BB","BB..sss..BB","BB.sSSSs.BB","BBbSSESSbBB","BB.sSSSs.BB","BB..sEs..BB","BB...E...BB","Bb..EEE..bB","bB.......Bb"];

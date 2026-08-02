@@ -46,8 +46,13 @@ export function rafraichirSkinVaisseaux(){ if(dernierCELL){ cuireUnites(dernierC
    l'androïde ou un id inconnu) */
 export function imgVaisseauRouge(heroId){ return (heroId && imgRougeParHero[heroId]) || imgRouge; }
 /* portrait détaillé d'un héros (survol en combat, écran de choix, encyclopédie) — repli sur
-   l'androïde si l'id est inconnu/absent */
-export function imgHeroPortrait(heroId){ return imgPortraitsHeros[heroId] || imgPortraitsHeros.androide; }
+   l'androïde si l'id est inconnu/absent ; l'uniforme affiché (médailles) reflète le niveau
+   actuel de l'arbre méta de ce héros (state.metaHeros), pas seulement son identité. */
+export function imgHeroPortrait(heroId){
+  const variants=imgPortraitsHeros[heroId]||imgPortraitsHeros.androide;
+  const niveau=(state.metaHeros&&state.metaHeros[heroId])||0;
+  return variants[Math.min(3,niveau)];
+}
 function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bombardier'?imgBomber:type==='eclaireur'?imgEclaireur:type==='porteur'?imgPorteur:type==='brouilleur'?imgBrouilleur:type==='lourd'?imgLourd:type==='stronghold'?imgStronghold:type==='mini_navette'?imgMiniNavette:type==='regenerateur'?imgRegen:type==='mini_sniper'?imgMiniSniper:type==='diagonal_d'?imgDiagD:type==='diagonal_g'?imgDiagG:type==='void'?imgVoid:type==='saboteur'?imgSaboteur:type==='bruleur'?imgBruleur:type==='titan'?imgTitan:type==='transporteur'?imgAileTransporteur:imgAile; }
 export function getImgMimic(){ return imgMimic; }
 /* accès en lecture seule au sprite d'une aile par type, pour le guide (bestiaire) */

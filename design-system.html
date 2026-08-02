@@ -426,6 +426,13 @@
       <a href="pixel-editor.html">l'éditeur pixel art</a>.</p>
     <div class="cards" id="cat-heros-portrait"></div>
 
+    <h3 class="sub">Héros du Vaisseau Rouge — uniforme commun (arbre méta)</h3>
+    <p class="note" style="margin-top:0;">Bandeau épaules/costume noir partagé par tous les héros
+      (<code>grillePortraitComplet()</code>, <code>sprites.js</code>) — dessiné une seule fois, jamais dupliqué par
+      héros. Le nombre de médailles dorées reflète le niveau investi dans l'arbre méta de ce héros
+      (<code>state.metaHeros</code>, 0 à <code>META_HEROS_MAX</code> = 3, <code>config.js</code>).</p>
+    <div class="cards" id="cat-heros-uniforme"></div>
+
     <h3 class="sub">Navettes</h3>
     <div class="cards" id="cat-navettes"></div>
 
@@ -514,6 +521,10 @@ for(const h of HEROS) carte('cat-heros-vaisseau',h.id==='slum'?S.ROUGE_SLUM:S.RO
 carte('cat-heros-vaisseau',S.ROUGE,ANDROIDE.nom);
 for(const h of HEROS) carte('cat-heros-portrait',S.PORTRAITS_HEROS[h.id],h.nom,{taille:140});
 carte('cat-heros-portrait',S.PORTRAITS_HEROS.androide,ANDROIDE.nom,{taille:140});
+
+// Uniforme + médailles : un même héros (Darkor) aux 4 niveaux, puis l'androïde (jamais de médaille)
+for(let niv=0;niv<=3;niv++) carte('cat-heros-uniforme',S.grillePortraitComplet('darkor',niv),'Darkor — niveau '+niv,{taille:130});
+carte('cat-heros-uniforme',S.grillePortraitComplet('androide',0),ANDROIDE.nom,{taille:130});
 
 // Navettes
 carte('cat-navettes',S.MINI_NAVETTE_ALLIEE,'Mini-navette alliée',{taille:TAILLE*0.62}); // vraiment miniature, voir entities.js:cuireUnites
