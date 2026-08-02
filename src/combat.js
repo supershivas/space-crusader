@@ -16,6 +16,13 @@ import { t } from './i18n.js';
 /* dégâts d'un tir laser ennemi (aile ou boss) : augmente avec le secteur */
 export function degLaserActuel(){ return DEG_LASER + Math.floor(state.secteur/2); }
 
+/* Mission planète — refonte : la portée de tir doit être une vraie limite de DISTANCE (rangées
+   devant le vaisseau), pas seulement de colonnes comme en combat spatial — sinon un vaisseau
+   resté à la rangée de départ peut sniper la base dès le tour 1 sans jamais avoir à avancer
+   (diagnostic de la V1, voir ROADMAP.md). Proportionnelle à la hauteur de la grille pour rester
+   cohérente entre le petit gabarit mobile et le grand gabarit desktop. */
+export function porteeTirVerticalePlanete(){ return Math.max(3,Math.round(state.RANGS*0.4)); }
+
 /* ---- ciblage / déplacement ---- */
 export function tirable(f,a){ return Math.abs(a.c-f.c)<=1; }
 export function porteeDep(f){ return state.PORTEE_DEP + (f.type==='rouge'||f.type==='rapide'?1:0) + (state.ups?state.ups.deplacement:0); }
@@ -88,10 +95,13 @@ export function analyseTir(f){
   const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); const tourellesOk=new Set(); let bossOk=false; let baseOk=false; const beams=[];
   // biome Grotte (mission planète) : obscurité, portée réduite de 1 (jamais négative)
   const p=Math.max(0,1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0)+(bonusDemonokos?bonusDemonokos.valeur:0)-(state.planete&&state.planete.biome==='grotte'?1:0));
+  // mission planète : portée verticale limitée (voir porteeTirVerticalePlanete) — en combat
+  // spatial, aucune limite, le faisceau balaie toute la colonne comme avant.
+  const rMinV=state.planete?Math.max(0,f.r-porteeTirVerticalePlanete()):0;
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
-    let kind='vide', r1=0;
-    for(let rr=start; rr>=0; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
+    let kind='vide', r1=rMinV;
+    for(let rr=start; rr>=rMinV; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
       const tr=state.planete&&tourelleEn(c,rr); if(tr){ if(tr.reveillee===false){ kind='menace'; r1=rr; break; } tourellesOk.add(tr); kind='ennemi'; r1=rr; break; }   // tourelle fixe (mission planète) : destructible comme un obstacle ; invisible/inactive tant que non révélée (camouflage, obscurité)
       const al=aileEn(c,rr); if(al){ if(estProtege(al)&&!bonusDemonokos){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
@@ -107,9 +117,10 @@ export function analyseTir(f){
   }
   // Rétro-tir du Vaisseau Rouge : vise aussi les ennemis passés en dessous
   if(f.type==='rouge' && state.ups && state.ups.rouge_back){
-    for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue; const start=f.r+1; if(start>state.RANGS-1) continue;
-      let kind='vide', r1=state.RANGS-1;
-      for(let rr=start; rr<=state.RANGS-1; rr++){
+    const rMaxV=state.planete?Math.min(state.RANGS-1,f.r+porteeTirVerticalePlanete()):state.RANGS-1;
+    for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue; const start=f.r+1; if(start>rMaxV) continue;
+      let kind='vide', r1=rMaxV;
+      for(let rr=start; rr<=rMaxV; rr++){
         const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
         const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
         const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }
