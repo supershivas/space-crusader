@@ -209,6 +209,54 @@ function appliquerZoneHostile(pl,niveau){
   }
 }
 
+/* ===== INTENTIONS VISIBLES (étape 4 de la refonte) =====
+   À la Slay the Spire : ce qu'une tourelle s'apprête à faire est toujours visible pendant que le
+   joueur décide ses actions, jamais révélé au moment du tir lui-même. */
+
+/* recalcule la cible de chaque tourelle active (même règle que le tir : la plus proche à portée,
+   distance de Chebyshev) à partir des positions APRÈS résolution de ce tour — donc visible dès
+   l'ouverture du tour joueur suivant, et c'est cette même cible qui sera utilisée au tir du tour
+   d'après (voir finDuTourPlanete, étape 1). Non appelée au démarrage de la mission : la toute
+   première salve d'une tourelle n'arrive donc jamais avant le tour 2, le temps que son intention
+   ait été visible au moins un tour complet. */
+export function annoncerCiblesTourelles(pl){
+  for(const tr of pl.tourelles){
+    tr.cible=null;
+    if(!tr.reveillee||champEn(tr.c)) continue;
+    let cible=null, meilleure=Infinity;
+    for(const f of state.fighters){ const d=Math.max(Math.abs(f.c-tr.c),Math.abs(f.r-tr.r)); if(d<=tr.portee&&d<meilleure){ meilleure=d; cible=f; } }
+    tr.cible=cible;
+  }
+}
+
+/* charge de salve de zone de la base : périodique (intervalle aléatoire, ajusté par la
+   difficulté comme la garnison), toujours annoncée 1 tour à l'avance (1-2 colonnes surlignées
+   via state.menacesWarn, même mécanisme visuel que les alertes du combat spatial) avant de
+   frapper — le joueur peut replier les vaisseaux exposés ou foncer détruire la base avant que
+   la charge n'aboutisse (elle est simplement annulée si la base meurt entretemps). */
+function gererChargeBase(pl){
+  const base=pl.base;
+  if(base.chargeCols){
+    for(const f of [...state.fighters]){
+      if(f.c<base.chargeCols.c0||f.c>base.chargeCols.c1) continue;
+      const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f);
+    }
+    sonBoom(); montrerToast(t('toast_charge_base_impact'),'bad');
+    base.chargeCols=null;
+    state.menacesWarn=state.menacesWarn.filter(w=>w.kind!=='baseCharge');
+    const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
+    base.prochaineCharge=pl.tourCompteur+4+Math.floor(Math.random()*3)+(d.garnisonDelta||0);
+    return;
+  }
+  if(pl.tourCompteur>=base.prochaineCharge){
+    const c0=Math.floor(Math.random()*Math.max(1,state.COLS-1));
+    const c1=Math.min(state.COLS-1,c0+(Math.random()<0.5?0:1));
+    base.chargeCols={c0,c1};
+    state.menacesWarn.push({kind:'baseCharge',c0,c1});
+    montrerToast(t('toast_charge_base_avert'),'bad');
+  }
+}
+
 /* ===== FLUX DE MISSION ===== */
 
 /* démarrage d'une mission planète : crée la base et les tourelles sur le biome choisi au
@@ -228,6 +276,7 @@ export function demarrerMissionPlanete(biomeId,approche){
   const biome=BIOMES.find(b=>b.id===biomeId)||BIOMES[Math.floor(Math.random()*BIOMES.length)];
   const d=DIFFICULTES[state.difficulte]||DIFFICULTES.normal;
   const base=creerBase(state.secteur,state.difficulte); base.reveillee=true;
+  base.chargeCols=null; base.prochaineCharge=4+Math.floor(Math.random()*3)+d.garnisonDelta;
   decouvrir('planete_biome',biome.id); decouvrir('planete_base','base');
   state.planete={
     biome:biome.id,
@@ -288,14 +337,18 @@ export function finDuTourPlanete(){
   // résolution ennemie — reflète uniquement la décision du joueur ce tour-ci.
   const niveauAlerte=mettreAJourAlerte(pl);
 
-  // (1) tourelles fixes : tirent sur le vaisseau le plus proche à portée (distance de Chebyshev),
-  // sauf si endormie/camouflée (reveillee===false) ou couverte par une tempête de sable (désert)
+  // (1) tourelles fixes : tirent sur la cible annoncée à l'ouverture de ce tour joueur (voir
+  // annoncerCiblesTourelles, appelée en fin de fonction), jamais une cible recalculée au dernier
+  // moment — l'intention affichée pendant que le joueur décidait est exactement ce qui se passe
+  // ici. Si la cible est morte ou a été déplacée hors de portée, le tir rate simplement (aucune
+  // tourelle ne peut donc jamais surprendre : sa toute première salve n'arrive qu'au tour 2).
   let tirs=false;
   for(const tr of pl.tourelles){
-    if(!tr.reveillee||champEn(tr.c)) continue;
-    let cible=null, meilleure=Infinity;
-    for(const f of state.fighters){ const d=Math.max(Math.abs(f.c-tr.c),Math.abs(f.r-tr.r)); if(d<=tr.portee&&d<meilleure){ meilleure=d; cible=f; } }
-    if(!cible) continue;
+    if(!tr.reveillee||champEn(tr.c)||!tr.cible) continue;
+    const cible=tr.cible;
+    if(!state.fighters.includes(cible)) continue;
+    const d=Math.max(Math.abs(cible.c-tr.c),Math.abs(cible.r-tr.r));
+    if(d>tr.portee) continue;
     tirs=true;
     state.lasers.push({x1:tr.x,y1:tr.y,x2:cible.x,y2:cible.y,t:0,ennemi:true,gros:true});
     state.trails.push({x1:tr.x,y1:tr.y,x2:cible.x,y2:cible.y,t:0,ennemi:true,gros:true});
@@ -332,6 +385,13 @@ export function finDuTourPlanete(){
 
   // (5) palier 2 d'alerte : zone hostile aux dernières rangées
   appliquerZoneHostile(pl,niveauAlerte);
+
+  // (6) charge de salve de la base : périodique, toujours annoncée 1 tour à l'avance
+  gererChargeBase(pl);
+
+  // (7) intentions du tour suivant : calculées maintenant (positions à jour après résolution
+  // ennemie), affichées dès l'ouverture du prochain tour joueur (voir render.js).
+  annoncerCiblesTourelles(pl);
 }
 
 /* fin de mission (victoire = base détruite, échec = escadrille détruite) : réutilise l'écran de

@@ -8,7 +8,7 @@ import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS, CAPACIT
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
-import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
+import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome, annoncerCiblesTourelles } from './planete.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil, ouvrirChoixHero } from './ui.js';
@@ -95,7 +95,7 @@ function reprendrePartie(){
     const b=d.planete.base, pb=centreCase(b.c+1,0);
     state.planete={
       biome:d.planete.biome,
-      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
+      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,chargeCols:b.chargeCols||null,prochaineCharge:b.prochaineCharge,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
       tourelles:(d.planete.tourelles||[]).map(tr=>{ const p=centreCase(tr.c,tr.r);
         const cachette=tr.cachette?state.obstacles.find(o=>o.c===tr.cachette.c&&o.r===tr.cachette.r&&o.type==='ruine'):null;
         return {id:tr.id,ico:tr.ico,c:tr.c,r:tr.r,hp:tr.hp,maxhp:tr.maxhp,portee:tr.portee,degats:tr.degats,camouflee:tr.camouflee,reveillee:tr.reveillee,cachette,x:p.x,y:p.y}; }),
@@ -104,6 +104,9 @@ function reprendrePartie(){
     };
     state.suiteDemarrerTour=demarrerTourJoueurPlanete; state.suiteFinPlanete=finMissionPlanete;
     activerRappelsBiome(state.planete.biome);
+    // intentions des tourelles (étape 4) : non sérialisées (référence directe à un vaisseau),
+    // recalculées ici à partir des positions restaurées — visibles dès la reprise de partie.
+    annoncerCiblesTourelles(state.planete);
   }
   deserialiserCarte(d.carte);
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');

@@ -184,6 +184,7 @@ const STRINGS = {
     hud_a_toi_de_jouer:'À TOI DE JOUER',
     hud_ennemis_attaquent:'LES ENNEMIS ATTAQUENT…',
     hud_champ:'CHAMP',
+    hud_charge_base:'CHARGE',
     hud_brouille:'BROUILLÉ',
     hud_combo:'x{n} COMBO',
 
@@ -362,6 +363,8 @@ const STRINGS = {
     alerte_palier2_actif_glace:'Le blizzard gagne l\'arrière du champ de bataille !',
     alerte_palier2_actif_grotte:'L\'obscurité engloutit l\'arrière du champ de bataille !',
     alerte_palier2_actif_villes_anciennes:'Les ruines s\'effondrent à l\'arrière du champ de bataille !',
+    toast_charge_base_avert:'La base charge une salve de zone — elle frappera au tour suivant !',
+    toast_charge_base_impact:'La salve de la base s\'abat sur la zone annoncée !',
     hangar_prep:'Hangar :',
 
     // ===== Infobulles unités (ailes ennemies) =====
@@ -663,6 +666,7 @@ const STRINGS = {
     hud_a_toi_de_jouer:'YOUR TURN',
     hud_ennemis_attaquent:'ENEMIES ATTACKING…',
     hud_champ:'FIELD',
+    hud_charge_base:'CHARGING',
     hud_brouille:'JAMMED',
     hud_combo:'x{n} COMBO',
 
@@ -831,6 +835,8 @@ const STRINGS = {
     alerte_palier2_actif_glace:'The blizzard is closing in on the rear of the battlefield!',
     alerte_palier2_actif_grotte:'The darkness is swallowing the rear of the battlefield!',
     alerte_palier2_actif_villes_anciennes:'The ruins are collapsing at the rear of the battlefield!',
+    toast_charge_base_avert:'The base is charging a zone salvo — it will strike next turn!',
+    toast_charge_base_impact:'The base\'s salvo hits the marked zone!',
     hangar_prep:'Hangar:',
 
     ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',

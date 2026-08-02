@@ -271,6 +271,9 @@ export function dessiner(t){
     if(w.kind==='astero'){ ctx.fillStyle='rgba(255,176,61,.16)'; ctx.fillRect(state.GX,state.GY+w.r*state.CELL,state.COLS*state.CELL,state.CELL);
       dessinerIcone(imgAlerte,w.dir>0?state.GX+4+imgAlerte.width/2:state.GX+state.COLS*state.CELL-4-imgAlerte.width/2,state.GY+w.r*state.CELL+state.CELL*0.7-6,al); }
     else if(w.kind==='trou'){ ctx.strokeStyle='rgba(180,120,255,'+al+')'; ctx.lineWidth=3; ctx.strokeRect(state.GX+(w.c-1)*state.CELL+3,state.GY+(w.r-1)*state.CELL+3,3*state.CELL-6,3*state.CELL-6); dessinerIcone(imgAlerte,centreCase(w.c,w.r).x,centreCase(w.c,w.r).y,al); }
+    else if(w.kind==='baseCharge'){ ctx.fillStyle='rgba(229,72,77,'+(.14+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL);
+      dessinerIcone(imgAlerte,state.GX+((w.c0+w.c1+1)/2)*state.CELL-24,state.GY+14,al);
+      ctx.fillStyle='rgba(255,140,140,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_charge_base'),state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
     else { ctx.fillStyle='rgba(155,107,214,'+(.12+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL);
       dessinerIcone(imgAlerte,state.GX+((w.c0+w.c1+1)/2)*state.CELL-24,state.GY+14,al);
       ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_champ'),state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
@@ -423,6 +426,12 @@ export function dessiner(t){
       const ty0=state.GY+tr.r*state.CELL+6;
       if(tr.maxhp>1){ const n=tr.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, hbx=Math.round(tr.x-tot/2), hby=Math.round(ty0-6);
         for(let i=0;i<n;i++){ ctx.fillStyle=i<tr.hp?'#e5484d':'#4a5262'; ctx.fillRect(hbx+i*(sq+gap),hby,sq,sq); } }
+      // intention visible (étape 4) : cible annoncée à l'ouverture de ce tour, tirée au tour
+      // suivant si elle reste à portée — jamais un tir qui surprend le joueur (voir planete.js).
+      if(tr.cible&&state.fighters.includes(tr.cible)){ const al=.5+.4*pulse;
+        ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(255,90,90,'+al+')'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(tr.x,tr.y); ctx.lineTo(tr.cible.x,tr.cible.y); ctx.stroke(); ctx.restore();
+        dessinerIcone(imgAlerte,tr.x,Math.round(ty0-14),al); }
     }
   }
 
