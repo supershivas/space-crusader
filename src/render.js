@@ -7,7 +7,7 @@ import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES, SKINS
 import { cuire, cuireFit, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS, ENEMY_BASE, TOURELLE_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom, iconImage } from './sprites.js';
-import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
+import { cuireUnites, imgVaisseau, imgObstacle, imgsDebrisVaisseau, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
 import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD, texteObjectif } from './map.js';
 import { t as trad } from './i18n.js';
@@ -359,6 +359,14 @@ export function dessiner(t){
       for(const[dx,dy]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22],[0,0]]){ ctx.fillStyle='#e5484d'; ctx.beginPath(); ctx.arc(cx+dx*state.CELL,cy+dy*state.CELL,3,0,7); ctx.fill(); ctx.strokeStyle='#8f2b2f'; ctx.lineWidth=1; for(let a=0;a<4;a++){ ctx.beginPath(); ctx.moveTo(cx+dx*state.CELL,cy+dy*state.CELL); ctx.lineTo(cx+dx*state.CELL+Math.cos(a*1.57)*5,cy+dy*state.CELL+Math.sin(a*1.57)*5); ctx.stroke(); } } }
     else if(o.type==='glace'){ ctx.fillStyle='rgba(191,233,255,'+(.20+.10*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
       ctx.strokeStyle='rgba(191,233,255,.7)'; ctx.lineWidth=1; ctx.strokeRect(state.GX+o.c*state.CELL+2,state.GY+o.r*state.CELL+2,state.CELL-4,state.CELL-4); }
+    // épave de vaisseau allié : 3 petits bouts de coque éparpillés dans la case (2 agencements
+    // possibles selon `variante`), plutôt qu'une seule image centrée — pour bien lire "morceaux"
+    // et rester visuellement plus petit que le débris classique (imgDebris1/2, plein cellule).
+    else if(o.type==='debris_vaisseau'){ const frags=imgsDebrisVaisseau();
+      const dispo1=[[-0.24,-0.16],[0.20,-0.06],[-0.02,0.24]], dispo2=[[0.22,-0.20],[-0.22,0.04],[0.04,0.24]];
+      const dispo=o.variante?dispo2:dispo1;
+      for(let i=0;i<3;i++){ const im2=frags[i], [dx,dy]=dispo[i]; if(!im2) continue;
+        ctx.drawImage(im2,Math.round(cx+dx*state.CELL-im2.width/2),Math.round(cy+dy*state.CELL-im2.height/2)); } }
     else if(im){ ctx.drawImage(im,Math.round(cx-im.width/2),Math.round(cy-im.height/2)); }
     // PV des obstacles destructibles à plusieurs PV (station)
     if(def.destructible && (o.maxhp||def.hp)>1) dessinerPV(cx,Math.round(cy+state.CELL*0.32),o.hp,o.maxhp||def.hp,'#ff2a5a');

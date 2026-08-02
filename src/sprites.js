@@ -133,6 +133,13 @@ export const BARRIERE=["WDDDDDW","DCiCiCD","DiCiCiD","DCiCiCD","DiCiCiD","DCiCiC
    dédiée (tons terre cuite), distincte des débris métalliques (N/n/m) */
 export const RUINE_1=[".TTTT.","TtTTtT","TTttTT","TtTTtT","TTTTTT",".TTTT."];
 export const RUINE_2=["TTTTTT",".TtTt.","TTTTTT",".tTTt.","TTTTTT",".TTTT."];
+/* épave de vaisseau (allié détruit) : 3 petits bouts de coque, palette bleu-gris du Vaisseau
+   Standard (B/b/S/s, voir JOUEUR) — distincte de la palette terreuse des débris classiques
+   (N/n/m) pour bien lire "morceau de vaisseau" et non "caillasse spatiale". Recuits à échelle
+   réduite (voir cuireUnites) pour rester nettement plus petits que DEBRIS_1/2. */
+export const DEBRIS_VAISSEAU_1=["Bb.","bSs",".sB"];
+export const DEBRIS_VAISSEAU_2=[".Bb","Ssb","b.."];
+export const DEBRIS_VAISSEAU_3=["sB.",".bS","B.b"];
 
 /* ---- MISSION PLANÈTE : base ennemie + tourelles fixes ---- */
 /* base ennemie : bastion fortifié (3×2 cases, même gabarit qu'un boss), noyau d'énergie violet

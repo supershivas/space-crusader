@@ -344,6 +344,7 @@ const GUIDE_BONUS=['pv','tir','vaisseau','mimic'];
    (imgObstacle/getImgAster) quand elles existent, sinon un pictogramme générique thématique. */
 const GUIDE_MENACES=[
   {type:'debris',    nomKey:'obs_debris_nom',    descKey:'obs_debris_desc',    img:()=>imgObstacle({type:'debris',variante:false})},
+  {type:'debris_vaisseau', nomKey:'obs_debris_vaisseau_nom', descKey:'obs_debris_vaisseau_desc', img:()=>imgObstacle({type:'debris_vaisseau'})},
   {type:'station',   nomKey:'obs_station_nom',   descKey:'obs_station_desc',   img:()=>imgObstacle({type:'station'})},
   {type:'barriere',  nomKey:'obs_barriere_nom',  descKey:'obs_barriere_desc',  img:()=>imgObstacle({type:'barriere'})},
   {type:'mines',     nomKey:'obs_mines_nom',     descKey:'obs_mines_desc',     ico:'alerte'},
