@@ -497,7 +497,7 @@ carte('cat-allies',S.JOUEUR_MEDIC,'Médic');
 for(const skin of SKINS_VAISSEAUX) if(skin.id!=='defaut') carte('cat-allies',S.JOUEUR,'Skin '+skin.nom,{over:skin.over});
 
 // Navettes
-carte('cat-navettes',S.MINI_NAVETTE_ALLIEE,'Mini-navette alliée');
+carte('cat-navettes',S.MINI_NAVETTE_ALLIEE,'Mini-navette alliée',{taille:TAILLE*0.62}); // vraiment miniature, voir entities.js:cuireUnites
 carte('cat-navettes',S.MINI_NAVETTE,'Mini-navette ennemie');
 
 // Ennemis (ailes) communs à rares

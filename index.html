@@ -119,8 +119,10 @@
   .fin-line.on{background:#37e0ff;}
   /* Précédent (flèche seule) + Suivant sur la même ligne : Précédent réutilise l'icône "play"
      (triangle plein) retournée plutôt que d'inventer un nouveau sprite pixel-art. */
-  .fin-nav{display:flex;gap:var(--space-sm);align-items:center;justify-content:center;width:min(84vw,320px);}
-  .fin-nav button.jouer{flex:1 1 0;white-space:nowrap;}
+  .fin-nav{display:flex;gap:var(--space-sm);align-items:center;justify-content:center;}
+  /* Précédent reste étroit (juste la flèche) mais partage la même hauteur que Suivant
+     (padding vertical 15px, comme le bouton primaire) — seule la largeur diffère. */
+  .fin-nav button.jouer.fin-prev{padding:15px 16px;}
   .ico-flip{display:inline-flex;transform:scaleX(-1);}
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
     border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:var(--radius-md);cursor:pointer;box-shadow:0 6px 22px rgba(47,214,160,.35);
