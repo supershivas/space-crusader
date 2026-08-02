@@ -406,6 +406,11 @@
     <div class="cards" id="cat-croiseur"></div>
 
     <h3 class="sub">Vaisseaux alliés jouables</h3>
+    <p class="note" style="margin-top:0;">Structure commune à TOUS les vaisseaux alliés (y compris les navettes ci-dessous) :
+      un cœur central — généralement circulaire (losange <code>s</code>/<code>S</code> + accent de couleur), plus
+      rarement carré — flanqué de deux panneaux latéraux (<code>B</code>/<code>b</code>, resserrés en bas façon
+      tuyères). <strong>Standard</strong> (<code>JOUEUR</code>) est la base structurelle : toute nouvelle silhouette
+      en reprend le gabarit plutôt que d'inventer une forme isolée.</p>
     <div class="cards" id="cat-allies"></div>
 
     <h3 class="sub">Navettes</h3>
@@ -422,6 +427,26 @@
 
     <h3 class="sub">Obstacles &amp; menaces</h3>
     <div class="cards" id="cat-obstacles"></div>
+
+    <h3 class="sub">Mission planète : base, tourelles, ruines</h3>
+    <div class="cards" id="cat-planete"></div>
+  </section>
+
+  <section>
+    <h2>Mission planète — biomes</h2>
+    <p class="note" style="margin-top:0;">Teinte de fond du champ de bataille pendant une mission planète (superposée
+      à la grille, <code>render.js</code>) — une par biome, à la place du bleu spatial habituel. Le croiseur n'est pas
+      affiché dans ce mode (pas de croiseur à l'écran, le joueur attaque au lieu de défendre) ; la barre de PV en haut
+      de la console affiche celle de la base ennemie à la place.</p>
+    <div class="swatches">
+      <div class="swatch"><div style="width:64px;height:44px;border-radius:var(--radius-sm);background:rgba(150,110,55,.85);border:2px solid #3b5aa0;"></div>Désert</div>
+      <div class="swatch"><div style="width:64px;height:44px;border-radius:var(--radius-sm);background:rgba(120,180,210,.85);border:2px solid #3b5aa0;"></div>Glace</div>
+      <div class="swatch"><div style="width:64px;height:44px;border-radius:var(--radius-sm);background:rgba(10,6,16,.95);border:2px solid #3b5aa0;"></div>Grotte</div>
+      <div class="swatch"><div style="width:64px;height:44px;border-radius:var(--radius-sm);background:rgba(110,90,55,.85);border:2px solid #3b5aa0;"></div>Villes anciennes</div>
+    </div>
+    <p class="note">Endormi/camouflé (biome Grotte : tourelles + base ; biome Villes anciennes : certaines tourelles) :
+      l'entité n'est ni dessinée ni ciblable tant qu'un vaisseau n'est pas assez proche — la barre de PV de la base
+      affiche <code>???</code> au lieu de ses PV réels tant qu'elle est endormie.</p>
   </section>
 
   <section>
@@ -506,6 +531,12 @@ carte('cat-obstacles',S.DEBRIS_2,'Débris (variante)');
 carte('cat-obstacles',S.STATION_PIECE,'Épave de station');
 carte('cat-obstacles',S.BARRIERE,'Barrière');
 carte('cat-obstacles',S.ASTER,'Astéroïde');
+
+// Mission planète : base ennemie, tourelles fixes, ruines (biome Villes anciennes)
+carte('cat-planete',S.ENEMY_BASE,'Base ennemie',{boss:true,taille:110});
+for(const type in S.TOURELLE_GRIDS) carte('cat-planete',S.TOURELLE_GRIDS[type],'Tourelle '+type);
+carte('cat-planete',S.RUINE_1,'Ruine');
+carte('cat-planete',S.RUINE_2,'Ruine (variante)');
 </script>
 </body>
 </html>

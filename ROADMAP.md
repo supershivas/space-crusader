@@ -128,7 +128,7 @@ passer à la suivante — jamais tout d'un bloc) :
    Point de test : un combat "boîte grise" jouable de bout en bout, sans
    mécanique de biome ni habillage.
 
-5. **Mécaniques de biome**, une à la fois, dans l'ordre du moins au plus
+5. ✅ **Mécaniques de biome**, une à la fois, dans l'ordre du moins au plus
    coûteux en nouveau code : désert (réutilise `champs`/`champEn` presque
    tel quel) → grotte (malus de portée + flag "endormi" sur tourelles/base)
    → glace (nouveau `champ:'glace'` + glissade au déplacement) → villes
@@ -136,22 +136,22 @@ passer à la suivante — jamais tout d'un bloc) :
    proximité/destruction). Chaque mécanique testée isolément avant la
    suivante.
 
-6. **UI/HUD** (`ui.js`, `render.js`) : barre de PV de la base à la place de
+6. ✅ **UI/HUD** (`ui.js`, `render.js`) : barre de PV de la base à la place de
    la barre de PV croiseur, masquage des actions `tourelle`/`bouclier`,
    récap de fin de mission réutilisant `ouvrirMission`/le circuit de
    récompense `elite` (choix d'amélioration).
 
-7. **Sauvegarde/reprise** (`state.js` `sauvegarderPartie`/`chargerSauvegarde`,
+7. ✅ **Sauvegarde/reprise** (`state.js` `sauvegarderPartie`/`chargerSauvegarde`,
    `main.js` `reprendrePartie`) : sérialiser une mission planète en cours
    (base, tourelles, biome, compteurs de mécanique) sur le modèle de ce qui
    existe pour un combat spatial en cours.
 
-8. **Habillage** : sprites de base/tourelles/ruines, décor par biome
+8. ✅ **Habillage** : sprites de base/tourelles/ruines, décor par biome
    (`render.js`, `sprites.js`), nouvelle section `design-system.html`,
    traduction FR/EN complète (`i18n.js`), entrées d'encyclopédie (base,
    tourelles par type, biomes), éventuels nouveaux achievements.
 
-9. **Vérifications transverses avant fusion** : le tutoriel scripté
+9. ✅ **Vérifications transverses avant fusion** : le tutoriel scripté
    (`tuto.js`) n'est jamais impacté par un nœud planète en première
    position ; le mode combat spatial existant n'est pas régressé (tests
    Playwright du flux existant) ; test Playwright dédié pour chacun des 4
@@ -159,9 +159,9 @@ passer à la suivante — jamais tout d'un bloc) :
    mission) ; incrément `VERSION` (`src/version.js`) et cache du service
    worker (`sw.js`) comme à chaque changement livré.
 
-**Prochaine étape** : étape 5 (mécaniques de biome, une à la fois : désert →
-grotte → glace → villes anciennes). Le combat « boîte grise » est jouable de
-bout en bout depuis l'étape 4, sans habillage ni effet de biome.
+**Statut final** : les 9 étapes sont terminées et vérifiées. Mode missions
+planète intégralement fonctionnel (4 biomes, base, tourelles, garnison,
+sauvegarde/reprise, habillage, encyclopédie), fusionné sur `main`.
 
 ### Héros du Vaisseau Rouge
 

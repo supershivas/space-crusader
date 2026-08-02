@@ -8,6 +8,7 @@ import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS, CAPACIT
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
+import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
 import { initAudio, startMusic } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil } from './ui.js';
@@ -21,7 +22,7 @@ function etatVide(){
   state.fighters=[];state.ailes=[];state.asteroides=[];state.bonus=[];state.boss=null;state.explosions=[];state.particules=[];state.lasers=[];state.trails=[];state.dmgTexts=[];
   state.trousNoirs=[];state.champs=[];state.menacesWarn=[];state.obstacles=[];state.bossVaincus=0;
   state.ups={portee:0,deplacement:0,bouclier:0,tourelleDouble:0,bonusPlus:0,regen:0};
-  state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.scoreAvantVague=0;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;state.scenePlanete=null;
+  state.pendingUpgrade=false;state.choixBuild=false;state.killsThisWave=0;state.shipsLostThisWave=0;state.bossKilledThisWave=false;state.scoreAvantVague=0;state.objectifVague=null;state.ultimeJauge=0;state.ondeChoc=0;state.pendingEvent=false;state.suiteAmelioration=null;state.suiteEvenement=null;state.carte=null;state.noeudActuel=null;state.secteur=1;state.enCombat=false;state.scenePlanete=null;state.planete=null;
   state.hpCruiser=state.HP_MAX;state.score=0;state.phase='attente';state.selection=null;state.vague=1;state.actionFaite=false;state.modeTourelle=false;state.modeCapacite=null;state.hangar=null;state.tirsGratuits=0;state.boucliersRestants=BOUCLIER_USAGES_MAX;state.ultimeSeuil=ULTIME_MAX;
   state.lockTimer=0;state.flashCroiseur=0;state.flashRecharge=0;state.secousse=0;state.tourCompteur=0;state.ambianceT=0;state.prochainAsteroide=99;state.prochainBoss=99;state.enFeu=0;state.rerollsRestants=0;
   state.comboCount=0;state.comboTimer=0;state.bestCombo=0;state.undoStack=[];state.paused=false;
@@ -87,11 +88,27 @@ function reprendrePartie(){
   state.champs=(d.champs||[]).map(c=>({...c})); state.menacesWarn=(d.menacesWarn||[]).map(w=>({...w}));
   for(const o of d.obstacles||[]){ const p=centreCase(o.c,o.r); state.obstacles.push({c:o.c,r:o.r,type:o.type,hp:o.hp,maxhp:(OBSTACLES[o.type]?OBSTACLES[o.type].hp:o.hp),x:p.x,y:p.y,variante:Math.random()<0.5,ang:0}); }
   if(d.boss){ const p=centreCase(d.boss.c+1,d.boss.r); state.boss={c:d.boss.c,r:d.boss.r,w:3,h:2,hp:d.boss.hp,maxhp:d.boss.maxhp,type:d.boss.type,charge:d.boss.charge,x:p.x,y:p.y+state.CELL/2-state.CELL}; }
+  // mission planète en cours : les obstacles (dont les ruines) sont déjà restaurés ci-dessus,
+  // on peut donc relier la cachette d'une tourelle camouflée (biome Villes anciennes) à l'objet
+  // obstacle réel plutôt qu'à la position sérialisée.
+  if(d.planete){
+    const b=d.planete.base, pb=centreCase(b.c+1,0);
+    state.planete={
+      biome:d.planete.biome,
+      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
+      tourelles:(d.planete.tourelles||[]).map(tr=>{ const p=centreCase(tr.c,tr.r);
+        const cachette=tr.cachette?state.obstacles.find(o=>o.c===tr.cachette.c&&o.r===tr.cachette.r&&o.type==='ruine'):null;
+        return {id:tr.id,ico:tr.ico,c:tr.c,r:tr.r,hp:tr.hp,maxhp:tr.maxhp,portee:tr.portee,degats:tr.degats,camouflee:tr.camouflee,reveillee:tr.reveillee,cachette,x:p.x,y:p.y}; }),
+      tourCompteur:d.planete.tourCompteur||0, prochaineGarnison:d.planete.prochaineGarnison, prochaineTempete:d.planete.prochaineTempete,
+    };
+    state.suiteDemarrerTour=demarrerTourJoueurPlanete; state.suiteFinPlanete=finMissionPlanete;
+    activerRappelsBiome(state.planete.biome);
+  }
   deserialiserCarte(d.carte);
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');
   document.getElementById('pause').classList.remove('visible'); document.getElementById('pauseBtn').style.display='block';
   document.getElementById('log').innerHTML=''; startMusic(); redimensionner();
-  if(state.enCombat) demarrerTourJoueur(); else ouvrirCarte();
+  if(state.planete) demarrerTourJoueurPlanete(); else if(state.enCombat) demarrerTourJoueur(); else ouvrirCarte();
   return true;
 }
 

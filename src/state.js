@@ -29,8 +29,20 @@ export const state = {
   ups:undefined, objectifVague:undefined, killsThisWave:undefined, shipsLostThisWave:undefined, scoreAvantVague:undefined, bestComboThisWave:undefined,
   bossKilledThisWave:undefined, pendingUpgrade:undefined, choixBuild:undefined, pendingEvent:undefined,
   suiteAmelioration:undefined, suiteEvenement:undefined, suiteMission:null,
+  // callbacks utilisés uniquement pendant une mission planète (planete.js), pour éviter un
+  // import circulaire depuis combat.js : voir animer() dans combat.js.
+  suiteDemarrerTour:null, suiteFinPlanete:null,
+  // callback optionnel (mécanique de biome villes anciennes) appelé par frapperObstacle()
+  // (combat.js) quand un obstacle est détruit, pour révéler une tourelle camouflée dessous.
+  onObstacleDetruit:null,
   carte:undefined, noeudActuel:undefined, secteur:undefined, enCombat:undefined,
   scenePlanete:null,
+
+  // mission planète en cours ('planete.js') : null hors mission. Une fois peuplé (étapes
+  // suivantes de la roadmap) : {biome, base:{hp,maxhp,c,r,w,h}, tourelles:[...], garnisonCompteur,
+  // prochaineGarnison, + compteurs propres à la mécanique du biome (ex. tempeteChamps/tempeteTimer
+  // pour le désert).
+  planete:null,
 
   ultimeJauge:undefined, ondeChoc:undefined,
   // héros équipant le Vaisseau Rouge pour la run en cours : id de HEROS, ou 'androide'
@@ -98,6 +110,7 @@ export const ACHIEVEMENTS_DEF = {
   'no_turret': {name:'Sans Tourelle', desc:'Tuer un boss sans tourelle', check:()=>state.achievements.no_turret},
   'perfect_wave': {name:'Vague Parfaite', desc:'Vague sans dégât', check:()=>state.achievements.perfect_wave},
   'asteroid_dodge': {name:'Esquive', desc:'Survivre à 5 astéroïdes', check:()=>state.achievements.asteroid_dodge>=5},
+  'base_slayer': {name:'Preneur de Bastion', desc:'Détruire une base ennemie (mission planète)', check:()=>state.achievements.base_slayer},
 };
 
 export function loadData(){ try{ const h=localStorage.getItem('dc_highscores'); if(h) state.highscores=JSON.parse(h); const a=localStorage.getItem('dc_achievements'); if(a) state.achievements=JSON.parse(a); const m=localStorage.getItem('dc_meta'); if(m) state.meta={...state.meta,...JSON.parse(m)}; const mh=localStorage.getItem('dc_meta_heros'); if(mh) state.metaHeros=JSON.parse(mh); const d=localStorage.getItem('dc_decouvertes'); if(d) state.decouvertes=JSON.parse(d); }catch(e){} }
@@ -164,6 +177,15 @@ export function sauvegarderPartie(serialiserCarte){
     champs: state.champs.map(c=>({c0:c.c0,c1:c.c1,turns:c.turns})),
     obstacles: state.obstacles.map(o=>({c:o.c,r:o.r,type:o.type,hp:o.hp})),
     menacesWarn:state.menacesWarn, boss: state.boss?{c:state.boss.c,r:state.boss.r,hp:state.boss.hp,maxhp:state.boss.maxhp,type:state.boss.type,charge:state.boss.charge}:null,
+    // mission planète en cours (null hors mission) : la cachette d'une tourelle camouflée
+    // (biome Villes anciennes) est une référence directe à un obstacle, non sérialisable telle
+    // quelle — on n'enregistre que sa position, re-liée à l'obstacle correspondant à la reprise.
+    planete: state.planete ? {
+      biome: state.planete.biome,
+      base: {c:state.planete.base.c, r:state.planete.base.r, w:state.planete.base.w, h:state.planete.base.h, hp:state.planete.base.hp, maxhp:state.planete.base.maxhp, reveillee:state.planete.base.reveillee},
+      tourelles: state.planete.tourelles.map(tr=>({id:tr.id, ico:tr.ico, c:tr.c, r:tr.r, hp:tr.hp, maxhp:tr.maxhp, portee:tr.portee, degats:tr.degats, camouflee:tr.camouflee, reveillee:tr.reveillee, cachette: tr.cachette?{c:tr.cachette.c,r:tr.cachette.r}:null})),
+      tourCompteur: state.planete.tourCompteur, prochaineGarnison: state.planete.prochaineGarnison, prochaineTempete: state.planete.prochaineTempete,
+    } : null,
     carte: serialiserCarte()
   })); }catch(e){}
 }

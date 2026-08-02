@@ -6,7 +6,7 @@
    pouvait servir indéfiniment une version périmée sur certains navigateurs
    (Safari/Firefox mobile) même après un rechargement normal.
    Incrémente CACHE à chaque nouvelle version. */
-const CACHE = 'croiseur-v71';
+const CACHE = 'croiseur-v77';
 const ASSETS = [
   './',
   './index.html',
@@ -24,6 +24,7 @@ const ASSETS = [
   './src/entities.js',
   './src/combat.js',
   './src/map.js',
+  './src/planete.js',
   './src/ui.js',
   './src/render.js',
   './src/main.js',

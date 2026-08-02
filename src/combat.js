@@ -4,7 +4,7 @@
 import { state, centreCase, saveState, sauvegarderPartie, decouvrir, afficherDegats } from './state.js';
 import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
-         obstacleEn, obstacleBloquant, champObstacleEn,
+         obstacleEn, obstacleBloquant, champObstacleEn, tourelleEn, baseEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
          deployerVaisseau, ramasser, getImgAster, nouveauVaisseau, caseLibreProche, caseLargageAllie } from './entities.js';
 import { sonTir, sonTirEnnemi, sonBoom, sonAie, sonVague, sonVoix, sonRenfort, sonSelect, setMusicPhase, canPlayAmbiance, sonRadar } from './audio.js';
@@ -81,16 +81,20 @@ export function trajectoire(ast){ const pts=[]; let c=ast.c,r=ast.r; for(let i=0
 /* Visée en ligne de mire : le faisceau monte et s'arrête au 1er obstacle
    (aile/boss = cible ; allié/menace = bloqué). */
 export function analyseTir(f){
-  if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),asteroidesOk:new Set(),mimicsOk:new Set(),boss:false,beams:[],jam:true};
-  const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); let bossOk=false; const beams=[]; const p=1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0);
+  if(champEn(f.c)) return {ailesOk:new Set(),obstaclesOk:new Set(),asteroidesOk:new Set(),mimicsOk:new Set(),tourellesOk:new Set(),base:false,boss:false,beams:[],jam:true};
+  const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); const tourellesOk=new Set(); let bossOk=false; let baseOk=false; const beams=[];
+  // biome Grotte (mission planète) : obscurité, portée réduite de 1 (jamais négative)
+  const p=Math.max(0,1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0)-(state.planete&&state.planete.biome==='grotte'?1:0));
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
     let kind='vide', r1=0;
     for(let rr=start; rr>=0; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
+      const tr=state.planete&&tourelleEn(c,rr); if(tr){ if(tr.reveillee===false){ kind='menace'; r1=rr; break; } tourellesOk.add(tr); kind='ennemi'; r1=rr; break; }   // tourelle fixe (mission planète) : destructible comme un obstacle ; invisible/inactive tant que non révélée (camouflage, obscurité)
       const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
       const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }   // le mimic est ciblable comme un ennemi
       if(bossEn(c,rr)){ bossOk=true; kind='ennemi'; r1=rr; break; }
+      if(state.planete&&baseEn(c,rr)){ if(state.planete.base.reveillee===false){ kind='menace'; r1=rr; break; } baseOk=true; kind='ennemi'; r1=rr; break; }   // base ennemie (mission planète)
       if(fighterEn(c,rr)){ kind='allie'; r1=rr; break; }
       const as=asterEn(c,rr); if(as){ asteroidesOk.add(as); kind='ennemi'; r1=rr; break; }   // les astéroïdes sont destructibles
       if(trouNoirEn(c,rr)){ kind='menace'; r1=rr; break; }
@@ -113,7 +117,7 @@ export function analyseTir(f){
       beams.push({c,r0:start,r1,kind});
     }
   }
-  return {ailesOk,obstaclesOk,asteroidesOk,mimicsOk,boss:bossOk,beams,jam:false};
+  return {ailesOk,obstaclesOk,asteroidesOk,mimicsOk,tourellesOk,base:baseOk,boss:bossOk,beams,jam:false};
 }
 /* tir allié sur un astéroïde : -1 PV, détruit à 0 */
 export function frapperAster(o){ o.hp--; afficherDegats(o.x,o.y,1); exploser(o.x,o.y,false); sonBoom();
@@ -134,8 +138,20 @@ export function frapperObstacle(o){
       for(let dc=-1;dc<=1;dc++) for(let dr=-1;dr<=1;dr++){ if(dc===0&&dr===0) continue; const c=o.c+dc,r=o.r+dr;
         const a=aileEn(c,r); if(a){ a.hp-=2; exploser(a.x,a.y,true); if(a.hp<=0) tuerAile(a); }
         const f=fighterEn(c,r); if(f){ f.hp=(f.hp||1)-2; exploser(f.x,f.y,true); if(f.hp<=0) tuerFighter(f); } } }
+    // biome Villes anciennes (mission planète) : la destruction d'une ruine peut révéler une
+    // tourelle camouflée dessous — callback posé par planete.js, même idiome que suiteMission.
+    if(state.onObstacleDetruit) state.onObstacleDetruit(o);
   }
 }
+
+/* tir allié sur une tourelle fixe (mission planète) : -1 PV, détruite à 0, comme un obstacle */
+export function frapperTourelle(t){ t.hp--; exploser(t.x,t.y,false); sonBoom();
+  if(t.hp<=0){ const i=state.planete.tourelles.indexOf(t); if(i>=0) state.planete.tourelles.splice(i,1); exploser(t.x,t.y,true); state.score++; state.killsThisWave++; } }
+/* tir allié sur la base ennemie (mission planète) : PV décomptés, la victoire est détectée
+   dans animer() (voir state.suiteFinPlanete) une fois les animations de tir retombées */
+export function toucherBase(deg,px,py){ if(!state.planete) return;
+  const base=state.planete.base; base.hp=Math.max(0,base.hp-deg); exploser(px,py,false); sonBoom();
+  if(base.hp<=0) exploser(base.x,base.y,true); }
 
 /* planifie une menace : ajoute une ALERTE visible un tour avant */
 export function programmerMenace(){
@@ -170,6 +186,9 @@ export function demarrerTourJoueur(){ state.phase='joueur';
 
 /* actions du croiseur */
 export function choisirAction(id){
+  // en mission planète, pas de croiseur à l'écran : ces deux actions n'ont plus de sens
+  // (masquées pour la première version — voir ROADMAP.md, à repenser plus tard)
+  if(state.planete && (id==='tourelle'||id==='bouclier')) return;
   if(id==='tourelle'){ if(state.actionFaite&&state.tirsGratuits<=0) return; state.modeTourelle=!state.modeTourelle; state.selection=null; return; }
   if(state.actionFaite) return;
   if(id==='vaisseau'){ if(!state.hangar&&state.fighters.length<state.MAX_VAISSEAUX){ ouvrirBuild(); } }
@@ -450,11 +469,21 @@ export function animer(dt){
   if(state.secousse>0) state.secousse=Math.max(0,state.secousse-dt*40);
   if(state.comboTimer>0){ state.comboTimer-=dt; if(state.comboTimer<=0) state.comboCount=0; }
   if(state.phase==='joueur'&&canPlayAmbiance()){ state.ambianceT+=dt; if(state.ambianceT>2.4){ state.ambianceT=Math.random()*0.6; sonRadar(); } }
-  if(state.phase==='ennemi'){ state.lockTimer-=dt; if(state.lockTimer<=0){ if(state.hangar){ state.hangar.tours--; if(state.hangar.tours<=0){ deployerVaisseau(state.hangar.type); state.hangar=null; } } demarrerTourJoueur(); } }
+  // suiteDemarrerTour : redirection vers demarrerTourJoueurPlanete() pendant une mission planète
+  // (state.planete), sans que ce module ait besoin d'importer planete.js — même idiome que
+  // suiteMission/suiteAmelioration ailleurs dans le jeu, pour éviter un import circulaire.
+  if(state.phase==='ennemi'){ state.lockTimer-=dt; if(state.lockTimer<=0){ if(state.hangar){ state.hangar.tours--; if(state.hangar.tours<=0){ deployerVaisseau(state.hangar.type); state.hangar=null; } } (state.suiteDemarrerTour||demarrerTourJoueur)(); } }
   // on attend la fin de l'animation de destruction (explosions/particules encore actives, ou laser
   // en cours) avant d'afficher l'écran de fin de combat, pour ne pas couper la dernière explosion.
   if(state.enCombat && state.phase==='joueur' && !state.boss && state.ailes.length===0
      && state.explosions.length===0 && state.particules.length===0 && state.lasers.length===0) gagnerCombat();
+  // mission planète : victoire (base détruite) ou échec (flotte détruite), même logique d'attente
+  // de fin d'animation ; suiteFinPlanete est fourni par planete.js à l'entrée en mission.
+  if(state.planete && state.phase==='joueur'
+     && state.explosions.length===0 && state.particules.length===0 && state.lasers.length===0){
+    if(state.planete.base.hp<=0) state.suiteFinPlanete(true);
+    else if(state.fighters.length===0) state.suiteFinPlanete(false);
+  }
   for(const tn of state.trousNoirs) tn.ang+=dt*2.2;
   if(state.ondeChoc>0) state.ondeChoc=Math.max(0,state.ondeChoc-dt*1.5);
   for(const a of state.ACT) if(a.anim>0) a.anim=Math.max(0,a.anim-dt*3);

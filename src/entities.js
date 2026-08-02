@@ -6,7 +6,7 @@ import { state, centreCase, decouvrir, afficherDegats } from './state.js';
 import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
-         DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE,
+         DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE, RUINE_1, RUINE_2,
          STRONGHOLD, MINI_NAVETTE, MINI_NAVETTE_ALLIEE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
          SABOTEUR, BRULEUR, TITAN, AILE_TRANSPORTEUR } from './sprites.js';
 import { sonRenfort } from './audio.js';
@@ -14,7 +14,7 @@ import { logMsg } from './ui.js';
 
 /* images des unités, recuites à la taille de case courante (voir cuireUnites) */
 let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVRapide,imgVBombardier,imgVBouclier,imgVSniper,imgVTransporteur,imgVMedic,imgPorteur,imgBrouilleur,imgLourd;
-let imgDebris1,imgDebris2,imgStation,imgBarriere;
+let imgDebris1,imgDebris2,imgStation,imgBarriere,imgRuine1,imgRuine2;
 let imgStronghold,imgMiniNavette,imgMiniNavetteAlliee,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
 let imgSaboteur,imgBruleur,imgTitan,imgAileTransporteur;
 let dernierCELL;
@@ -27,6 +27,7 @@ export function cuireUnites(CELL){
   imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL,skin); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL,skin); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL,skin); imgVSniper=cuireFit(JOUEUR_SNIPER,CELL,skin); imgVTransporteur=cuireFit(JOUEUR_TRANSPORTEUR,CELL,skin); imgVMedic=cuireFit(JOUEUR_MEDIC,CELL,skin);
   imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL); imgLourd=cuireFit(AILE_LOURD,CELL);
   imgDebris1=cuireFit(DEBRIS_1,CELL); imgDebris2=cuireFit(DEBRIS_2,CELL); imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
+  imgRuine1=cuireFit(RUINE_1,CELL); imgRuine2=cuireFit(RUINE_2,CELL);
   imgStronghold=cuireFit(STRONGHOLD,CELL); imgMiniNavette=cuireFit(MINI_NAVETTE,CELL); imgMiniNavetteAlliee=cuireFit(MINI_NAVETTE_ALLIEE,CELL); imgRegen=cuireFit(REGENERATEUR,CELL); imgMiniSniper=cuireFit(MINI_SNIPER,CELL);
   imgDiagD=cuireFit(DIAGONAL_D,CELL); imgDiagG=cuireFit(DIAGONAL_G,CELL); imgMimic=cuireFit(MIMIC,CELL); imgVoid=cuireFit(VOID,CELL);
   imgSaboteur=cuireFit(SABOTEUR,CELL); imgBruleur=cuireFit(BRULEUR,CELL); imgTitan=cuireFit(TITAN,CELL); imgAileTransporteur=cuireFit(AILE_TRANSPORTEUR,CELL);
@@ -37,7 +38,7 @@ function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bom
 export function getImgMimic(){ return imgMimic; }
 /* accès en lecture seule au sprite d'une aile par type, pour le guide (bestiaire) */
 export function imgAileGuide(type){ return imgAilePourType(type); }
-export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : null; }
+export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : o.type==='ruine'?(o.variante?imgRuine2:imgRuine1) : null; }
 export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='medic'?imgVMedic : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
 /* PV de base d'un vaisseau allié, hors améliorations de la partie en cours (encyclopédie) */
@@ -63,7 +64,10 @@ export function bossEn(c,r){ return state.boss&&c>=state.boss.c&&c<=state.boss.c
 export function obstacleEn(c,r){ return state.obstacles?state.obstacles.find(o=>o.c===c&&o.r===r):undefined; }
 export function obstacleBloquant(c,r){ const o=obstacleEn(c,r); return (o && OBSTACLES[o.type].bloque)?o:undefined; }
 export function champObstacleEn(c,r){ const o=obstacleEn(c,r); return (o && OBSTACLES[o.type].champ)?OBSTACLES[o.type].champ:null; }
-export function occupe(c,r){ return fighterEn(c,r)||aileEn(c,r)||bossEn(c,r)||obstacleBloquant(c,r); }
+/* mission planète (state.planete) : tourelle fixe / base ennemie sur une case donnée */
+export function tourelleEn(c,r){ return state.planete&&state.planete.tourelles.find(tr=>tr.c===c&&tr.r===r); }
+export function baseEn(c,r){ if(!state.planete) return false; const b=state.planete.base; return c>=b.c&&c<b.c+b.w&&r>=b.r&&r<b.r+b.h; }
+export function occupe(c,r){ return fighterEn(c,r)||aileEn(c,r)||bossEn(c,r)||obstacleBloquant(c,r)||!!tourelleEn(c,r)||baseEn(c,r); }
 export function dansGrille(c,r){ return c>=0&&c<state.COLS&&r>=0&&r<state.RANGS; }
 export function trouNoirEn(c,r){ return state.trousNoirs.find(t=>t.c===c&&t.r===r); }
 export function champEn(c){ return state.champs.some(ch=>c>=ch.c0&&c<=ch.c1); }

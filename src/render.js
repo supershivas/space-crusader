@@ -4,7 +4,7 @@
    ===================================================================== */
 import { state, centreCase } from './state.js';
 import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES, SKINS_CROISEUR } from './config.js';
-import { cuire, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS,
+import { cuire, cuireFit, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS, ENEMY_BASE, TOURELLE_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom, iconImage } from './sprites.js';
 import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
@@ -32,11 +32,15 @@ function dessinerIcone(img,cx,cy,alpha=1){ ctx.globalAlpha=alpha; ctx.drawImage(
 export function flotte(o,t){ if(o.__bob===undefined) o.__bob=Math.random()*Math.PI*2; return Math.sin(t/480+o.__bob)*1.3; }
 
 let imgCroiseur, imgBossMap, croiseurSC;
+let imgBaseMap, imgTourelleMap;
 let nebuleuses, planete;
 /* ré-applique la teinte cosmétique du croiseur en cours (après un changement de skin dans le menu méta) */
 export function rafraichirSkinCroiseur(){ if(croiseurSC) imgCroiseur=cuire(CROISEUR,croiseurSC,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); }
 /* accès en lecture seule au sprite d'un boss par type, pour le guide (bestiaire) */
 export function imgBossGuide(type){ return imgBossMap && (imgBossMap[type]||imgBossMap.canon); }
+/* idem, base ennemie et tourelles des missions planète (guide) */
+export function imgBaseGuide(){ return imgBaseMap; }
+export function imgTourelleGuide(type){ return imgTourelleMap && (imgTourelleMap[type]||imgTourelleMap.canon); }
 const etoiles=[];
 
 /* =====================================================================
@@ -75,6 +79,8 @@ export function configurer(){
   const sc=Math.max(3,Math.round((state.LARGEUR-2*MARGE)/CROISEUR[0].length)); croiseurSC=sc;
   imgCroiseur=cuire(CROISEUR,sc,(SKINS_CROISEUR[(state.meta&&state.meta.skinCroiseur)||0]||SKINS_CROISEUR[0]).over); const BANDE=CROISEUR.length*sc;
   imgBossMap={}; for(const kk in BOSS_GRIDS){ const g=BOSS_GRIDS[kk]; imgBossMap[kk]=cuire(g,Math.max(4,Math.round(3*state.CELL/g[0].length))); }
+  imgBaseMap=cuire(ENEMY_BASE,Math.max(4,Math.round(3*state.CELL/ENEMY_BASE[0].length)));
+  imgTourelleMap={}; for(const kk in TOURELLE_GRIDS){ imgTourelleMap[kk]=cuireFit(TOURELLE_GRIDS[kk],state.CELL); }
   cuireUnites(state.CELL);
   const actY=state.GRID_BAS+6, actH=44; state.cruiserY=actY+actH+6; state.BANDE=BANDE;
   state.CROISEUR_X=Math.round((state.LARGEUR-imgCroiseur.width)/2);
@@ -245,7 +251,10 @@ export function dessiner(t){
   dessinerCadreHUD();
   // fond du champ de bataille (délimite clairement la zone jouable) — même radius que les
   // cadres HUD haut/bas (RADIUS.bar), pas des coins vifs qui détonnaient avec le reste du HUD.
-  arrondi(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL,RADIUS.bar); ctx.fillStyle='rgba(18,28,55,.5)'; ctx.fill();
+  // Teinté par biome en mission planète (désert/glace/grotte/villes anciennes), sinon le bleu
+  // spatial habituel.
+  const teinteBiome={desert:'rgba(150,110,55,.4)',glace:'rgba(120,180,210,.35)',grotte:'rgba(10,6,16,.7)',villes_anciennes:'rgba(110,90,55,.38)'};
+  arrondi(state.GX,state.GY,state.COLS*state.CELL,state.RANGS*state.CELL,RADIUS.bar); ctx.fillStyle=(state.planete&&teinteBiome[state.planete.biome])||'rgba(18,28,55,.5)'; ctx.fill();
   arrondi(state.GX-1,state.GY-1,state.COLS*state.CELL+2,state.RANGS*state.CELL+2,RADIUS.bar); ctx.strokeStyle='rgba(95,135,215,.55)'; ctx.lineWidth=2; ctx.stroke();
   // grille
   ctx.strokeStyle='rgba(120,150,220,.14)'; ctx.lineWidth=1;
@@ -324,15 +333,18 @@ export function dessiner(t){
     if(an.jam){ ctx.fillStyle='rgba(155,107,214,.9)'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_brouille'),state.selection.x,state.selection.y-state.CELL*0.5); ctx.textAlign='left'; } }
   if(state.modeTourelle){ ctx.strokeStyle='#ffd23d'; ctx.lineWidth=3; for(const a of state.ailes){ if(a.r<0) continue; ctx.beginPath(); ctx.arc(a.x,a.y,state.CELL*0.42,0,7); ctx.stroke(); } if(state.boss){ ctx.strokeRect(state.GX+state.boss.c*state.CELL+4,state.GY+state.boss.r*state.CELL+4,3*state.CELL-8,2*state.CELL-8); } }
 
-  // croiseur (endommagé visuel)
-  const dmgRatio=1-Math.max(0,state.hpCruiser/state.HP_MAX);
-  ctx.save(); ctx.shadowColor='rgba(74,163,255,.35)'; ctx.shadowBlur=16;
-  ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
-  ctx.restore();
-  if(dmgRatio>0.3){ ctx.globalAlpha=dmgRatio*.6; ctx.fillStyle='#e5484d'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
-  if(dmgRatio>0.6){ ctx.globalAlpha=.4+.2*Math.sin(t/100); ctx.fillStyle='#3a1515'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
-  if(state.flashCroiseur>0){ ctx.fillStyle='rgba(229,72,77,'+(state.flashCroiseur*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
-  if(state.flashRecharge>0){ ctx.fillStyle='rgba(47,214,160,'+(state.flashRecharge*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
+  // croiseur (endommagé visuel) — absent en mission planète (pas de croiseur à l'écran, le
+  // joueur attaque au lieu de défendre) ; la console d'action reste affichée à sa place fixe.
+  if(!state.planete){
+    const dmgRatio=1-Math.max(0,state.hpCruiser/state.HP_MAX);
+    ctx.save(); ctx.shadowColor='rgba(74,163,255,.35)'; ctx.shadowBlur=16;
+    ctx.drawImage(imgCroiseur,Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY));
+    ctx.restore();
+    if(dmgRatio>0.3){ ctx.globalAlpha=dmgRatio*.6; ctx.fillStyle='#e5484d'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
+    if(dmgRatio>0.6){ ctx.globalAlpha=.4+.2*Math.sin(t/100); ctx.fillStyle='#3a1515'; ctx.fillRect(Math.round((state.LARGEUR-imgCroiseur.width)/2),Math.round(state.cruiserY),imgCroiseur.width,imgCroiseur.height); ctx.globalAlpha=1; }
+    if(state.flashCroiseur>0){ ctx.fillStyle='rgba(229,72,77,'+(state.flashCroiseur*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
+    if(state.flashRecharge>0){ ctx.fillStyle='rgba(47,214,160,'+(state.flashRecharge*.4)+')'; ctx.fillRect(0,state.cruiserY-4,state.LARGEUR,imgCroiseur.height+8); }
+  }
   // aperçu du vaisseau en construction : au-dessus de la console (pas dessus, elle l'aurait
   // sinon recouvert), dans la zone des tourelles en haut de la coque.
   if(state.hangar){ const him=imgVaisseau(state.hangar.type), hy=state.cruiserY-him.height-4; ctx.globalAlpha=.5; ctx.drawImage(him,Math.round(state.LARGEUR/2-him.width/2),Math.round(hy)); ctx.globalAlpha=1; ctx.fillStyle='#ffd23d'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText('⏳'+(state.hangar.tours>1?' '+state.hangar.tours:''),state.LARGEUR/2,hy-4); ctx.textAlign='left'; }
@@ -345,6 +357,8 @@ export function dessiner(t){
       ctx.strokeStyle='rgba(120,180,255,'+(.5+.3*pulse)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(cx,cy,state.CELL*0.3*(0.6+0.4*Math.sin(t/300)),0,7); ctx.stroke(); }
     else if(o.type==='mines'){ ctx.fillStyle='rgba(229,72,77,'+(.10+.08*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
       for(const[dx,dy]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22],[0,0]]){ ctx.fillStyle='#e5484d'; ctx.beginPath(); ctx.arc(cx+dx*state.CELL,cy+dy*state.CELL,3,0,7); ctx.fill(); ctx.strokeStyle='#8f2b2f'; ctx.lineWidth=1; for(let a=0;a<4;a++){ ctx.beginPath(); ctx.moveTo(cx+dx*state.CELL,cy+dy*state.CELL); ctx.lineTo(cx+dx*state.CELL+Math.cos(a*1.57)*5,cy+dy*state.CELL+Math.sin(a*1.57)*5); ctx.stroke(); } } }
+    else if(o.type==='glace'){ ctx.fillStyle='rgba(191,233,255,'+(.20+.10*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
+      ctx.strokeStyle='rgba(191,233,255,.7)'; ctx.lineWidth=1; ctx.strokeRect(state.GX+o.c*state.CELL+2,state.GY+o.r*state.CELL+2,state.CELL-4,state.CELL-4); }
     else if(im){ ctx.drawImage(im,Math.round(cx-im.width/2),Math.round(cy-im.height/2)); }
     // PV des obstacles destructibles à plusieurs PV (station)
     if(def.destructible && (o.maxhp||def.hp)>1) dessinerPV(cx,Math.round(cy+state.CELL*0.32),o.hp,o.maxhp||def.hp,'#ff2a5a');
@@ -389,6 +403,28 @@ export function dessiner(t){
     const txtBoss=trad('boss_label')+' '+trad('boss_'+state.boss.type+'_nom').toUpperCase(); ctx.fillText(txtBoss,state.boss.x,by-4);
     if(state.boss.type==='rayon'&&state.boss.charge) dessinerIcone(imgEclairIco,state.boss.x+ctx.measureText(txtBoss).width/2+8,by-6,1);
     ctx.textAlign='left'; }
+
+  // mission planète : base ennemie + tourelles fixes (sprites dédiés, voir sprites.js)
+  if(state.planete){ const pl=state.planete, base=pl.base;
+    // endormie (biome Grotte) : invisible tant qu'aucun vaisseau n'est à 2 cases ou moins
+    if(base.reveillee!==false && imgBaseMap){
+      ctx.drawImage(imgBaseMap,Math.round(base.x-imgBaseMap.width/2),Math.round(base.y-imgBaseMap.height/2));
+      const by0=state.GY+base.r*state.CELL+3, bw0=base.w*state.CELL-6, bx0=state.GX+base.c*state.CELL+3;
+      const bbw=bw0-8, bbx=bx0+4, bby=by0-8; ctx.fillStyle='#2a1040'; ctx.fillRect(bbx,bby,bbw,6);
+      ctx.fillStyle='#a355e0'; ctx.fillRect(bbx,bby,bbw*Math.max(0,base.hp/base.maxhp),6);
+      ctx.fillStyle='#a355e0'; ctx.font='7px "Press Start 2P", monospace'; ctx.textAlign='center';
+      ctx.fillText(trad('planete_base_label'),base.x,bby-4); ctx.textAlign='left';
+    }
+
+    // tourelles endormies (Grotte) ou camouflées (Villes anciennes) : invisibles tant que non révélées
+    for(const tr of pl.tourelles){ if(!tr.reveillee) continue;
+      const im=imgTourelleMap&&(imgTourelleMap[tr.id]||imgTourelleMap.canon);
+      if(im) ctx.drawImage(im,Math.round(tr.x-im.width/2),Math.round(tr.y-im.height/2));
+      const ty0=state.GY+tr.r*state.CELL+6;
+      if(tr.maxhp>1){ const n=tr.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, hbx=Math.round(tr.x-tot/2), hby=Math.round(ty0-6);
+        for(let i=0;i<n;i++){ ctx.fillStyle=i<tr.hp?'#e5484d':'#4a5262'; ctx.fillRect(hbx+i*(sq+gap),hby,sq,sq); } }
+    }
+  }
 
   // astéroïdes (le gros est plus grand ; PV affichés s'il est blindé)
   for(const o of state.asteroides){ const sc=o.type==='gros'?1.4:o.type==='essaim'?0.7:1;
@@ -456,7 +492,23 @@ export function dessiner(t){
   // la couleur de remplissage change : vert/jaune/rouge selon les PV, violet→jaune pour
   // l'ultime (qui devient un vrai bouton une fois prête). Secteur/score/statut/objectif sont
   // dans le cadre HUD au-dessus de la grille (voir dessinerCadreHUD()), pas sur le croiseur.
-  { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
+  if(state.planete){
+    // même barre, même position : PV de la base au lieu du croiseur. Tant qu'elle est endormie
+    // (biome Grotte, avant réveil), ses PV restent cachés — juste le cadre et un « ??? ».
+    const base=state.planete.base, pv=state.PV;
+    arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
+    if(base.reveillee===false){
+      arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#5b6580'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='center';
+      ctx.fillText('???',pv.x+pv.w/2,pv.y+pv.h/2+3); ctx.textAlign='left';
+    } else {
+      const ratio=Math.max(0,base.hp/base.maxhp);
+      const coul=ratio>.5?'#a355e0':(ratio>.25?'#ffd23d':'#e5484d');
+      ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
+      arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
+      ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(trad('hud_base'),pv.x+8,pv.y+pv.h/2+3);
+    }
+  } else { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
     arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
     let coul=ratio>.5?'#2fd6a0':(ratio>.25?'#ffd23d':'#e5484d'); if(ratio<=.25) coul='rgba(229,72,77,'+(.55+.45*pulse)+')';
     ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
@@ -484,7 +536,8 @@ export function dessiner(t){
   }
 
   // boutons d'action
-  for(const a of state.ACT){ const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
+  for(const a of state.ACT){ if(state.planete&&(a.id==='tourelle'||a.id==='bouclier')) continue;   // pas de sens sans croiseur à l'écran (masquées, pas juste grisées)
+    const dispo=state.phase!=='joueur'?false:a.id==='tourelle'?(!state.actionFaite||state.tirsGratuits>0):a.id==='vaisseau'?(!state.actionFaite&&state.fighters.length<state.MAX_VAISSEAUX&&!state.hangar):a.id==='bouclier'?(!state.actionFaite&&state.boucliersRestants>0):(!state.actionFaite); const vise=a.id==='tourelle'&&state.modeTourelle;
     arrondi(a.x,a.y,a.w,a.h,RADIUS.bar); ctx.fillStyle=vise?'#e5a13d':(dispo?'#274a8a':'#243048'); ctx.fill(); ctx.strokeStyle=vise?'#ffd23d':'#3b5aa0'; ctx.lineWidth=2; ctx.stroke();
     // génération d'un vaisseau en cours : le bouton se remplit progressivement (tours écoulés / tours nécessaires)
     if(a.id==='vaisseau'&&state.hangar){ const ratio=Math.max(0,Math.min(1,1-state.hangar.tours/(state.hangar.toursInitial||2)));
