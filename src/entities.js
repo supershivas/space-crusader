@@ -3,7 +3,7 @@
    astéroïdes, boss, bonus)
    ===================================================================== */
 import { state, centreCase, decouvrir, afficherDegats } from './state.js';
-import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId } from './config.js';
+import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId, appliquerMetaHero } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
          DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE, RUINE_1, RUINE_2,
@@ -44,9 +44,12 @@ export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapi
 /* PV de base d'un vaisseau allié, hors améliorations de la partie en cours (encyclopédie) */
 export function hpVaisseauBase(type){ return type==='rouge'?2 : type==='bouclier'?3 : 1; }
 /* bonus passif du héros incarnant CE Vaisseau Rouge (snapshot pris à la création du vaisseau,
-   voir nouveauVaisseau) — null pour l'androïde ou tout autre type de vaisseau. */
+   voir nouveauVaisseau), déjà renforcé par l'arbre méta de ce héros (state.metaHeros) — null
+   pour l'androïde ou tout autre type de vaisseau. */
 export function bonusRouge(f){ if(!f||f.type!=='rouge'||!f.heroId||f.heroId==='androide') return null;
-  const h=heroParId(f.heroId); return h?h.bonus:null; }
+  const h=heroParId(f.heroId); if(!h) return null;
+  const niveau=(state.metaHeros&&state.metaHeros[f.heroId])||0;
+  return appliquerMetaHero(h.bonus,niveau); }
 export function nouveauVaisseau(c,r,type,depuisBas){ const p=centreCase(c,r); type=type||'normal';
   // le héros équipant ce Vaisseau Rouge est figé à sa création (state.heroActif au moment du
   // spawn) : si ce vaisseau meurt, state.heroActif bascule sur 'androide' (voir tuerFighter)
@@ -98,11 +101,13 @@ export function estProtege(a){ return !estElite(a)&&brouilleurAura(a); }
 export function blesser(f){
   const bonus=bonusRouge(f); let deg=1;
   if(bonus&&bonus.id==='bouclier_premier_tir'){
-    if(!f.boucliersHero){ f.boucliersHero=true; logMsg("🛡 Bouclier de L'Achéen : premier tir absorbé !",'log-grn'); return false; }
-    deg=2; // talon d'Achille : +1 dégât reçu sur tous les tirs suivants ce combat-là
+    f.boucliersHeroUses=f.boucliersHeroUses||0;
+    if(f.boucliersHeroUses<(bonus.usages||1)){ f.boucliersHeroUses++; logMsg("🛡 Bouclier de L'Achéen : tir absorbé !",'log-grn'); return false; }
+    deg=2; // talon d'Achille : +1 dégât reçu une fois le bouclier épuisé, pour le reste du combat
   }
-  if(bonus&&bonus.id==='evasion_mortelle' && !f.evasionUsee && (f.hp||1)-deg<=0){
-    f.evasionUsee=true; f.hp=1; logMsg('🍀 Odysseus évite le coup fatal !','log-grn'); return false;
+  if(bonus&&bonus.id==='evasion_mortelle'){
+    f.evasionUsees=f.evasionUsees||0;
+    if(f.evasionUsees<(bonus.usages||1) && (f.hp||1)-deg<=0){ f.evasionUsees++; f.hp=1; logMsg('🍀 Odysseus évite le coup fatal !','log-grn'); return false; }
   }
   f.hp=(f.hp||1)-deg; afficherDegats(f.x,f.y,deg); return f.hp<=0;
 }

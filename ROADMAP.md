@@ -357,18 +357,40 @@ passer à la suivante) :
    Testé en jeu (FR et EN) : écran de choix, sélection d'un héros, partie
    lancée, entrée correspondante débloquée dans l'Encyclopédie avec badge de
    rareté et détail du bonus — aucune erreur console.
-5. **Événements de carte** (`map.js`) : nouveau type de nœud dédié pour
-   récupérer/débloquer un héros.
-6. **Arbre méta par héros** : dépense de cristaux pour booster un héros
-   précis, une fois le barème défini.
+5. ✅ **Événements de carte** (`map.js`) : nouveau type de nœud `heros`
+   (icône `trophee`, couleur rose dédiée), tiré parmi les nœuds
+   intermédiaires comme `planete` (au plus 1/secteur, jamais garanti,
+   `PROBA_HEROS=0.4`), et seulement s'il reste au moins un héros non
+   débloqué (sinon jamais tiré — pas de nœud sans rien à offrir). Scène
+   « Signal de détresse » (même moteur que les autres scènes sans combat,
+   `construireScene`/`ouvrirScenePlanete`) : *Secourir* (-10% PV, débloque
+   un héros non encore rencontré au hasard) ou *Ignorer* (+10% PV). Repli
+   neutre (petit butin) si généré alors que tous les héros sont déjà
+   débloqués. Testé : ~27% d'occurrence sur 30 générations de secteur,
+   scène de sauvetage jouée jusqu'au bout (héros débloqué visible dans
+   `dc_decouvertes`), aucune erreur console.
+6. ✅ **Arbre méta par héros** (`config.js`, `state.js`, `ui.js`) :
+   `state.metaHeros[heroId]` = niveau (0-3, `META_HEROS_MAX`), coût en
+   cristaux `coutMetaHero(niveau)=4+niveau×3` (même ordre de grandeur que
+   `META`), persisté (`dc_meta_heros`). `appliquerMetaHero()` renforce le
+   bonus selon son `id` (barème générique, un seul palier par formule,
+   volontairement simple — à ajuster après tests) : Darkor +1 dégât/niveau,
+   Polyphème +15% dégâts/niveau, Slum +1% régén/niveau, Demonokos +1 portée
+   au niveau 2, Odysseus/L'Achéen +1 usage de leur défense/niveau,
+   Bar4-bar4 +10% de tir raté/niveau. Nouvelle section « Arbre des héros »
+   dans l'écran Améliorations permanentes (`#meta`), visible dès qu'au moins
+   un héros est débloqué, même pattern carte que `META`. Le modal `#meta`
+   est désormais scrollable (`.guide-scroll`, réutilisé de l'Encyclopédie)
+   pour ne jamais couper son contenu sur petit écran. Testé : investissement
+   d'un niveau sur Darkor (cristaux décomptés, palier affiché, persisté),
+   aucune erreur console.
 7. **Habillage** : portraits réels (via `pixel-editor.html`), variations de
    sprite de combat par héros, section `design-system.html` dédiée,
    incrément `VERSION`/cache SW comme à chaque lot livré (déjà fait pour les
    traductions FR/EN, complètes dès le lot 3).
 
-**Prochaine étape** : lot 5 (événements de carte pour récupérer/débloquer un
-héros) — ou lot 6 (arbre méta par héros) selon la priorité choisie ; les deux
-sont indépendants du reste et peuvent être menés dans l'ordre qui arrange le
-mieux les tests. En l'état, tous les héros restent sélectionnables dès la
-première partie (voir simplification notée à l'étape 3) tant que le lot 5
-n'est pas livré.
+**Prochaine étape** : lot 7 (habillage — portraits réels, variations de
+sprite, section design-system). C'est le dernier lot du plan initial ; les
+7 héros sont maintenant entièrement fonctionnels (bonus, sélection,
+déblocage, progression méta), seul l'aspect visuel reste provisoire (icônes
+`ICONS` génériques en attendant de vrais portraits pixel-art).

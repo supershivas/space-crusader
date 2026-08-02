@@ -3,7 +3,7 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert, decouvrir } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS, META_HEROS_MAX, coutMetaHero } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase } from './entities.js';
@@ -247,7 +247,7 @@ export function ouvrirResultat(texte,suite){
    d'écran + décor sur le canvas, qui ne suivait pas le design system et laissait le joueur
    chercher l'action sur son escadrille, purement décorative sur cette scène. Le canvas
    derrière reste celui de la carte (state.phase n'est pas changé), comme les autres modales. */
-const ICONE_SCENE={station:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',marche:'point'};
+const ICONE_SCENE={station:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',marche:'point',heros:'coeur'};
 export function ouvrirScenePlanete(scene){
   state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
   tooltip.classList.remove('visible');
@@ -293,6 +293,28 @@ export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.
     carteSkin(t('skin_croiseur'),SKINS_CROISEUR,'skinCroiseur',rafraichirSkinCroiseur);
     carteSkin(t('skin_vaisseaux'),SKINS_VAISSEAUX,'skinVaisseaux',rafraichirSkinVaisseaux);
   } else cosmBloc.style.display='none';
+
+  // Arbre méta par héros (roadmap "Héros du Vaisseau Rouge", lot 6) : un héros débloqué
+  // (rencontré/joué au moins une fois) peut être renforcé durablement, comme le reste de META.
+  const heroMetaBloc=document.getElementById('heroMetaBloc'), heroMetaCards=document.getElementById('heroMetaCards');
+  const herosDebloques=HEROS.filter(h=>estDecouvert('heros',h.id));
+  if(herosDebloques.length){
+    heroMetaBloc.style.display=''; heroMetaCards.innerHTML='';
+    for(const h of herosDebloques){
+      const lvl=(state.metaHeros&&state.metaHeros[h.id])||0, cout=coutMetaHero(lvl), atMax=lvl>=META_HEROS_MAX, peut=!atMax&&(state.meta.cristaux||0)>=cout;
+      const b=document.createElement('div'); b.className='card';
+      b.appendChild(divEmo(h.ico));
+      const d=document.createElement('div');
+      d.innerHTML='<div class="nom">'+t('hero_'+h.id+'_nom')+'</div><div class="desc">'+t('hero_'+h.id+'_bonus')+'</div>'
+        +'<div class="desc" style="color:#8fd0ff">'+'●'.repeat(lvl)+'○'.repeat(META_HEROS_MAX-lvl)+'</div>';
+      b.appendChild(d);
+      const cout_div=document.createElement('div'); cout_div.className='desc'; cout_div.style.color='#ffd23d';
+      if(atMax) cout_div.textContent=t('meta_max'); else { icone(cout_div,'gemme',12); cout_div.appendChild(document.createTextNode(' '+cout)); }
+      b.appendChild(cout_div);
+      if(peut){ b.onclick=()=>{ state.meta.cristaux-=cout; state.metaHeros[h.id]=lvl+1; saveData(); ouvrirMeta(); }; } else b.style.opacity=atMax?'.6':'.4';
+      heroMetaCards.appendChild(b);
+    }
+  } else heroMetaBloc.style.display='none';
 
   metaDiv.classList.add('visible');
 }
@@ -450,8 +472,9 @@ export function ouvrirGuide(){
 
 document.getElementById('btnResetProgression').addEventListener('click',()=>{
   demanderConfirmation(t('meta_reset_confirm'),()=>{
-    try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); localStorage.removeItem('dc_decouvertes'); }catch(e){}
+    try{ localStorage.removeItem('dc_meta'); localStorage.removeItem('dc_meta_heros'); localStorage.removeItem('dc_achievements'); localStorage.removeItem('dc_highscores'); localStorage.removeItem('dc_partie'); localStorage.removeItem('dc_stats'); localStorage.removeItem('dc_decouvertes'); }catch(e){}
     state.meta={cristaux:0,pvBonus:0,deptAmelio:0,ultimeRapide:0,vaisseauBonus:0,reroll:0,vaisseauMedic:0,cosmetiques:0,skinCroiseur:0,skinVaisseaux:0};
+    state.metaHeros={};
     state.achievements={}; state.highscores=[]; state.decouvertes={};
     rafraichirSkinCroiseur(); rafraichirSkinVaisseaux();
     document.getElementById('params').classList.remove('visible');

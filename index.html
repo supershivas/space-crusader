@@ -403,8 +403,16 @@
     <div id="maj" class="modal"><h2><span class="ico-slot" data-ico="restart"></span><span data-i18n="maj_titre">MISE À JOUR INSTALLÉE</span></h2>
       <div class="hint"><span data-i18n="maj_texte">Le jeu a été mis à jour vers la</span> version <span id="majVersion" style="color:#ffd23d"></span></div>
       <button class="jouer" id="btnMajOk" style="margin-top:14px;font-size:var(--fs-corps);padding:11px 22px;" data-i18n="maj_ok">OK</button></div>
-    <div id="meta" class="modal"><h2><span class="ico-slot" data-ico="gemme"></span><span data-i18n="meta_titre">AMÉLIORATIONS PERMANENTES</span></h2><div class="hint" id="metaCristaux">Cristaux : 0</div><div class="cards" id="metaCards"></div>
-      <div id="cosmetiquesBloc" style="display:none;margin-top:16px;"><div class="hint" style="margin-bottom:8px;" data-i18n="meta_cosmetiques_titre">Cosmétiques</div><div class="cards" id="skinCards"></div></div>
+    <div id="meta" class="modal"><h2><span class="ico-slot" data-ico="gemme"></span><span data-i18n="meta_titre">AMÉLIORATIONS PERMANENTES</span></h2><div class="hint" id="metaCristaux">Cristaux : 0</div>
+      <div class="guide-scroll">
+        <div class="cards" id="metaCards"></div>
+        <div id="cosmetiquesBloc" style="display:none;margin-top:16px;"><div class="hint" style="margin-bottom:8px;" data-i18n="meta_cosmetiques_titre">Cosmétiques</div><div class="cards" id="skinCards"></div></div>
+        <div id="heroMetaBloc" style="display:none;margin-top:16px;">
+          <div class="hint" style="margin-bottom:8px;" data-i18n="meta_heros_titre">Arbre des héros</div>
+          <div class="hint" style="margin-bottom:8px;" data-i18n="meta_heros_hint">Renforce durablement le bonus passif d'un héros débloqué.</div>
+          <div class="cards" id="heroMetaCards"></div>
+        </div>
+      </div>
       <button class="jouer" id="btnFermerMeta" style="margin-top:16px;font-size:var(--fs-corps);padding:10px 18px;" data-i18n="params_fermer">Fermer</button>
     </div>
     <div id="guide" class="modal">

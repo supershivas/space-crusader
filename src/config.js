@@ -78,6 +78,26 @@ export const HEROS=[
 ];
 export function heroParId(id){ return HEROS.find(h=>h.id===id)||null; }
 
+/* ===== ARBRE MÉTA PAR HÉROS (roadmap "Héros du Vaisseau Rouge", lot 6) =====
+   Persisté dans state.metaHeros[heroId] = niveau atteint (0..META_HEROS_MAX), coûte des
+   cristaux comme le reste de META. Barème générique volontairement simple plutôt que 7
+   formules ad hoc : un seul incrément par palier, propre à l'id du bonus passif (voir HEROS) —
+   à ajuster après tests, comme la rareté théorique. */
+export const META_HEROS_MAX=3;
+export function coutMetaHero(niveau){ return 4+niveau*3; }
+export function appliquerMetaHero(bonus,niveau){
+  if(!bonus||!niveau) return bonus;
+  const b={...bonus};
+  if(b.id==='degats_tir') b.valeur=(b.valeur||0)+niveau;                        // Darkor : +1 dégât / niveau
+  else if(b.id==='degats_pourcent') b.valeur=(b.valeur||0)+0.15*niveau;         // Polyphème : +15% dégâts / niveau
+  else if(b.id==='regen_tour') b.valeur=(b.valeur||0)+0.01*niveau;              // Slum : +1% régén / niveau
+  else if(b.id==='portee_brouillage') b.valeur=(b.valeur||0)+(niveau>=2?1:0);   // Demonokos : +1 portée au niveau 2
+  else if(b.id==='aura_precision_ennemie') b.chanceRatee=0.3+0.1*niveau;        // Bar4-bar4 : +10% de tir raté / niveau
+  else if(b.id==='evasion_mortelle') b.usages=1+niveau;                         // Odysseus : +1 évasion/combat / niveau
+  else if(b.id==='bouclier_premier_tir') b.usages=1+niveau;                     // L'Achéen : +1 tir absorbé/combat / niveau
+  return b;
+}
+
 /* palettes cosmétiques (débloquées via la méta 'cosmetiques') : recolorent l'accent du croiseur / des vaisseaux alliés */
 export const SKINS_CROISEUR=[
  {id:'defaut',   nom:'Défaut',   over:{}},

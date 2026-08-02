@@ -293,7 +293,7 @@ export function finDuTour(){
   // (1) TIRS des ailes + du boss
   const tirs=state.ailes.map(a=>({a,cb:cibleLaser(a)})).filter(o=>o.cb); let degats=0;
   for(const {a,cb} of tirs){
-    if(auraBar4 && Math.abs(a.c-auraBar4.c)<=1 && Math.abs(a.r-auraBar4.r)<=1 && Math.random()<0.3) continue; // tir complètement raté
+    if(auraBar4 && Math.abs(a.c-auraBar4.c)<=1 && Math.abs(a.r-auraBar4.r)<=1 && Math.random()<(bonusRougeActif.chanceRatee||0.3)) continue; // tir complètement raté
     if(cb.type==='multi'){ for(const f of cb.targets){ if(state.fighters.includes(f)){ laserAile(a,f.x,f.y); const mort=blesser(f); exploser(f.x,f.y,false); if(mort) tuerFighter(f); } } continue; }
     const tx=cb.type==='fighter'?cb.f.x:a.x, ty=cb.type==='fighter'?cb.f.y:(state.GRID_BAS+10);
     if(a.type==='bombardier'||a.type==='bruleur'){ state.lasers.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); state.trails.push({x1:a.x,y1:a.y,x2:a.x,y2:ty,t:0,ennemi:true}); }

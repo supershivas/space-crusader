@@ -2,8 +2,8 @@
    CARTE DE SECTEUR — génération, navigation, objectifs de vague,
    événements aléatoires entre les vagues
    ===================================================================== */
-import { state, centreCase, sauvegarderPartie } from './state.js';
-import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX } from './config.js';
+import { state, centreCase, sauvegarderPartie, decouvrir, estDecouvert } from './state.js';
+import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX, HEROS } from './config.js';
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, sonVoix, sonRenfort, sonVague } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
@@ -11,8 +11,8 @@ import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAch
 import { demarrerMissionPlanete } from './planete.js';
 import { t, L } from './i18n.js';
 
-export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon',planete:'globe'};
-const NOEUD_TYPES=['combat','elite','event','rest','tresor','hangar','forge','boss','planete'];
+export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon',planete:'globe',heros:'trophee'};
+const NOEUD_TYPES=['combat','elite','event','rest','tresor','hangar','forge','boss','planete','heros'];
 /* getters : le nom/la description affichés dépendent de la langue courante, donc résolus à chaque accès */
 export const NOM_NOEUD=Object.fromEntries(NOEUD_TYPES.map(k=>[k,'']));
 export const DESC_NOEUD=Object.fromEntries(NOEUD_TYPES.map(k=>[k,'']));
@@ -26,6 +26,10 @@ const BONUS_TYPES=['rest','tresor','hangar','forge'];
 // nœud de colonne 0 est toujours 'combat' (voir genererCarte), donc une mission planète ne
 // peut structurellement jamais tomber sur le tout premier nœud du secteur.
 const PROBA_PLANETE=0.5;
+// nœud de récupération de héros : jamais garanti, au plus 1/secteur, seulement s'il reste au
+// moins un héros non débloqué (sinon la carte pourrait proposer un nœud sans rien à offrir).
+const PROBA_HEROS=0.4;
+function heroARecuperer(){ return HEROS.some(h=>!estDecouvert('heros',h.id)); }
 function construireTypesIntermediaires(total){
   const pool=[];
   // au moins 2 combats/élites en plus du départ (qui est déjà un combat garanti) => 3 au total
@@ -35,12 +39,14 @@ function construireTypesIntermediaires(total){
   for(let i=0;i<nbBonus;i++) pool.push(BONUS_TYPES[Math.floor(Math.random()*BONUS_TYPES.length)]);
   // au plus 1 mission planète sur tout le secteur, glissée parmi les nœuds restants
   if(pool.length<total && Math.random()<PROBA_PLANETE) pool.push('planete');
-  // le reste : mélange combat/élite/événement, toujours pas de bonus ni de planète supplémentaire
+  // au plus 1 nœud héros sur tout le secteur, même logique que la mission planète
+  if(pool.length<total && heroARecuperer() && Math.random()<PROBA_HEROS) pool.push('heros');
+  // le reste : mélange combat/élite/événement, toujours pas de bonus ni de planète/héros supplémentaire
   while(pool.length<total){ const r=Math.random(); pool.push(r<0.55?'combat':r<0.7?'elite':'event'); }
   for(let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
   return pool;
 }
-export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},hangar:{c1:'#bfe9ff',c2:'#5a8fd6',d:'#2f4a86'},forge:{c1:'#ffe08a',c2:'#e0a13d',d:'#8f6a1f'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'},planete:{c1:'#e0b0ff',c2:'#a355e0',d:'#4a1f6a'}};
+export const COUL_NOEUD={combat:{c1:'#ff8f6b',c2:'#c94257',d:'#7a2030'},elite:{c1:'#ffe08a',c2:'#ffd23d',d:'#8f6a1f'},event:{c1:'#bfe9ff',c2:'#37a0d6',d:'#215f8f'},rest:{c1:'#8fe89a',c2:'#5fce6a',d:'#256a2f'},tresor:{c1:'#bfe0ff',c2:'#5a8fd6',d:'#3a4aa0'},hangar:{c1:'#bfe9ff',c2:'#5a8fd6',d:'#2f4a86'},forge:{c1:'#ffe08a',c2:'#e0a13d',d:'#8f6a1f'},boss:{c1:'#ff9a9a',c2:'#ff5a5a',d:'#6a1f2f'},planete:{c1:'#e0b0ff',c2:'#a355e0',d:'#4a1f6a'},heros:{c1:'#ffb3d9',c2:'#ff6bb3',d:'#8f2f66'}};
 export function genererCarte(){ const NB=6, cols=[];
   const tailles=[]; for(let c=0;c<NB;c++) tailles.push((c===0||c===NB-1)?1:(2+Math.floor(Math.random()*2)));
   const totalIntermediaire=tailles.slice(1,NB-1).reduce((a,b)=>a+b,0);
@@ -95,6 +101,25 @@ function construireScene(type){
     {ico:'fleche_haut',nom:t('forge_ameliorer_nom'),desc:t('forge_ameliorer_desc'),effet:()=>{ ameliorationAleatoire(); }},
     {ico:'eclair',nom:t('forge_surcharger_nom'),desc:t('forge_surcharger_desc'),effet:()=>{ state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg(t('evt_ultime_recharge'),'log-ylw'); }},
   ]}; }
+  if(type==='heros'){
+    // mission de sauvetage : rend débloqué un héros pas encore rencontré. Cas de repli (aucun
+    // héros restant, ex. carte générée juste avant que le dernier soit débloqué ailleurs) :
+    // scène neutre équivalente à un petit trésor, pour ne jamais proposer un choix sans effet.
+    const locked=HEROS.filter(h=>!estDecouvert('heros',h.id));
+    if(!locked.length){ return {kind:'tresor',titre:t('scene_heros_titre'),suite,choix:[
+      {ico:'gemme',nom:t('heros_rien_nom'),desc:t('heros_rien_desc'),effet:()=>{ state.score+=8; }},
+    ]}; }
+    const cible=locked[Math.floor(Math.random()*locked.length)];
+    return {kind:'heros',titre:t('scene_heros_titre'),suite,choix:[
+      {ico:'coeur',nom:t('heros_secourir_nom'),desc:t('heros_secourir_desc'),effet:()=>{
+        state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9));
+        decouvrir('heros',cible.id);
+        montrerToast('★ '+t('hero_'+cible.id+'_nom'),'gold');
+        logMsg(t('evt_heros_secouru',{nom:t('hero_'+cible.id+'_nom')}),'log-ylw');
+      }},
+      {ico:'refuser',nom:t('heros_ignorer_nom'),desc:t('heros_ignorer_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }},
+    ]};
+  }
   // event : événement aléatoire présenté comme une scène
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
   return {kind:'marche',titre:'✦ '+L(ev.titre),suite,choix:ev.choix.map(ch=>({...ch,nom:L(ch.nom),desc:L(ch.desc)}))};
