@@ -522,8 +522,53 @@ livrés**, uniforme commun inclus. Reste ouvert pour une itération future
   première partie) ou via le nœud "Signal de détresse" — pas encore de
   distinction stricte "héros non débloqué = non sélectionnable" à l'écran
   de choix (étape 3) ;
-- les portraits/sprites sont un premier jet pensé pour être repris via
-  `pixel-editor.html`, pas un art final ;
 - la mission spéciale solo (champ d'astéroïdes, vaisseau héros seul) évoquée
   dans le brainstorming initial n'a jamais été chiffrée (notée non
   prioritaire dès le départ).
+
+### Édition en direct des sprites (pixel-editor.html → jeu)
+
+**Statut** : livré pour les portraits de héros + l'uniforme commun ; prévu
+ensuite pour les vaisseaux, tuiles de décor, menaces et icônes.
+
+**Pitch** : jusqu'ici, modifier un sprite dans `pixel-editor.html` voulait
+dire copier l'export à la main dans `sprites.js`. Désormais, un sprite du
+"catalogue" (`REGISTRE_SPRITES` dans `sprites.js`) peut être chargé, édité,
+puis **publié** directement depuis l'éditeur — il devient la version active
+de ce sprite dans **tout** le jeu (combat, encyclopédie, écran de choix,
+`design-system.html`) au prochain rechargement de ces pages, sans toucher au
+code.
+
+**Comment ça marche** :
+- `grilleEffective(id)` (`sprites.js`) renvoie la version personnalisée
+  stockée en `localStorage` (`dc_sprite_overrides`) si elle existe, sinon le
+  défaut d'usine (`REGISTRE_SPRITES[id]`). Tout le code qui affiche un
+  sprite du catalogue passe par cette fonction plutôt que de lire les
+  constantes `PORTRAIT_*`/`UNIFORME_HEROS` directement — c'est ce qui fait
+  qu'une publication se répercute partout.
+- `publierSprite(id, grille)` écrit la nouvelle version active et pousse
+  l'ancienne dans un historique (`dc_sprite_historique`, 20 versions max par
+  sprite, jamais écrasées silencieusement).
+- `reinitialiserSprite(id)` retire la version personnalisée (retour au
+  défaut d'usine), en gardant elle aussi une trace dans l'historique.
+- Côté éditeur : sélecteur du sprite à charger (regroupé par catégorie —
+  `portrait:`, `uniforme:` pour l'instant), boutons Charger/Publier/
+  Réinitialiser, et une liste d'historique avec vignette + date + bouton
+  Restaurer par version. La colonne "Projet libre" (dessin depuis zéro,
+  export JS à coller à la main) reste disponible pour un sprite pas encore
+  dans le jeu.
+- **Limite assumée** : la publication est stockée en `localStorage`, donc
+  propre à CE navigateur — elle ne modifie jamais `src/sprites.js` sur le
+  disque et n'est pas partagée avec d'autres joueurs. Pour que ça devienne
+  la version livrée à tout le monde, il faut encore répercuter le contenu
+  publié dans `sprites.js` et déployer (étape manuelle, hors de portée d'une
+  page statique sans backend).
+- Au passage : palette de l'éditeur triée par teinte (au lieu de l'ordre
+  d'insertion dans `PAL`) — beaucoup plus facile à parcourir visuellement.
+
+Testé : chargement de `portrait:darkor`, édition, publication, vérifié
+visible après rechargement dans `pixel-editor.html` lui-même, dans
+`design-system.html` et dans l'écran de choix du jeu réel (même navigateur,
+onglets différents) ; réinitialisation vérifiée (retour au défaut, ancienne
+version conservée dans l'historique) — aucune erreur console sur aucune des
+trois pages.

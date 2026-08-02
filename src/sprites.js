@@ -41,6 +41,8 @@ export const PORTRAIT_SLUM=["...VVVVVVVVV...","..VVVVVVVVVVV..",".VVVVVVVVVVVVV.
 export const PORTRAIT_BAR4BAR4=["...TTTTTTTTT...","..MTTTTTTTTTM..",".MMTTTTTTTTTMM.","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTkkMMMMMkkTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT","TTTMMMMMMMMMTTT",".MMMMMMMMMMMMM.","..MMMMMMMMMMM..","...MMMMMMMMM...","....MMMMMMM....",".....MMMMM.....","......MMM......","...............","..............."];
 export const PORTRAIT_DEMONOKOS=[".....SSSSS.....","....SSSSSSS....","...SSSSSSSSS...","...SSSSSSSSS...","ZZSSSSSSSSSSSZZ","ZZSSSSSSSSSSSZZ","ZZSkkkSSSkkkSZZ","ZZSSSSSSSSSSSZZ","ZZSSSSSSSSSSSZZ","ZZSSSeeeeeSSSZZ","..SSSeeeeeSSS..","...SSSMMMSSS...","....SSMMMSS....",".....SooSS.....","......SoSS.....","......SSS......",".......S.......","...............","..............."];
 export const PORTRAIT_ANDROIDE=["...SSSSSSSSS...","..SSSSSSSSSSS..",".SSSSSSSSSSSSS.","SSSSSSSSSSSSSSS","SSSSSSSSSSSSSSS","SSSSSSSSSSSSSSS","SSSDDDDDDDDDSSS","SSSkCDDDDDCkSSS","SSSDDDDDDDDDSSS","SSSDDDDDDDDDSSS","SSSSSSDDDSSSSSS",".SSSSSSSSSSSSS.","..SSSSSSSSSSS..","...SSSSSSSSS...","....SSSSSSS....",".....SSSSS.....","......SSS......","...............","..............."];
+/* défauts d'usine (repli si aucune version personnalisée n'a été enregistrée via
+   pixel-editor.html — voir REGISTRE_SPRITES/grilleEffective ci-dessous) */
 export const PORTRAITS_HEROS={
   darkor:PORTRAIT_DARKOR, odysseus:PORTRAIT_ODYSSEUS, acheen:PORTRAIT_ACHEEN, polypheme:PORTRAIT_POLYPHEME,
   slum:PORTRAIT_SLUM, bar4bar4:PORTRAIT_BAR4BAR4, demonokos:PORTRAIT_DEMONOKOS, androide:PORTRAIT_ANDROIDE,
@@ -49,28 +51,79 @@ export const PORTRAITS_HEROS={
 /* ===== UNIFORME COMMUN (roadmap "Héros du Vaisseau Rouge") =====
    Bandeau épaules/costume noir partagé par TOUS les héros — dessiné une seule fois, jamais
    dupliqué — accolé sous le portrait de tête (voir PORTRAIT_* ci-dessus). Jusqu'à 3 médailles
-   dorées (un '?' par emplacement dans la ligne concernée) apparaissent selon le niveau de
-   l'arbre méta du héros (state.metaHeros[heroId], 0 à META_HEROS_MAX=3 dans config.js — les
-   deux valeurs sont tenues manuellement synchronisées, changer l'une suppose de revoir l'autre). */
-const UNIFORME_HEROS=[
+   dorées se superposent aux positions MEDAILLES_POS selon le niveau de l'arbre méta du héros
+   (state.metaHeros[heroId], 0 à META_HEROS_MAX=3 dans config.js — les deux valeurs sont tenues
+   manuellement synchronisées, changer l'une suppose de revoir l'autre). La grille elle-même
+   reste "propre" (aucun caractère spécial) pour rester éditable telle quelle dans
+   pixel-editor.html ; les médailles sont superposées en code, pas encodées dans la grille. */
+export const UNIFORME_HEROS=[
   "......kkk......",
   ".....kkkkk.....",
   "....kkkkkkk....",
   "...kkkkkkkkk...",
   "..kkkkkkkkkkk..",
   ".kkkkkkkkkkkkk.",
-  ".kk?kkk?kkk?kk.",
+  ".kkkkkkkkkkkkk.",
   "kkkkkkkkkkkkkkk",
 ];
+const MEDAILLES_POS=[[3,6],[7,6],[11,6]];   // [x,y] dans UNIFORME_HEROS
+
+/* ===== REGISTRE DES SPRITES ÉDITABLES (pixel-editor.html, "publier comme version active") =====
+   Chaque entrée = un identifiant stable ("portrait:darkor", "uniforme:heros"…) associé à sa
+   grille par défaut. `grilleEffective(id)` renvoie la version personnalisée enregistrée en
+   localStorage si elle existe, sinon le défaut d'usine ci-dessus — TOUT le jeu (combat,
+   encyclopédie, écran de choix, design-system.html) passe par cette fonction plutôt que de lire
+   les PORTRAIT_… / UNIFORME_HEROS directement, pour qu'une modification publiée dans l'éditeur se
+   répercute partout sans toucher au code. Catégorie "héros" pour l'instant ; même mécanisme
+   prévu pour les vaisseaux/tuiles/menaces/icônes dans une prochaine itération. */
+export const REGISTRE_SPRITES={
+  'portrait:darkor':PORTRAIT_DARKOR, 'portrait:odysseus':PORTRAIT_ODYSSEUS, 'portrait:acheen':PORTRAIT_ACHEEN,
+  'portrait:polypheme':PORTRAIT_POLYPHEME, 'portrait:slum':PORTRAIT_SLUM, 'portrait:bar4bar4':PORTRAIT_BAR4BAR4,
+  'portrait:demonokos':PORTRAIT_DEMONOKOS, 'portrait:androide':PORTRAIT_ANDROIDE,
+  'uniforme:heros':UNIFORME_HEROS,
+};
+const OVERRIDES_KEY='dc_sprite_overrides';
+const HISTORIQUE_KEY='dc_sprite_historique';
+const HISTORIQUE_MAX=20;
+function chargerJSON(cle){ try{ return JSON.parse(localStorage.getItem(cle))||{}; }catch(e){ return {}; } }
+function sauverJSON(cle,val){ try{ localStorage.setItem(cle,JSON.stringify(val)); }catch(e){} }
+/* grille effective d'un sprite du registre : version personnalisée (localStorage) si elle
+   existe, sinon le défaut d'usine. Lu une seule fois au chargement de la page — un changement
+   publié depuis un autre onglet (pixel-editor.html) n'apparaît qu'au rechargement de celui-ci. */
+export function grilleEffective(id){
+  const overrides=chargerJSON(OVERRIDES_KEY);
+  return overrides[id] || REGISTRE_SPRITES[id] || null;
+}
+/* publie `grille` comme nouvelle version active de `id` — la version qui était active jusque-là
+   (personnalisée ou défaut d'usine) est conservée dans l'historique pour pouvoir revenir en
+   arrière (voir historiqueDe/restaurerVersion). */
+export function publierSprite(id,grille){
+  const ancienne=grilleEffective(id);
+  const hist=chargerJSON(HISTORIQUE_KEY); hist[id]=hist[id]||[];
+  hist[id].push({grille:ancienne,at:Date.now()});
+  if(hist[id].length>HISTORIQUE_MAX) hist[id].shift();
+  sauverJSON(HISTORIQUE_KEY,hist);
+  const overrides=chargerJSON(OVERRIDES_KEY); overrides[id]=grille; sauverJSON(OVERRIDES_KEY,overrides);
+}
+/* retire la version personnalisée de `id` (revient au défaut d'usine) — l'ancienne version
+   personnalisée part elle aussi dans l'historique, rien n'est jamais perdu silencieusement. */
+export function reinitialiserSprite(id){
+  const ancienne=grilleEffective(id);
+  const hist=chargerJSON(HISTORIQUE_KEY); hist[id]=hist[id]||[]; hist[id].push({grille:ancienne,at:Date.now()});
+  if(hist[id].length>HISTORIQUE_MAX) hist[id].shift();
+  sauverJSON(HISTORIQUE_KEY,hist);
+  const overrides=chargerJSON(OVERRIDES_KEY); delete overrides[id]; sauverJSON(OVERRIDES_KEY,overrides);
+}
+export function historiqueDe(id){ return chargerJSON(HISTORIQUE_KEY)[id]||[]; }
+
 /* portrait complet (tête + uniforme) d'un héros pour un niveau d'arbre méta donné — grille
-   brute, pas encore cuite (voir composerPortrait pour la version prête à afficher). */
+   brute, pas encore cuite (voir imgPortraitsHeros pour la version prête à afficher). Lit
+   toujours la version EFFECTIVE (personnalisée ou défaut) de la tête et de l'uniforme. */
 export function grillePortraitComplet(heroId,niveau){
-  const tete=PORTRAITS_HEROS[heroId]||PORTRAITS_HEROS.androide;
-  let i=-1;
-  const corps=UNIFORME_HEROS.map(row=>row.includes('?')
-    ? row.split('').map(ch=>{ if(ch!=='?') return ch; i++; return i<(niveau||0)?'P':'k'; }).join('')
-    : row);
-  return [...tete, ...corps];
+  const tete=grilleEffective('portrait:'+heroId)||grilleEffective('portrait:androide');
+  const corps=(grilleEffective('uniforme:heros')||UNIFORME_HEROS).map(row=>row.split(''));
+  MEDAILLES_POS.forEach(([x,y],i)=>{ if(i<(niveau||0)) corps[y][x]='P'; });
+  return [...tete, ...corps.map(r=>r.join(''))];
 }
 /* portraits déjà cuits, un jeu par niveau de méta (0 à 3) — taille fixe (indépendante de CELL :
    jamais dessinés sur la grille de jeu, seulement dans des panneaux d'UI : sélection du héros,

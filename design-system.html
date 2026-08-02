@@ -422,8 +422,9 @@
     <h3 class="sub">Héros du Vaisseau Rouge — portraits</h3>
     <p class="note" style="margin-top:0;">Grille plus grande et plus détaillée que les sprites de vaisseaux
       (<code>PORTRAIT_*</code>, <code>sprites.js</code>) — affichée au survol du Vaisseau Rouge en combat, sur
-      l'écran de choix du héros et dans l'Encyclopédie. Premier jet pensé pour être repris/affiné via
-      <a href="pixel-editor.html">l'éditeur pixel art</a>.</p>
+      l'écran de choix du héros et dans l'Encyclopédie. Modifiable directement dans
+      <a href="pixel-editor.html">l'éditeur pixel art</a> : une version publiée y remplace le défaut d'usine
+      partout, y compris sur cette page (<code>grilleEffective()</code>, <code>sprites.js</code>).</p>
     <div class="cards" id="cat-heros-portrait"></div>
 
     <h3 class="sub">Héros du Vaisseau Rouge — uniforme commun (arbre méta)</h3>
@@ -519,8 +520,8 @@ for(const skin of SKINS_VAISSEAUX) if(skin.id!=='defaut') carte('cat-allies',S.J
 // Héros : sprite de combat (variante du Vaisseau Rouge) + portrait
 for(const h of HEROS) carte('cat-heros-vaisseau',h.id==='slum'?S.ROUGE_SLUM:S.ROUGE,h.nom,{over:S.HERO_ROUGE_OVERRIDES[h.id]});
 carte('cat-heros-vaisseau',S.ROUGE,ANDROIDE.nom);
-for(const h of HEROS) carte('cat-heros-portrait',S.PORTRAITS_HEROS[h.id],h.nom,{taille:140});
-carte('cat-heros-portrait',S.PORTRAITS_HEROS.androide,ANDROIDE.nom,{taille:140});
+for(const h of HEROS) carte('cat-heros-portrait',S.grilleEffective('portrait:'+h.id),h.nom,{taille:140});
+carte('cat-heros-portrait',S.grilleEffective('portrait:androide'),ANDROIDE.nom,{taille:140});
 
 // Uniforme + médailles : un même héros (Darkor) aux 4 niveaux, puis l'androïde (jamais de médaille)
 for(let niv=0;niv<=3;niv++) carte('cat-heros-uniforme',S.grillePortraitComplet('darkor',niv),'Darkor — niveau '+niv,{taille:130});
