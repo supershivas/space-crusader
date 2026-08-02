@@ -9,7 +9,7 @@ import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImg
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
 import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
-import { initAudio, startMusic } from './audio.js';
+import { initAudio, startMusic, sonSelect, getVolumeMusique, getVolumeEffets, setVolumeMusique, setVolumeEffets } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil, ouvrirChoixHero } from './ui.js';
 import { cuireFit, JOUEUR, iconCanvas } from './sprites.js';
@@ -164,6 +164,13 @@ function ouvrirInfos(){
   document.getElementById('infoStats').textContent = st.total>0 ? '📊 Secteur moyen atteint : '+st.moyenneSecteur.toFixed(1)+' ('+st.total+' partie'+(st.total>1?'s':'')+')' : '';
   document.getElementById('info').classList.add('visible');
 }
+/* Réglage 1 · Volume séparé musique/effets : curseurs initialisés à la valeur persistée
+   (audio.js lit déjà localStorage au chargement du module) et appliqués en direct. */
+const volMusiqueSlider=document.getElementById('volMusiqueSlider'), volEffetsSlider=document.getElementById('volEffetsSlider');
+volMusiqueSlider.value=Math.round(getVolumeMusique()*100);
+volEffetsSlider.value=Math.round(getVolumeEffets()*100);
+volMusiqueSlider.addEventListener('input',()=>{ initAudio(); setVolumeMusique(volMusiqueSlider.value/100); });
+volEffetsSlider.addEventListener('input',()=>{ initAudio(); setVolumeEffets(volEffetsSlider.value/100); sonSelect(); });
 document.getElementById('btnInfo').addEventListener('click',ouvrirParams);
 document.getElementById('btnParamsInfos').addEventListener('click',ouvrirInfos);
 document.getElementById('btnParamsLangue').addEventListener('click',()=>{ langueSuivante(); ajusterTitreAccueil(); majMeilleurScoreAccueil(); });

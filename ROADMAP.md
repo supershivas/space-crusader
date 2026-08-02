@@ -165,8 +165,11 @@ sauvegarde/reprise, habillage, encyclopédie), fusionné sur `main`.
 
 ### Ambiance sonore — enrichissement de l'audio procédural
 
-**Statut** : proposition à l'étude, non discutée en détail avec l'utilisateur,
-implémentation non démarrée.
+**Statut** : lots 1, 2, 3, 5 livrés et vérifiés (aucune erreur console, testé
+via Playwright headless — chargement, curseurs de volume, persistance après
+rechargement, appel de toutes les nouvelles fonctions d'`audio.js`) ; lot 7
+livré à titre d'**essai** (voir note dédiée plus bas) ; lots 4 et 6 restent à
+l'étude, non implémentés.
 
 **Contexte technique (état actuel de `src/audio.js`)** : tout le son du jeu
 est **procédural**, généré en direct via la Web Audio API (`OscillatorNode`/
@@ -196,52 +199,95 @@ rester servi par le jeu lui-même, jamais un CDN externe).
 
 **Propositions (à trier/prioriser avec l'utilisateur avant de chiffrer)** :
 
-1. **Réglage de volume séparé musique / effets** : deux curseurs (ou un
-   curseur + un bouton musique on/off distinct du bouton effets on/off) dans
-   l'écran Paramètres, remplaçant le tout-ou-rien actuel de `#son`. Nécessite
-   un `gainMusique`/`gainEffets` (deux `GainNode` maîtres dans `audio.js` au
-   lieu de connecter chaque oscillateur directement à `AC.destination`),
-   valeurs persistées (`localStorage`, sur le modèle de ce qui existe déjà
-   pour la langue/les autres préférences).
-2. **Ambiance par biome (missions planète)** : `setMusicPhase` accepte déjà un
-   identifiant de phase — étendre le principe à un identifiant de **timbre**
-   par biome plutôt que juste calme/tense/boss : désert (percussif sec, peu
-   de notes, silences longs), glace (harmoniques hautes, `sine` cristallin,
-   reverb simulée par un delay court), grotte (registre grave, `sawtooth`
-   étouffé, très clairsemé — cohérent avec la mécanique d'obscurité déjà
-   existante), villes anciennes (drone plus dense, dissonances légères sur
-   la gamme pentatonique). Réutilise `scheduleMusic`/`PENTA`/`BASSSHIFT`
-   existants, juste de nouveaux jeux de paramètres (bass/mel/type
-   d'oscillateur/densité) sélectionnés selon `state.planete.biome`.
-3. **Spatialisation de la musique elle-même** : `bip()` utilise déjà
-   `StereoPannerNode` pour les effets de tir (`pan` aléatoire gauche/droite) ;
-   `playSoft()` (musique) n'en a pas. Ajouter un panoramique doux et lent
-   (LFO simple modulant `pan.value` dans le temps) donnerait une sensation
-   d'espace sans nouvel asset.
-4. **Réverbe légère procédurale** : un `ConvolverNode` avec une impulse
-   response générée par bruit blanc décroissant (quelques lignes de code,
-   pas de fichier `.wav` à héberger) sur le bus musique, pour sortir du son
-   "bip sec" actuel et donner une texture plus spatiale/aérienne cohérente
-   avec le thème croiseur spatial.
-5. **Sting sonore renforcé aux moments clés** : `sonAchievement` existe déjà
-   pour les hauts faits ; étendre le même principe (petite séquence de notes
-   montantes/descendantes façon `sonVague`) à d'autres moments qui n'ont
-   aujourd'hui qu'un bip unique ou rien : victoire de secteur, victoire de
-   mission planète (PV base à 0), déblocage d'un héros (nœud "Signal de
-   détresse"), amélioration épique tirée. Cohérent avec la hiérarchie de
-   rareté déjà établie visuellement (commun/peu commun/rare/épique) —
-   un sting plus riche pour les événements plus rares.
-6. **Retour haptique mobile en complément** (`navigator.vibrate`), synchronisé
-   sur les effets déjà existants (tir, dégât reçu, boss qui apparaît) — chaque
-   plateforme mobile n'a pas forcément le son activé, la vibration est un
-   canal de feedback complémentaire gratuit à ajouter (déjà dans l'esprit
-   "mobile d'abord" de ce projet).
-7. **Voix de synthèse un peu plus riche pour `sonVoix`** : aujourd'hui chaque
-   lettre déclenche une fréquence fixe indépendamment du contexte (ça "sonne"
-   plus qu'elle ne "parle"). Une version 2 pourrait moduler légèrement le
-   timbre selon le type de message (alerte boss = plus grave/lent, renfort =
-   plus aigu/rapide) pour renforcer la lisibilité sonore sans ajouter de vraie
-   synthèse vocale (hors scope, poids/dépendance externe).
+1. ✅ **Réglage de volume séparé musique / effets** : deux curseurs dans
+   l'écran Paramètres (`#params`, `index.html`), remplaçant le tout-ou-rien
+   du bouton `#son` du HUD (qui reste le coupe-son global). Deux `GainNode`
+   maîtres (`gainEffets`/`gainMusique`) créés dans `initAudio()`, tous les
+   `bip()`/`playSoft()` reroutés dessus au lieu de `AC.destination`
+   directement. Valeurs persistées (`dc_vol_musique`/`dc_vol_effets` dans
+   `localStorage`, lues dès le chargement du module `audio.js`). Nouveau
+   composant `.volume-bloc`/`.volume-row` documenté dans
+   `design-system.html`. Testé : curseurs déplacés, valeur persistée après
+   rechargement complet de la page, aucune erreur console.
+2. ✅ **Ambiance par biome (missions planète)** : nouvelle fonction
+   `setMusicBiome(biomeId)` dans `audio.js`, table `BIOME_SONORE` (bass/mel/
+   type d'oscillateur/densité/dissonance par biome) qui prend le pas sur les
+   paramètres calme/tense/boss dans `scheduleMusic` dès qu'une mission
+   planète est active — désert clairsemé (`triangle`), glace scintillante
+   (`sine`, plus d'octaves hautes), grotte grave et étouffée (`sawtooth`,
+   très peu de notes, cohérent avec sa mécanique d'obscurité), villes
+   anciennes plus dense avec une pointe de dissonance (frottement d'un demi-
+   ton/triton par-dessus la gamme pentatonique). Appelée dans
+   `demarrerMissionPlanete()` (`planete.js`) et réinitialisée à `null` dans
+   `finMissionPlanete()` et `demarrerCombat()` (`map.js`, au cas où une
+   reprise de partie interromprait une mission planète). Le calme/tense de
+   `setMusicPhase` continue d'agir par-dessus (tempo), sans conflit.
+3. ✅ **Spatialisation de la musique** : `playSoft()` (musique) prend
+   désormais un panoramique lent calculé par une pseudo-LFO
+   (`Math.sin(Date.now()/6000)`, recalculée à chaque note plutôt qu'un nœud
+   audio dédié vu la brièveté des notes) — la nappe grave et la mélodie
+   errent doucement dans le champ stéréo, l'harmonie secondaire prenant le
+   côté opposé pour une sensation d'espace.
+4. **Réverbe légère procédurale** (non fait) : un `ConvolverNode` avec une
+   impulse response générée par bruit blanc décroissant (quelques lignes de
+   code, pas de fichier `.wav` à héberger) sur le bus musique, pour sortir du
+   son "bip sec" actuel et donner une texture plus spatiale/aérienne
+   cohérente avec le thème croiseur spatial.
+5. ✅ **Stings renforcés aux moments clés** : 4 nouvelles fanfares dans
+   `audio.js` (`sonVictoireSecteur`, `sonVictoirePlanete`, `sonHerosDebloque`,
+   `sonEpique`), branchées respectivement sur la victoire de secteur (boss
+   vaincu, `gagnerCombat()` dans `map.js` — remplace le simple `sonVague()`
+   pour ce cas précis, les autres vagues gardent `sonVague()`), la victoire
+   de mission planète (`finMissionPlanete(true)`, `planete.js`), le
+   déblocage d'un héros via le nœud "Signal de détresse" (`map.js`), et
+   l'apparition d'un boss de rareté épique (`miroir`/`forge`/`eclipse`,
+   vérifié via `RARETE.boss` déjà présent dans `config.js`). Pas
+   d'équivalent "amélioration épique" trouvé côté `UPGRADES` (aucune n'a de
+   palier de rareté dans le code actuel) : le sting épique a donc été posé
+   sur l'élément du jeu qui porte réellement cette rareté aujourd'hui, le
+   boss, plutôt que d'inventer une rareté d'amélioration qui n'existe pas.
+6. **Retour haptique mobile en complément** (non fait) : `navigator.vibrate`
+   synchronisé sur les effets déjà existants (tir, dégât reçu, boss qui
+   apparaît) — chaque plateforme mobile n'a pas forcément le son activé, la
+   vibration est un canal de feedback complémentaire gratuit à ajouter.
+7. ✅ **Voix de synthèse contextuelle pour `sonVoix` (essai)** : `sonVoix`
+   accepte désormais un 2ᵉ paramètre de contexte (`'alerte'`/`'victoire'`/
+   `'normal'`, ce dernier par défaut = comportement d'origine inchangé) qui
+   module multiplicateur de fréquence/type d'oscillateur/tempo — plus grave,
+   `sawtooth` et plus lent pour l'alerte boss (`map.js`, apparition), plus
+   aigu, `square` et plus rapide pour la victoire (`combat.js`, boss
+   détruit). **Marqué "essai"** : avec seulement ces deux appels existants
+   dans le jeu (le mot "BOSS" dans les deux cas), la différence de timbre
+   est le principal levier testable pour l'instant — à réévaluer en jeu
+   avant d'étendre le principe à d'autres messages vocaux futurs.
+
+**Autres boucles sonores proposées** (au-delà des 7 pistes ci-dessus, pour
+prochaine itération) :
+
+- **Boucle "hangar"** : un timbre calme et mécanique dédié à l'écran de choix
+  de vaisseau (`#build`) et à l'attente en hangar, distinct de l'ambiance de
+  combat — actuellement la musique ne change pas d'état pendant ces pauses.
+- **Boucle "carte de secteur"** : ambiance propre à l'écran `#carte` (choix de
+  destination) et à la marche entre les nœuds, plus aérienne/exploratoire que
+  le combat, pour marquer la transition qu'apporte déjà visuellement la carte.
+- **Boucle "défaite / game over"** : aujourd'hui la fin de partie n'a pas de
+  traitement musical dédié (retour à `calme` comme un combat normal) ; un
+  thème descendant, plus lent, en mineur plus marqué, renforcerait le poids
+  de l'écran de fin.
+- **Boucle "montée en tension progressive de secteur"** : plutôt qu'un
+  binaire calme/tense/boss, faire dériver légèrement le tempo/la densité de
+  `scheduleMusic` selon `state.vague` au sein d'un même secteur (de plus en
+  plus dense à mesure qu'on approche du boss), sans nouvelle phase explicite
+  à gérer ailleurs dans le code.
+- **Boucle "victoire de run" (fin de partie réussie)** : un thème de
+  cadence complète (progression d'accords qui se résout, contrairement aux
+  fanfares courtes de `sonVictoireSecteur`/`sonVictoirePlanete`), pour
+  distinguer une fin de run pleinement réussie d'une simple victoire de
+  combat.
+- **Variation de boucle par difficulté choisie** (`state.difficulte`) : un
+  soupçon de tempo/densité en plus en difficulté élevée dès le début de
+  partie, pas seulement pendant les combats de boss — cohérent avec
+  `DIFFICULTES` qui pilote déjà plusieurs autres paramètres du jeu.
 
 **Non retenu pour l'instant (à documenter si la question revient)** : musique
 enregistrée (fichiers `.mp3`/`.ogg`) plutôt que procédurale — irait à

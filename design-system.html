@@ -52,6 +52,12 @@
   .menu-vertical{display:flex;flex-direction:column;gap:var(--space-sm);align-items:center;}
   .menu-vertical button.jouer{width:min(78vw,260px);}
 
+  /* ===== Réglage de volume (Paramètres) ===== */
+  .volume-bloc{display:flex;flex-direction:column;gap:10px;width:100%;max-width:260px;margin-bottom:var(--space-md);}
+  .volume-row{display:flex;align-items:center;gap:8px;font-family:var(--pixel);font-size:var(--fs-petit);color:var(--texte);}
+  .volume-row span:nth-child(2){min-width:52px;text-align:left;}
+  .volume-row input[type=range]{flex:1;accent-color:#37e0ff;height:14px;}
+
   /* ===== Cartes de choix ===== */
   .cards{display:flex;gap:var(--space-sm);flex-wrap:wrap;}
   .card{font-family:var(--pixel);width:118px;min-height:100px;background:#111a30;border:2px solid #2f4a86;border-radius:var(--radius-lg);
@@ -293,6 +299,18 @@
       <button class="jouer secondaire">Options</button>
       <button class="jouer secondaire">Encyclopédie</button>
       <button class="jouer danger">Abandonner</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Réglage de volume (Paramètres)</h2>
+    <p class="note">Deux curseurs indépendants (musique / effets) dans l'écran Paramètres,
+      remplaçant le tout-ou-rien du bouton son du HUD. <code>accent-color</code> reprend le cyan
+      d'accent du jeu ; icône + libellé + curseur, même famille que <code>.volume-row</code>
+      dans <code>index.html</code>.</p>
+    <div class="volume-bloc">
+      <div class="volume-row"><span>🔊</span><span>Musique</span><input type="range" min="0" max="100" value="80"></div>
+      <div class="volume-row"><span>🔊</span><span>Effets</span><input type="range" min="0" max="100" value="65"></div>
     </div>
   </section>
 

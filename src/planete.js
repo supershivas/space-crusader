@@ -6,7 +6,7 @@ import { DIFFICULTES, TOURELLES, BIOMES, OBSTACLES, basePvMax } from './config.j
 import { faireAile, aileEn, tourelleEn, fighterEn, blesser, tuerFighter,
          champObstacleEn, champEn, obstacleEn, dansGrille, occupe } from './entities.js';
 import { exploser } from './combat.js';
-import { sonBoom, sonTirEnnemi, setMusicPhase } from './audio.js';
+import { sonBoom, sonTirEnnemi, setMusicPhase, setMusicBiome, sonVictoirePlanete } from './audio.js';
 import { ouvrirMission, ouvrirAmelioration, montrerToast, ouvrirEtapeBanner, checkAchievements } from './ui.js';
 import { ouvrirCarte, reorganiserVaisseaux, serialiserCarte } from './map.js';
 import { t } from './i18n.js';
@@ -193,6 +193,7 @@ export function demarrerMissionPlanete(){
   for(const f of state.fighters){ f.capUsed=false; f.provoque=false; f.gele=0; }
   reorganiserVaisseaux();
   appliquerMecaniqueBiome(biome.id);
+  setMusicBiome(biome.id);
   annoncerMissionPlanete(biome.id);
   state.suiteDemarrerTour=demarrerTourJoueurPlanete;
   state.suiteFinPlanete=finMissionPlanete;
@@ -277,10 +278,10 @@ export function finDuTourPlanete(){
 export function finMissionPlanete(victoire){
   state.planete=null; state.suiteFinPlanete=null; state.suiteDemarrerTour=null;
   reorganiserVaisseaux();
-  setMusicPhase('calme');
+  setMusicPhase('calme'); setMusicBiome(null);
   const lignes=[];
   if(state.killsThisWave>0) lignes.push({label:t('mission_recap_kills',{n:state.killsThisWave}), points:state.killsThisWave});
-  if(victoire){ state.score+=5; lignes.push({label:t('mission_recap_base'), points:5}); state.achievements.base_slayer=true; checkAchievements(); }
+  if(victoire){ state.score+=5; lignes.push({label:t('mission_recap_base'), points:5}); state.achievements.base_slayer=true; checkAchievements(); sonVictoirePlanete(); }
   const recap={avant:state.scoreAvantVague, apres:state.score, lignes};
   state.suiteMission = victoire
     ? ()=>{ state.suiteAmelioration=ouvrirCarte; ouvrirAmelioration(); }
