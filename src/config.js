@@ -199,6 +199,18 @@ export function forceDefensePlanete(secteur,difficulte){
    toujours télégraphié 1 tour avant. */
 export const ALERTE_PALIER1=3, ALERTE_PALIER2=6, ALERTE_ZONE_RANGS=2;
 
+/* ===== POINT FAIBLE MOBILE DE LA BASE (mission planète, refonte étape 5) =====
+   La colonne de la base qui encaisse les dégâts pleins se déplace périodiquement (les autres
+   colonnes n'infligent que BASE_POINT_FAIBLE_MULT de dégâts) — empêche de camper une seule
+   colonne d'approche trouvée au tour 1 (voir ROADMAP.md, inspiration échecs). */
+export const BASE_POINT_FAIBLE_INTERVAL=4, BASE_POINT_FAIBLE_MULT=0.5;
+
+/* ===== SABORDAGE (mission planète, refonte étape 7) =====
+   Assaut risque/récompense : un vaisseau rapide au contact de la base peut lancer un canal de
+   SABORDAGE_TOURS tours (immobilisé, ne peut plus agir) infligeant SABORDAGE_DEGATS_RATIO des
+   PV max de la base à son terme — annulé sans autre effet si le vaisseau est détruit avant. */
+export const SABORDAGE_TOURS=2, SABORDAGE_DEGATS_RATIO=0.4;
+
 /* ===== CAPACITÉS ACTIVES DES VAISSEAUX (une fois par combat) =====
    Déclenchées par un second appui sur le vaisseau déjà sélectionné. */
 export const CAPACITES = {

@@ -279,6 +279,20 @@ export function dessiner(t){
       ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_champ'),state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
     ctx.textAlign='left'; ctx.restore(); }
 
+  // ---- zone de contrôle des tourelles (étape 5) : carré de portée, toujours visible, très
+  // discret pour ne pas noyer la lecture de la grille — sert à planifier l'approche sans essai-
+  // erreur, complète l'intention (cible annoncée) dessinée plus loin sur chaque tourelle. ----
+  if(state.planete){ for(const tr of state.planete.tourelles){ if(!tr.reveillee) continue;
+    const cMin=Math.max(0,tr.c-tr.portee), cMax=Math.min(state.COLS-1,tr.c+tr.portee),
+      rMin=Math.max(0,tr.r-tr.portee), rMax=Math.min(state.RANGS-1,tr.r+tr.portee);
+    ctx.fillStyle='rgba(229,72,77,.05)'; ctx.fillRect(state.GX+cMin*state.CELL,state.GY+rMin*state.CELL,(cMax-cMin+1)*state.CELL,(rMax-rMin+1)*state.CELL); }
+    // point faible mobile de la base (étape 5) : colonne surlignée en or, dégâts pleins uniquement là
+    const base=state.planete.base;
+    if(base.reveillee!==false&&base.pointFaible!=null){
+      ctx.fillStyle='rgba(255,210,61,'+(.16+.1*pulse)+')';
+      ctx.fillRect(state.GX+base.pointFaible*state.CELL,state.GY+base.r*state.CELL,state.CELL,base.h*state.CELL); }
+  }
+
   if(state.phase==='joueur'){
     // survol d'un ennemi -> montre sa future destination
     if(state.hoverCell){ const ha=aileEn(state.hoverCell.c,state.hoverCell.r);
@@ -462,6 +476,11 @@ export function dessiner(t){
       if(state.ups.rouge_back){ ctx.fillStyle='#ff8a3d'; for(const dx of [-6,0,6]){ ctx.fillRect(Math.round(f.x+dx-1),Math.round(fy+f.img.height/2+1),3,4); } } }
     ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(fy-f.img.height/2)); ctx.globalAlpha=1;
     if(f.gele>0) dessinerIcone(imgGel,f.x,fy,.7+.3*pulse);
+    // sabordage (étape 7) : canal d'assaut en cours contre la base — anneau doré pulsant +
+    // pastilles de tours restants, remplace la pastille de capacité tant qu'il dure.
+    if(f.sabordage>0){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(f.x,fy,state.CELL*0.42,0,7); ctx.stroke();
+      const n=f.sabordage, sq=5, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(f.x-tot/2), by=Math.round(fy-f.img.height/2-10);
+      for(let i=0;i<n;i++){ ctx.fillStyle='#ffd23d'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq); } }
     // PV : mêmes carrés harmonisés que les ennemis, sous le vaisseau (rouge = coque renforcée, bleu = cuirassé)
     if(f.maxhp>1){ const coul=f.type==='rouge'?'#ff5a5a':f.type==='bouclier'?'#4aa3ff':'#ff2a5a'; dessinerPV(f.x,Math.round(fy+f.img.height/2+2),f.hp,f.maxhp,coul); }
     // grade du vaisseau (kills) : 1-3 points jaunes puis étoile dorée à 15+

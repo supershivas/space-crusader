@@ -80,7 +80,7 @@ function reprendrePartie(){
   state.boucliersRestants=(d.boucliersRestants!==undefined)?d.boucliersRestants:BOUCLIER_USAGES_MAX;
   state.ultimeSeuil=d.ultimeSeuil||ULTIME_MAX; state.enFeu=d.enFeu||0;
   state.rerollsRestants=(d.rerollsRestants!==undefined)?d.rerollsRestants:(state.meta.reroll||0);
-  for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,maxhp:f.maxhp||f.hp,used:f.used,capUsed:!!f.capUsed,kills:f.kills||0,gele:f.gele||0});
+  for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,maxhp:f.maxhp||f.hp,used:f.used,capUsed:!!f.capUsed,kills:f.kills||0,gele:f.gele||0,sabordage:f.sabordage||0});
   for(const a of d.ailes||[]){ faireAile(a.c,a.r,a.type); const na=state.ailes[state.ailes.length-1]; na.hp=a.hp; na.maxhp=a.maxhp; na.vitesse=a.vitesse; const p=centreCase(a.c,a.r); na.x=p.x; na.y=p.y; }
   for(const o of d.asteroides||[]){ const p=centreCase(Math.max(0,Math.min(state.COLS-1,o.c)),Math.max(0,Math.min(state.RANGS-1,o.r))); state.asteroides.push({c:o.c,r:o.r,dc:o.dc,dr:o.dr,x:p.x,y:p.y,ang:0,img:getImgAster(),hp:o.hp||1,maxhp:o.maxhp||1,type:o.type||'normal'}); }
   for(const b of d.bonus||[]){ const p=centreCase(b.c,b.r); state.bonus.push({c:b.c,r:b.r,type:b.type,ttl:b.ttl,x:p.x,y:p.y}); }
@@ -95,7 +95,7 @@ function reprendrePartie(){
     const b=d.planete.base, pb=centreCase(b.c+1,0);
     state.planete={
       biome:d.planete.biome,
-      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,chargeCols:b.chargeCols||null,prochaineCharge:b.prochaineCharge,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
+      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,chargeCols:b.chargeCols||null,prochaineCharge:b.prochaineCharge,pointFaible:(b.pointFaible!=null)?b.pointFaible:b.c,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
       tourelles:(d.planete.tourelles||[]).map(tr=>{ const p=centreCase(tr.c,tr.r);
         const cachette=tr.cachette?state.obstacles.find(o=>o.c===tr.cachette.c&&o.r===tr.cachette.r&&o.type==='ruine'):null;
         return {id:tr.id,ico:tr.ico,c:tr.c,r:tr.r,hp:tr.hp,maxhp:tr.maxhp,portee:tr.portee,degats:tr.degats,camouflee:tr.camouflee,reveillee:tr.reveillee,cachette,x:p.x,y:p.y}; }),

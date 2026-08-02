@@ -2,7 +2,7 @@
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
 import { state, centreCase, saveState, sauvegarderPartie, decouvrir, afficherDegats } from './state.js';
-import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES } from './config.js';
+import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES, SABORDAGE_TOURS, BASE_POINT_FAIBLE_MULT } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn, tourelleEn, baseEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
@@ -39,7 +39,16 @@ function annoncerCapacite(type){ if(CAPACITES[type]) montrerToast(t('cap_'+type+
 export function activerCapacite(f){
   if(!peutActiverCapacite(f)) return false;
   if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); annoncerCapacite(f.type); return true; }
-  if(f.type==='rapide'){ state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); annoncerCapacite(f.type); return true; }
+  if(f.type==='rapide'){
+    // Sabordage (mission planète, refonte étape 7) : au contact de la base, la capacité du
+    // vaisseau rapide devient un assaut risque/récompense plutôt qu'un déplacement — voir
+    // finDuTourPlanete (planete.js) pour la résolution du canal.
+    if(state.planete){ const b=state.planete.base;
+      const d=Math.max(0,f.c-(b.c+b.w-1),b.c-f.c,f.r-(b.r+b.h-1),b.r-f.r);
+      if(d<=1){ f.sabordage=SABORDAGE_TOURS; f.capUsed=true; f.used=true; state.selection=null; sonSelect(); montrerToast(t('toast_sabordage_amorce'),'gold'); return true; }
+    }
+    state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); annoncerCapacite(f.type); return true;
+  }
   if(f.type==='bombardier'){ state.modeCapacite={ship:f,kind:'charge'}; sonSelect(); annoncerCapacite(f.type); return true; }
   if(f.type==='transporteur'){
     if(state.fighters.length>=state.MAX_VAISSEAUX) return false;
@@ -162,9 +171,14 @@ export function frapperObstacle(o){
 export function frapperTourelle(t){ t.hp--; exploser(t.x,t.y,false); sonBoom();
   if(t.hp<=0){ const i=state.planete.tourelles.indexOf(t); if(i>=0) state.planete.tourelles.splice(i,1); exploser(t.x,t.y,true); state.score++; state.killsThisWave++; } }
 /* tir allié sur la base ennemie (mission planète) : PV décomptés, la victoire est détectée
-   dans animer() (voir state.suiteFinPlanete) une fois les animations de tir retombées */
-export function toucherBase(deg,px,py){ if(!state.planete) return;
-  const base=state.planete.base; base.hp=Math.max(0,base.hp-deg); exploser(px,py,false); sonBoom();
+   dans animer() (voir state.suiteFinPlanete) une fois les animations de tir retombées.
+   col : colonne visée — seule la colonne base.pointFaible (étape 5, mobile, voir
+   gererPointFaibleBase dans planete.js) encaisse les dégâts pleins, les autres n'en infligent
+   que BASE_POINT_FAIBLE_MULT (arrondi, jamais 0 tant que deg>0). */
+export function toucherBase(deg,px,py,col){ if(!state.planete) return;
+  const base=state.planete.base;
+  const reel=(col===base.pointFaible)?deg:Math.max(1,Math.round(deg*BASE_POINT_FAIBLE_MULT));
+  base.hp=Math.max(0,base.hp-reel); exploser(px,py,false); sonBoom();
   if(base.hp<=0) exploser(base.x,base.y,true); }
 
 /* planifie une menace : ajoute une ALERTE visible un tour avant */

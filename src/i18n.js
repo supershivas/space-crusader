@@ -365,6 +365,9 @@ const STRINGS = {
     alerte_palier2_actif_villes_anciennes:'Les ruines s\'effondrent à l\'arrière du champ de bataille !',
     toast_charge_base_avert:'La base charge une salve de zone — elle frappera au tour suivant !',
     toast_charge_base_impact:'La salve de la base s\'abat sur la zone annoncée !',
+    toast_point_faible_deplace:'Le point faible de la base s\'est déplacé !',
+    toast_sabordage_amorce:'Sabordage amorcé — le vaisseau frappera la base dans 2 tours s\'il survit.',
+    toast_sabordage_impact:'Le sabordage frappe la base de plein fouet !',
     hangar_prep:'Hangar :',
 
     // ===== Infobulles unités (ailes ennemies) =====
@@ -837,6 +840,9 @@ const STRINGS = {
     alerte_palier2_actif_villes_anciennes:'The ruins are collapsing at the rear of the battlefield!',
     toast_charge_base_avert:'The base is charging a zone salvo — it will strike next turn!',
     toast_charge_base_impact:'The base\'s salvo hits the marked zone!',
+    toast_point_faible_deplace:'The base\'s weak point has shifted!',
+    toast_sabordage_amorce:'Sabotage run started — the ship will hit the base in 2 turns if it survives.',
+    toast_sabordage_impact:'The sabotage run slams into the base!',
     hangar_prep:'Hangar:',
 
     ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',
