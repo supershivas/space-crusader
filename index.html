@@ -110,7 +110,18 @@
   .fin-page{display:flex;flex-direction:column;align-items:center;gap:var(--space-md);width:100%;}
   .fin-page.cache{display:none;}
   .fin-souscran{font-family:var(--pixel);color:#37e0ff;font-size:var(--fs-modale);margin:0;text-shadow:0 2px 0 #10406a;}
-  .fin-page-num{font-family:var(--pixel);font-size:var(--fs-petit);color:#5b6580;margin:0;}
+  /* Timeline à 3 points reliés (étape atteinte = claire, à venir = sombre) plutôt qu'un
+     compteur "1 / 3" — se lit d'un coup d'œil et affiche la progression, pas juste un rang. */
+  .fin-dots{display:flex;align-items:center;gap:0;}
+  .fin-dot{width:10px;height:10px;border-radius:50%;background:#243048;border:2px solid #3b5aa0;}
+  .fin-dot.on{background:#37e0ff;border-color:#37e0ff;}
+  .fin-line{width:26px;height:2px;background:#3b5aa0;}
+  .fin-line.on{background:#37e0ff;}
+  /* Précédent (flèche seule) + Suivant sur la même ligne : Précédent réutilise l'icône "play"
+     (triangle plein) retournée plutôt que d'inventer un nouveau sprite pixel-art. */
+  .fin-nav{display:flex;gap:var(--space-sm);align-items:center;justify-content:center;}
+  .fin-nav button.jouer.fin-prev{padding:11px 16px;}
+  .ico-flip{display:inline-flex;transform:scaleX(-1);}
   button.jouer{font-family:var(--pixel);font-size:clamp(10px,3vmin,15px);color:#07240f;background:#2fd6a0;
     border:none;border-bottom:5px solid #1c8d67;padding:15px 24px;border-radius:var(--radius-md);cursor:pointer;box-shadow:0 6px 22px rgba(47,214,160,.35);
     display:inline-flex;align-items:center;justify-content:center;gap:8px;}
@@ -430,21 +441,29 @@
         <p class="sous" data-i18n="fin_sous_titre">Il a besoin de réparations !</p>
         <p class="score-fin" id="scoreFin">Score : 0</p>
         <table id="highscores"></table>
-        <p class="fin-page-num">1 / 3</p>
-        <button class="jouer" id="btnFinSuivant1"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line"></span><span class="fin-dot"></span><span class="fin-line"></span><span class="fin-dot"></span></div>
+        <div class="fin-nav">
+          <button class="jouer" id="btnFinSuivant1"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+        </div>
       </div>
       <div class="fin-page cache" id="finPage2">
         <h2 class="fin-souscran" data-i18n="fin_bilan_titre">BILAN</h2>
         <div id="finStats" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:2px"></div>
         <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
-        <p class="fin-page-num">2 / 3</p>
-        <button class="jouer" id="btnFinSuivant2"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line"></span><span class="fin-dot"></span></div>
+        <div class="fin-nav">
+          <button class="jouer secondaire fin-prev" id="btnFinPrecedent2" aria-label="Précédent"><span class="ico-slot ico-flip" data-ico="play"></span></button>
+          <button class="jouer" id="btnFinSuivant2"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+        </div>
       </div>
       <div class="fin-page cache" id="finPage3">
         <h2 class="fin-souscran" data-i18n="fin_recompenses_titre">RÉCOMPENSES</h2>
         <div id="finDecouvertes" style="margin-top:4px;max-width:100%;"></div>
         <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
-        <p class="fin-page-num">3 / 3</p>
+        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span></div>
+        <div class="fin-nav">
+          <button class="jouer secondaire fin-prev" id="btnFinPrecedent3" aria-label="Précédent"><span class="ico-slot ico-flip" data-ico="play"></span></button>
+        </div>
         <div class="menu-vertical">
           <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
           <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="gemme"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
