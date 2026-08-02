@@ -6,7 +6,7 @@ import { state, centreCase, decouvrir, afficherDegats } from './state.js';
 import { DIFFICULTES, OBSTACLES, SKINS_VAISSEAUX, RARETE, tirageParRarete, heroParId, appliquerMetaHero, HEROS } from './config.js';
 import { cuireFit, JOUEUR, ROUGE, ROUGE_SLUM, HERO_ROUGE_OVERRIDES, imgPortraitsHeros, JOUEUR_RAPIDE, JOUEUR_BOMBER, JOUEUR_BOUCLIER, JOUEUR_SNIPER, JOUEUR_TRANSPORTEUR, JOUEUR_MEDIC,
          AILE, CHASSEUR, BOMBARDIER, ECLAIREUR, ASTER, AILE_PORTEUR, AILE_BROUILLEUR, AILE_LOURD,
-         DEBRIS_1, DEBRIS_2, STATION_PIECE, BARRIERE, RUINE_1, RUINE_2, DEBRIS_VAISSEAU_1, DEBRIS_VAISSEAU_2, DEBRIS_VAISSEAU_3,
+         STATION_PIECE, BARRIERE, RUINE_1, RUINE_2, DEBRIS_FRAGMENT_1, DEBRIS_FRAGMENT_2, DEBRIS_FRAGMENT_3,
          STRONGHOLD, MINI_NAVETTE, MINI_NAVETTE_ALLIEE, REGENERATEUR, MINI_SNIPER, DIAGONAL_D, DIAGONAL_G, MIMIC, VOID,
          SABOTEUR, BRULEUR, TITAN, AILE_TRANSPORTEUR } from './sprites.js';
 import { sonRenfort } from './audio.js';
@@ -17,8 +17,12 @@ let imgJoueur,imgRouge,imgAile,imgAster,imgChasseur,imgBomber,imgEclaireur,imgVR
 /* sprite de combat du Vaisseau Rouge, une variante par héros (voir HERO_ROUGE_OVERRIDES/
    ROUGE_SLUM dans sprites.js) — recuit à chaque changement de taille de case comme imgRouge. */
 let imgRougeParHero={};
-let imgDebris1,imgDebris2,imgStation,imgBarriere,imgRuine1,imgRuine2;
+let imgStation,imgBarriere,imgRuine1,imgRuine2;
 let imgDebrisVaisseau1,imgDebrisVaisseau2,imgDebrisVaisseau3;
+let imgDebrisEnnemi1,imgDebrisEnnemi2,imgDebrisEnnemi3;
+/* débris ennemi = mêmes fragments que l'épave alliée, teinte rouge (voir DEBRIS_FRAGMENT_*
+   dans sprites.js) — cohérent avec la palette des ailes ennemies (X/R/K). */
+const OVER_DEBRIS_ENNEMI={B:'#5a1420',b:'#8f2b2f',S:'#c94257',s:'#ff8f92'};
 let imgStronghold,imgMiniNavette,imgMiniNavetteAlliee,imgRegen,imgMiniSniper,imgDiagD,imgDiagG,imgMimic,imgVoid;
 let imgSaboteur,imgBruleur,imgTitan,imgAileTransporteur;
 let dernierCELL;
@@ -31,11 +35,12 @@ export function cuireUnites(CELL){
   imgChasseur=cuireFit(CHASSEUR,CELL); imgBomber=cuireFit(BOMBARDIER,CELL); imgEclaireur=cuireFit(ECLAIREUR,CELL);
   imgVRapide=cuireFit(JOUEUR_RAPIDE,CELL,skin); imgVBombardier=cuireFit(JOUEUR_BOMBER,CELL,skin); imgVBouclier=cuireFit(JOUEUR_BOUCLIER,CELL,skin); imgVSniper=cuireFit(JOUEUR_SNIPER,CELL,skin); imgVTransporteur=cuireFit(JOUEUR_TRANSPORTEUR,CELL,skin); imgVMedic=cuireFit(JOUEUR_MEDIC,CELL,skin);
   imgPorteur=cuireFit(AILE_PORTEUR,CELL); imgBrouilleur=cuireFit(AILE_BROUILLEUR,CELL); imgLourd=cuireFit(AILE_LOURD,CELL);
-  imgDebris1=cuireFit(DEBRIS_1,CELL); imgDebris2=cuireFit(DEBRIS_2,CELL); imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
+  imgStation=cuireFit(STATION_PIECE,CELL); imgBarriere=cuireFit(BARRIERE,CELL);
   imgRuine1=cuireFit(RUINE_1,CELL); imgRuine2=cuireFit(RUINE_2,CELL);
-  // épave de vaisseau : recuite à échelle réduite (CELL*0.42) pour rester nettement plus
-  // petite que les débris classiques (imgDebris1/2, recuits à CELL) — voir DEBRIS_VAISSEAU_*.
-  imgDebrisVaisseau1=cuireFit(DEBRIS_VAISSEAU_1,CELL*0.42); imgDebrisVaisseau2=cuireFit(DEBRIS_VAISSEAU_2,CELL*0.42); imgDebrisVaisseau3=cuireFit(DEBRIS_VAISSEAU_3,CELL*0.42);
+  // épaves (alliée et ennemie) : mêmes fragments, recuits à échelle réduite (CELL*0.42) pour
+  // rester nettement plus petits qu'un obstacle plein cellule — seule la palette diffère.
+  imgDebrisVaisseau1=cuireFit(DEBRIS_FRAGMENT_1,CELL*0.42); imgDebrisVaisseau2=cuireFit(DEBRIS_FRAGMENT_2,CELL*0.42); imgDebrisVaisseau3=cuireFit(DEBRIS_FRAGMENT_3,CELL*0.42);
+  imgDebrisEnnemi1=cuireFit(DEBRIS_FRAGMENT_1,CELL*0.42,OVER_DEBRIS_ENNEMI); imgDebrisEnnemi2=cuireFit(DEBRIS_FRAGMENT_2,CELL*0.42,OVER_DEBRIS_ENNEMI); imgDebrisEnnemi3=cuireFit(DEBRIS_FRAGMENT_3,CELL*0.42,OVER_DEBRIS_ENNEMI);
   // "Mini"-navette alliée : vraiment miniature (échelle réduite), pas juste un vaisseau standard
   // au design plus simple — cuireFit(...,CELL) seul l'aurait rendue à la même taille à l'écran
   // que n'importe quel autre vaisseau (elle remplit la case comme les autres), grille plus
@@ -61,10 +66,11 @@ function imgAilePourType(type){ return type==='chasseur'?imgChasseur:type==='bom
 export function getImgMimic(){ return imgMimic; }
 /* accès en lecture seule au sprite d'une aile par type, pour le guide (bestiaire) */
 export function imgAileGuide(type){ return imgAilePourType(type); }
-export function imgObstacle(o){ return o.type==='debris'?(o.variante?imgDebris2:imgDebris1) : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : o.type==='ruine'?(o.variante?imgRuine2:imgRuine1) : o.type==='debris_vaisseau'?imgDebrisVaisseau1 : null; }
-/* les 3 bouts de coque de l'épave de vaisseau se dessinent ensemble, éparpillés dans la case
-   (voir render.js) — plutôt qu'une seule image centrée comme les autres obstacles. */
+export function imgObstacle(o){ return o.type==='debris'?imgDebrisEnnemi1 : o.type==='station'?imgStation : o.type==='barriere'?imgBarriere : o.type==='ruine'?(o.variante?imgRuine2:imgRuine1) : o.type==='debris_vaisseau'?imgDebrisVaisseau1 : null; }
+/* les 3 bouts de coque d'une épave (alliée ou ennemie) se dessinent ensemble, éparpillés dans
+   la case (voir render.js) — plutôt qu'une seule image centrée comme les autres obstacles. */
 export function imgsDebrisVaisseau(){ return [imgDebrisVaisseau1,imgDebrisVaisseau2,imgDebrisVaisseau3]; }
+export function imgsDebrisEnnemi(){ return [imgDebrisEnnemi1,imgDebrisEnnemi2,imgDebrisEnnemi3]; }
 export function getImgAster(){ return imgAster; }
 export function imgVaisseau(type){ return type==='rouge'?imgRouge : type==='rapide'?imgVRapide : type==='bombardier'?imgVBombardier : type==='bouclier'?imgVBouclier : type==='sniper'?imgVSniper : type==='transporteur'?imgVTransporteur : type==='medic'?imgVMedic : type==='navette'?imgMiniNavetteAlliee : imgJoueur; }
 /* PV de base d'un vaisseau allié, hors améliorations de la partie en cours (encyclopédie) */
