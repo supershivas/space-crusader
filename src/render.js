@@ -7,7 +7,7 @@ import { COLS_N, RANGS_N, CELL_N, DEP_N, ULTIME_MAX, CAPACITES, OBSTACLES, SKINS
 import { cuire, cuireFit, PAL, CROISEUR, JOUEUR, ROUGE, AILE, BOSS_GRIDS, ENEMY_BASE, TOURELLE_GRIDS,
          imgBonusPV, imgBonusTIR, imgBonusVAIS, imgIcoVaisseau, imgIcoTourelle, imgIcoBouclier,
          NFRAMES, framesBoom, iconImage } from './sprites.js';
-import { cuireUnites, imgVaisseau, imgObstacle, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
+import { cuireUnites, imgVaisseau, imgObstacle, imgsDebrisVaisseau, imgsDebrisEnnemi, getImgMimic, fighterEn, aileEn, estProtege } from './entities.js';
 import { casesMouvement, casesMouvementCapacite, analyseTir, cibleLaser, trajectoire } from './combat.js';
 import { noeudsAtteignables, posNoeud, COUL_NOEUD, NOM_NOEUD, texteObjectif } from './map.js';
 import { t as trad } from './i18n.js';
@@ -359,6 +359,15 @@ export function dessiner(t){
       for(const[dx,dy]of[[-.22,-.22],[.22,-.22],[-.22,.22],[.22,.22],[0,0]]){ ctx.fillStyle='#e5484d'; ctx.beginPath(); ctx.arc(cx+dx*state.CELL,cy+dy*state.CELL,3,0,7); ctx.fill(); ctx.strokeStyle='#8f2b2f'; ctx.lineWidth=1; for(let a=0;a<4;a++){ ctx.beginPath(); ctx.moveTo(cx+dx*state.CELL,cy+dy*state.CELL); ctx.lineTo(cx+dx*state.CELL+Math.cos(a*1.57)*5,cy+dy*state.CELL+Math.sin(a*1.57)*5); ctx.stroke(); } } }
     else if(o.type==='glace'){ ctx.fillStyle='rgba(191,233,255,'+(.20+.10*pulse)+')'; ctx.fillRect(state.GX+o.c*state.CELL,state.GY+o.r*state.CELL,state.CELL,state.CELL);
       ctx.strokeStyle='rgba(191,233,255,.7)'; ctx.lineWidth=1; ctx.strokeRect(state.GX+o.c*state.CELL+2,state.GY+o.r*state.CELL+2,state.CELL-4,state.CELL-4); }
+    // épave (alliée ou ennemie) : 3 petits bouts de coque éparpillés dans la case (2 agencements
+    // possibles selon `variante`), plutôt qu'une seule image centrée — pour bien lire "morceaux"
+    // et rester visuellement plus petit qu'un obstacle plein cellule. Même forme des deux côtés,
+    // seule la palette diffère (bleu-gris allié / rouge ennemi, voir imgsDebrisVaisseau/Ennemi).
+    else if(o.type==='debris_vaisseau'||o.type==='debris'){ const frags=o.type==='debris_vaisseau'?imgsDebrisVaisseau():imgsDebrisEnnemi();
+      const dispo1=[[-0.24,-0.16],[0.20,-0.06],[-0.02,0.24]], dispo2=[[0.22,-0.20],[-0.22,0.04],[0.04,0.24]];
+      const dispo=o.variante?dispo2:dispo1;
+      for(let i=0;i<3;i++){ const im2=frags[i], [dx,dy]=dispo[i]; if(!im2) continue;
+        ctx.drawImage(im2,Math.round(cx+dx*state.CELL-im2.width/2),Math.round(cy+dy*state.CELL-im2.height/2)); } }
     else if(im){ ctx.drawImage(im,Math.round(cx-im.width/2),Math.round(cy-im.height/2)); }
     // PV des obstacles destructibles à plusieurs PV (station)
     if(def.destructible && (o.maxhp||def.hp)>1) dessinerPV(cx,Math.round(cy+state.CELL*0.32),o.hp,o.maxhp||def.hp,'#ff2a5a');
@@ -479,9 +488,6 @@ export function dessiner(t){
     ctx.fillText(d.txt,d.x,d.y-10-p*22);
     ctx.restore(); }
   ctx.globalAlpha=1;
-
-  // Combo display
-  if(state.comboCount>1){ ctx.fillStyle='rgba(255,210,61,'+(0.7+0.3*pulse)+')'; ctx.font='11px "Press Start 2P", monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_combo',{n:state.comboCount}),state.LARGEUR/2,state.GY-12); ctx.textAlign='left'; }
 
   if(state.ondeChoc>0){ const cx=state.LARGEUR/2, cy=state.cruiserY, R=(1-state.ondeChoc)*Math.max(state.LARGEUR,state.HAUTEUR)*1.15; ctx.strokeStyle='rgba(255,210,61,'+(state.ondeChoc*0.85)+')'; ctx.lineWidth=2+10*state.ondeChoc; ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.stroke(); ctx.strokeStyle='rgba(255,255,255,'+(state.ondeChoc*0.5)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(cx,cy,R*0.82,0,7); ctx.stroke(); }
 
