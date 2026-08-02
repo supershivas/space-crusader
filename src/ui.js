@@ -516,6 +516,16 @@ document.getElementById('btnFinSuivant2').addEventListener('click',()=>{
   document.getElementById('finPage3').classList.remove('cache');
   document.getElementById('fin').scrollTop=0;
 });
+document.getElementById('btnFinPrecedent2').addEventListener('click',()=>{
+  document.getElementById('finPage2').classList.add('cache');
+  document.getElementById('finPage1').classList.remove('cache');
+  document.getElementById('fin').scrollTop=0;
+});
+document.getElementById('btnFinPrecedent3').addEventListener('click',()=>{
+  document.getElementById('finPage3').classList.add('cache');
+  document.getElementById('finPage2').classList.remove('cache');
+  document.getElementById('fin').scrollTop=0;
+});
 
 /* Meilleur score déjà réalisé, affiché sur l'accueil (juste sous le titre) pour donner un
    objectif immédiat sans devoir ouvrir les Améliorations. Rien à afficher tant qu'aucune
