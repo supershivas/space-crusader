@@ -80,7 +80,7 @@ en premier) :
 1. ✅ Correctif de portée (limite de distance réelle) — seul, pour valider que
    l'avance redevient nécessaire, avant d'ajouter la couche de pression.
 2. ✅ Jauge d'alerte (2 paliers, télégraphiée, habillée par biome).
-3. Écran de briefing (biome, force de défense approximative, rappel
+3. ✅ Écran de briefing (biome, force de défense approximative, rappel
    d'alerte, choix d'approche optionnel).
 4. Intentions visibles (tourelles + charge de salve de la base).
 5. Zone de contrôle mobile des tourelles + point faible mobile de la base.
