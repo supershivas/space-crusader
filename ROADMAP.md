@@ -82,7 +82,7 @@ en premier) :
 2. ✅ Jauge d'alerte (2 paliers, télégraphiée, habillée par biome).
 3. ✅ Écran de briefing (biome, force de défense approximative, rappel
    d'alerte, choix d'approche optionnel).
-4. Intentions visibles (tourelles + charge de salve de la base).
+4. ✅ Intentions visibles (tourelles + charge de salve de la base).
 5. Zone de contrôle mobile des tourelles + point faible mobile de la base.
 6. Couverture (ruines) généralisée aux 4 biomes.
 7. Capacité de sabordage (vaisseau rapide, assaut final).
