@@ -608,7 +608,12 @@ code.
   disque et n'est pas partagée avec d'autres joueurs. Pour que ça devienne
   la version livrée à tout le monde, il faut encore répercuter le contenu
   publié dans `sprites.js` et déployer (étape manuelle, hors de portée d'une
-  page statique sans backend).
+  page statique sans backend) — voir le pont ci-dessous.
+- **Pont vers le code source** : fieldset « Exporter mes personnalisations »
+  dans l'éditeur — génère, pour chaque sprite publié dans le navigateur, le
+  bloc `export const NOM=[...]` prêt à remplacer la constante correspondante
+  dans `src/sprites.js` (`NOM_CONSTANTE_SPRITE`, table id → nom de constante,
+  `sprites.js`). Un bouton "Copier tout" pour transmettre le résultat.
 - Au passage : palette de l'éditeur triée par teinte (au lieu de l'ordre
   d'insertion dans `PAL`) — beaucoup plus facile à parcourir visuellement.
 
@@ -616,5 +621,8 @@ Testé : chargement de `portrait:darkor`, édition, publication, vérifié
 visible après rechargement dans `pixel-editor.html` lui-même, dans
 `design-system.html` et dans l'écran de choix du jeu réel (même navigateur,
 onglets différents) ; réinitialisation vérifiée (retour au défaut, ancienne
-version conservée dans l'historique) — aucune erreur console sur aucune des
+version conservée dans l'historique) ; export global vérifié avec deux
+sprites publiés (`portrait:darkor` + `uniforme:heros`) — les deux blocs
+`export const` générés étaient corrects et prêts à coller — aucune erreur
+console sur aucune des
 trois pages.

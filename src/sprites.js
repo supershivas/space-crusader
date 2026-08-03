@@ -82,6 +82,16 @@ export const REGISTRE_SPRITES={
   'portrait:demonokos':PORTRAIT_DEMONOKOS, 'portrait:androide':PORTRAIT_ANDROIDE,
   'uniforme:heros':UNIFORME_HEROS,
 };
+/* nom de la constante JS à faire correspondre à chaque id du registre — sert uniquement à
+   générer un export "prêt à coller dans sprites.js" depuis pixel-editor.html (voir "Exporter
+   mes personnalisations"), pour faire passer une publication locale (localStorage) dans le
+   code source réel et la rendre visible à tous les joueurs après déploiement. */
+export const NOM_CONSTANTE_SPRITE={
+  'portrait:darkor':'PORTRAIT_DARKOR', 'portrait:odysseus':'PORTRAIT_ODYSSEUS', 'portrait:acheen':'PORTRAIT_ACHEEN',
+  'portrait:polypheme':'PORTRAIT_POLYPHEME', 'portrait:slum':'PORTRAIT_SLUM', 'portrait:bar4bar4':'PORTRAIT_BAR4BAR4',
+  'portrait:demonokos':'PORTRAIT_DEMONOKOS', 'portrait:androide':'PORTRAIT_ANDROIDE',
+  'uniforme:heros':'UNIFORME_HEROS',
+};
 const OVERRIDES_KEY='dc_sprite_overrides';
 const HISTORIQUE_KEY='dc_sprite_historique';
 const HISTORIQUE_MAX=20;

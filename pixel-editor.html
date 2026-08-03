@@ -190,12 +190,23 @@
       <button class="jouer secondaire" id="btnImporter" style="width:100%;margin-top:8px;font-size:6.5px;">Charger depuis le texte</button>
       <p class="avert" id="avertImport" style="display:none;color:#ff9a9a;"></p>
     </fieldset>
+
+    <fieldset>
+      <legend>Exporter mes personnalisations</legend>
+      <p class="avert" style="display:block;color:#9fb0d8;">Les sprites publiés (bouton Publier, colonne de gauche) ne
+        vivent que dans ce navigateur. Génère ici le code à transmettre pour qu'ils soient intégrés pour de vrai
+        dans <code>src/sprites.js</code> et livrés à tous les joueurs.</p>
+      <button class="jouer" id="btnGenererExportGlobal" style="width:100%;font-size:6.5px;">Générer l'export</button>
+      <textarea id="taExportGlobal" readonly style="margin-top:8px;min-height:160px;"></textarea>
+      <button class="jouer secondaire" id="btnCopierExportGlobal" style="width:100%;margin-top:8px;font-size:6.5px;">Copier tout</button>
+      <p class="ok" id="okCopieGlobal" style="display:none;">Copié !</p>
+    </fieldset>
   </div>
 
 </div>
 
 <script type="module">
-import { PAL, cuire, REGISTRE_SPRITES, grilleEffective, publierSprite, reinitialiserSprite, historiqueDe } from './src/sprites.js';
+import { PAL, cuire, REGISTRE_SPRITES, NOM_CONSTANTE_SPRITE, grilleEffective, publierSprite, reinitialiserSprite, historiqueDe } from './src/sprites.js';
 
 /* =====================================================================
    MODÈLE — grille = tableau de chaînes (mêmes conventions que sprites.js) :
@@ -511,6 +522,27 @@ document.getElementById('btnReinitialiserSpriteJeu').onclick=()=>{
   reinitialiserSprite(spriteJeuActif);
   chargerGrilleDansToile(grilleEffective(spriteJeuActif));
   majStatutSpriteJeu(); rafraichirHistorique();
+};
+
+/* Génère, pour chaque sprite publié dans CE navigateur, le bloc "export const NOM=[...]" prêt
+   à remplacer la constante correspondante dans src/sprites.js — c'est le pont entre "publié
+   localement" et "livré pour de vrai à tous les joueurs" (voir ROADMAP.md). */
+const taExportGlobal=document.getElementById('taExportGlobal');
+document.getElementById('btnGenererExportGlobal').onclick=()=>{
+  let overrides={}; try{ overrides=JSON.parse(localStorage.getItem('dc_sprite_overrides'))||{}; }catch(e){}
+  const ids=Object.keys(overrides);
+  if(!ids.length){ taExportGlobal.value='(Aucun sprite publié pour l\'instant dans ce navigateur — charge un sprite du catalogue, édite-le, puis Publier.)'; return; }
+  const blocs=ids.map(id=>{
+    const nom=NOM_CONSTANTE_SPRITE[id]||id.replace(/[^A-Za-z0-9]/g,'_').toUpperCase();
+    const lignes=overrides[id].map(l=>JSON.stringify(l));
+    return '// '+id+' — à remplacer dans src/sprites.js\nexport const '+nom+'=[\n  '+lignes.join(',\n  ')+'\n];';
+  });
+  taExportGlobal.value=blocs.join('\n\n');
+};
+document.getElementById('btnCopierExportGlobal').onclick=async()=>{
+  if(!taExportGlobal.value) return;
+  try{ await navigator.clipboard.writeText(taExportGlobal.value); const ok=document.getElementById('okCopieGlobal'); ok.style.display='block'; setTimeout(()=>ok.style.display='none',1500); }
+  catch(e){ taExportGlobal.select(); document.execCommand('copy'); }
 };
 
 /* =====================================================================
