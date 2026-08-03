@@ -164,6 +164,8 @@ const STRINGS = {
     cap_bombardier_nom:'Tir chargé', cap_bombardier_desc:'Vise une cible : détruit 2 colonnes au lieu d\'une',
     cap_transporteur_nom:'Largage', cap_transporteur_desc:'Lance une mini-navette sur une case libre adjacente (diagonales incluses)',
     cap_medic_nom:'Réparation', cap_medic_desc:'Soigne 1 PV à un allié adjacent (diagonales incluses)',
+    toast_special_deja:'{nom} déjà utilisé ce combat',
+    toast_special_bloque:'{nom} : impossible pour l\'instant',
 
     // ===== Obstacles =====
     obs_debris_nom:'Débris', obs_debris_desc:'Bloque tirs et déplacements. Destructible (1 PV).',
@@ -653,6 +655,8 @@ const STRINGS = {
     cap_bombardier_nom:'Charged Shot', cap_bombardier_desc:'Aim at a target: destroys 2 columns instead of 1',
     cap_transporteur_nom:'Airdrop', cap_transporteur_desc:'Launches a mini-shuttle onto a free adjacent cell (diagonals included)',
     cap_medic_nom:'Repair', cap_medic_desc:'Heals 1 HP to an adjacent ally (diagonals included)',
+    toast_special_deja:'{nom} already used this battle',
+    toast_special_bloque:'{nom}: not available right now',
 
     obs_debris_nom:'Debris', obs_debris_desc:'Blocks fire and movement. Destructible (1 HP).',
     obs_station_nom:'Station Wreck', obs_station_desc:'Blocks. Drops a bonus when destroyed (2 HP).',

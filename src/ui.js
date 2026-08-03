@@ -59,12 +59,17 @@ export function logMsg(txt,cls=''){
   logDiv.appendChild(d); if(logDiv.children.length>6) logDiv.removeChild(logDiv.firstChild);
   setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); }, 5000);
 }
-/* Toast : notification temporaire, lisible (10px), fond coloré, bordure 3px, 3s. */
+/* Toast : notification temporaire, lisible (10px), fond coloré, bordure 3px, 3s.
+   icon (optionnel) : clé de ICONS, rendue en pixel-art via .ico-slot — jamais un caractère
+   unicode/emoji collé dans le texte (mauvais alignement/espacement avec la police pixel, cf.
+   ⬆ ★ ⚠ 🏆 ⚡ qu'on retrouvait avant directement dans les chaînes passées à montrerToast). */
 const toastZone=document.getElementById('toast');
-export function montrerToast(txt,type=''){
+export function montrerToast(txt,type='',icon=null){
   if(!toastZone) return;
   const d=document.createElement('div');
-  d.className='toast'+(type?(' t-'+type):''); d.textContent=txt;
+  d.className='toast'+(type?(' t-'+type):'');
+  if(icon){ const s=document.createElement('span'); s.className='ico-slot'; icone(s,icon,16); d.appendChild(s); }
+  const txtSpan=document.createElement('span'); txtSpan.textContent=txt; d.appendChild(txtSpan);
   toastZone.appendChild(d);
   requestAnimationFrame(()=>d.classList.add('show'));
   setTimeout(()=>{ d.classList.remove('show'); setTimeout(()=>{ if(d.parentNode) d.parentNode.removeChild(d); },300); }, 3000);
@@ -145,7 +150,7 @@ btnReroll.addEventListener('click',()=>{
   const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
   state.rerollsRestants--; sonSelect(); rendreChoixAmelioration(dispo);
 });
-function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); montrerToast('⬆ '+t('up_'+id+'_nom'),'ok'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
+function appliquerAmelioration(id){ state.ups[id]=(state.ups[id]||0)+1; appliquerAmeliorationEffet(id); upgradeDiv.classList.remove('visible'); sonAchievement(); montrerToast(t('up_'+id+'_nom'),'ok','fleche_haut'); const suite=state.suiteAmelioration||demarrerTourJoueur; state.suiteAmelioration=null; suite(); }
 
 function apercuVaisseau(type){
   const src=imgVaisseau(type), box=52;
@@ -253,8 +258,10 @@ export function ouvrirEtapeBanner(titre,sousTitre,secteurTexte){
   clearTimeout(etapeBannerTimeout);
   etapeBannerTimeout=setTimeout(()=>banniere.classList.remove('visible'),2200);
 }
-/* modale de résultat (bouton OK) : utilisée après le choix d'un événement aléatoire, pour que le
-   joueur voie clairement ce qui s'est passé avant de revenir à la carte. */
+/* surmodale de résultat (bouton OK) : utilisée après le choix d'un événement aléatoire, pour que
+   le joueur voie clairement ce qui s'est passé avant de revenir à la carte. Contrairement aux
+   .modal (pages plein écran), c'est une .submodal — boîte dimensionnée à son contenu, affichée
+   PAR-DESSUS la page de choix encore ouverte derrière (jamais une nouvelle page qui la remplace). */
 export function ouvrirResultat(texte,suite){
   resultatTexte.textContent=texte; resultatDiv.classList.add('visible');
   const fermer=()=>{ resultatDiv.classList.remove('visible'); resultatDiv.removeEventListener('click',surFond); btnResultatOk.removeEventListener('click',fermer); if(suite) suite(); };
@@ -282,8 +289,10 @@ export function ouvrirScenePlanete(scene){
     b.onclick=()=>{
       const suite=scene.suite;
       const resultat=capturerResultat(ch.effet, ch.desc);
-      eventDiv.classList.remove('visible');
-      ouvrirResultat(resultat, suite);
+      // La page de choix (eventDiv) reste ouverte derrière : ouvrirResultat s'affiche en
+      // surmodale par-dessus (voir .submodal) plutôt que de remplacer l'écran par une nouvelle
+      // page. Elle n'est refermée qu'une fois le résultat acquitté (OK), juste avant la suite.
+      ouvrirResultat(resultat, ()=>{ eventDiv.classList.remove('visible'); if(suite) suite(); });
     };
     eventCards.appendChild(b); }
   eventDiv.classList.add('visible');
@@ -862,7 +871,16 @@ canvas.addEventListener('pointerdown', ev=>{
   }
   if(!state.selection){ const f=fighterEn(c,r); if(f&&!f.used){ state.selection=f; sonSelect(); } return; }
   const f=state.selection;
-  if(f.c===c&&f.r===r){ if(activerCapacite(f)) return; state.selection=null; return; }
+  if(f.c===c&&f.r===r){
+    if(activerCapacite(f)) return;
+    // Second appui sur un vaisseau à capacité active qui n'a pas pu se déclencher : sans retour,
+    // rien ne distingue "spécial déjà utilisé ce combat" (cas courant : transporteur limité à
+    // une seule mini-navette par combat, cf. capUsed remis à zéro seulement au combat suivant)
+    // d'un blocage ponctuel (transporteur sans case libre adjacente) — le joueur ne comprenait
+    // pas pourquoi rien ne se passait.
+    if(CAPACITES[f.type]) montrerToast(t(f.capUsed?'toast_special_deja':'toast_special_bloque',{nom:t('cap_'+f.type+'_nom')}),'bad');
+    state.selection=null; return;
+  }
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(deg,px,py); },130); } else montrerToast(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'bad'); return; }

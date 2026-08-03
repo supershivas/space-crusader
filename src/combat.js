@@ -249,7 +249,7 @@ export function toucherBoss(deg,px,py){ if(!state.boss) return;
     state.achievements.boss_slayer=true;
     exploser(state.boss.x,state.boss.y,true); exploser(state.boss.x-24,state.boss.y+12,true); exploser(state.boss.x+24,state.boss.y-12,true);
     state.secousse=18; state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null;
-    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast('🏆 '+t('toast_forteresse_detruite'),'gold'); sonVoix('BOSS','victoire');
+    logMsg(t('toast_forteresse_detruite').toUpperCase(), 'log-ylw'); montrerToast(t('toast_forteresse_detruite'),'gold','trophee'); sonVoix('BOSS','victoire');
     checkAchievements();
   } }
 
@@ -287,7 +287,7 @@ export function declencheUltime(){
   if(state.boss){ state.boss.hp-=4; if(state.boss.hp<=0){ exploser(state.boss.x,state.boss.y,true); state.score+=5; state.bossVaincus++; state.bossKilledThisWave=true; larguerBonus(state.boss.c+1,Math.min(state.RANGS-1,state.boss.r+1)); state.boss=null; } }
   state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.2));
   state.secousse=22; state.flashRecharge=1; state.ondeChoc=1; state.ultimeJauge=0; state.ultimeSeuil+=ULTIME_INCREMENT;
-  sonBoom(); sonVague(); logMsg('⚡ '+t('toast_frappe_orbitale').toUpperCase(),'log-ylw'); montrerToast('⚡ '+t('toast_frappe_orbitale'),'gold'); checkAchievements();
+  sonBoom(); sonVague(); logMsg('⚡ '+t('toast_frappe_orbitale').toUpperCase(),'log-ylw'); montrerToast(t('toast_frappe_orbitale'),'gold','eclair'); checkAchievements();
 }
 export function frapperAile(a,grand,deg=1){ if(a.bouclier){ a.bouclier=false; exploser(a.x,a.y,false); return false; }
   a.hp=(a.hp||1)-deg; afficherDegats(a.x,a.y,deg);

@@ -88,7 +88,7 @@ function construireScene(type){
     {ico:'eclair',nom:t('rest_recalibrage_nom'),desc:t('rest_recalibrage_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); state.ultimeJauge=Math.min(state.ultimeSeuil,state.ultimeJauge+Math.round(state.ultimeSeuil*0.5)); logMsg(t('evt_recalibre'),'log-grn'); }},
   ]}; }
   if(type==='tresor'){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge')));
-    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({ico:u.ico,nom:t('up_'+u.id+'_nom'),desc:t('up_'+u.id+'_desc'),effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); montrerToast('⬆ '+t('up_'+u.id+'_nom'),'ok'); }}));
+    const choix=[...dispo].sort(()=>Math.random()-0.5).slice(0,3).map(u=>({ico:u.ico,nom:t('up_'+u.id+'_nom'),desc:t('up_'+u.id+'_desc'),effet:()=>{ state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); montrerToast(t('up_'+u.id+'_nom'),'ok','fleche_haut'); }}));
     if(!choix.length) choix.push({ico:'gemme',nom:t('tresor_butin_nom'),desc:t('tresor_butin_desc'),effet:()=>{ state.score+=8; }});
     return {kind:'tresor',titre:t('scene_tresor_titre'),suite,choix}; }
   if(type==='hangar'){ return {kind:'hangar',titre:t('scene_hangar_titre'),suite,choix:[
@@ -114,7 +114,7 @@ function construireScene(type){
         state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.9));
         decouvrir('heros',cible.id);
         sonHerosDebloque();
-        montrerToast('★ '+t('hero_'+cible.id+'_nom'),'gold');
+        montrerToast(t('hero_'+cible.id+'_nom'),'gold','etoile');
         logMsg(t('evt_heros_secouru',{nom:t('hero_'+cible.id+'_nom')}),'log-ylw');
       }},
       {ico:'refuser',nom:t('heros_ignorer_nom'),desc:t('heros_ignorer_desc'),effet:()=>{ state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.1)); }},
@@ -122,7 +122,7 @@ function construireScene(type){
   }
   // event : événement aléatoire présenté comme une scène
   const ev=EVENEMENTS[Math.floor(Math.random()*EVENEMENTS.length)];
-  return {kind:'marche',titre:'✦ '+L(ev.titre),suite,choix:ev.choix.map(ch=>({...ch,nom:L(ch.nom),desc:L(ch.desc)}))};
+  return {kind:'marche',titre:L(ev.titre),suite,choix:ev.choix.map(ch=>({...ch,nom:L(ch.nom),desc:L(ch.desc)}))};
 }
 export function demarrerCombat(type){
   setMusicBiome(null);   // au cas où une mission planète aurait été interrompue (reprise de partie)
@@ -137,7 +137,7 @@ export function demarrerCombat(type){
   const squads=Math.max(1, 2+Math.round(diff)+(type==='elite'?2:0)+d.squadDelta);
   for(let s=0;s<squads;s++) apparaitreEscadrille();
   if(type==='elite'){ const c=Math.floor(Math.random()*state.COLS); if(!aileEn(c,0)) faireAile(c,0,Math.random()<0.5?'porteur':'brouilleur'); }
-  if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS','alerte'); if(RARETE.boss[state.boss.type]==='epique') sonEpique(); logMsg(t('log_forteresse'),'log-red'); montrerToast('⚠ '+t('toast_forteresse_approche'),'bad'); }
+  if(type==='boss'){ spawnBoss(); setMusicPhase('boss'); sonVoix('BOSS','alerte'); if(RARETE.boss[state.boss.type]==='epique') sonEpique(); logMsg(t('log_forteresse'),'log-red'); montrerToast(t('toast_forteresse_approche'),'bad','alerte'); }
   // Pas d'objectif secondaire "détruire le boss" pendant un combat de boss : c'est déjà
   // l'objectif PRINCIPAL (obligatoire pour passer à la suite), un faux objectif secondaire
   // toujours réussi sinon. assignerObjectif() exclut ce cas.
@@ -179,7 +179,7 @@ export function reorganiserVaisseaux(){
   libres.sort((a,b)=>(Math.abs(a.r-r0)-Math.abs(b.r-r0)) || (Math.abs(a.c-centre)-Math.abs(b.c-centre)));
   state.fighters.forEach((f,i)=>{ const pos=libres[i%libres.length]; f.c=pos.c; f.r=pos.r; const p=centreCase(f.c,f.r); f.x=p.x; f.y=p.y; });
 }
-export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); reorganiserVaisseaux(); logMsg('★ '+t('carte_secteur')+' '+state.secteur,'log-ylw'); montrerToast('★ '+t('toast_secteur',{n:state.secteur}),'ok'); genererCarte(); ouvrirCarte(); }
+export function secteurSuivant(){ state.secteur++; state.hpCruiser=Math.min(state.HP_MAX,state.hpCruiser+Math.round(state.HP_MAX*0.15)); reorganiserVaisseaux(); logMsg('★ '+t('carte_secteur')+' '+state.secteur,'log-ylw'); montrerToast(t('toast_secteur',{n:state.secteur}),'ok','etoile'); genererCarte(); ouvrirCarte(); }
 
 /* ===== OBJECTIFS DE VAGUE ===== */
 export function texteObjectif(o){
@@ -205,7 +205,7 @@ export function objectifReussi(){ const o=state.objectifVague; if(!o) return fal
        : o.type==='combo'     ? (state.bestComboThisWave||0)>=o.cible : false; }
 
 /* ===== ÉVÉNEMENTS entre les vagues ===== */
-export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge'))); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); montrerToast('⬆ '+t('up_'+u.id+'_nom'),'ok'); }
+export function ameliorationAleatoire(){ const dispo=UPGRADES.filter(u=>(state.ups[u.id]||0)<(u.max||9) && (!u.id.startsWith('rouge_')||state.fighters.some(f=>f.type==='rouge'))); if(!dispo.length) return; const u=dispo[Math.floor(Math.random()*dispo.length)]; state.ups[u.id]=(state.ups[u.id]||0)+1; appliquerAmeliorationEffet(u.id); montrerToast(t('up_'+u.id+'_nom'),'ok','fleche_haut'); }
 export const EVENEMENTS=[
  {titre:{fr:'MARCHAND',en:'MERCHANT'}, desc:{fr:'Un marchand échange une cache d\'armes contre un peu de coque.',en:'A merchant trades a weapons cache for some of your hull.'}, choix:[
    {ico:'panier', nom:{fr:'Acheter',en:'Buy'}, desc:{fr:'-25% PV, +1 amélioration',en:'-25% HP, +1 upgrade'}, effet:()=>{ state.hpCruiser=Math.max(1,Math.round(state.hpCruiser*0.75)); ameliorationAleatoire(); }},

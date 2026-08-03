@@ -450,13 +450,25 @@
       <div class="secteur-info">Secteur 3</div>
     </div>
 
-    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Modale de confirmation (résultat / mise à jour)</h3>
-    <p class="note">Titre + texte + un seul bouton OK. Utilisée pour confirmer le
-      résultat d'un événement aléatoire ou d'un bonus de planète, et pour la notification de mise à jour
-      (bouton désactivé ~600ms à l'ouverture pour éviter un clic fantôme juste après un chargement de page).</p>
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Surmodale de résultat (événement / bonus de planète)</h3>
+    <p class="note">Titre + texte + un seul bouton OK, dans une boîte dimensionnée à son contenu
+      (<code>.submodal &gt; .boite</code>, jamais <code>.modal</code> plein écran) : elle s'affiche
+      PAR-DESSUS la page de choix encore ouverte derrière, qu'on devine dimmée tout autour — jamais une
+      nouvelle page qui la remplace. Voir <code>ui.js:ouvrirResultat()</code>.</p>
     <div class="confirm-preview">
       <h3>RÉSULTAT</h3>
       <p>+10% PV au croiseur.</p>
+      <button class="jouer">OK</button>
+    </div>
+
+    <h3 style="font-size:var(--fs-corps);color:#ffd23d;margin:28px 0 10px;">Modale de confirmation (mise à jour)</h3>
+    <p class="note">Même gabarit titre + texte + un seul bouton OK, mais en <code>.modal</code> plein
+      écran classique : contrairement au résultat d'événement, elle n'a rien d'autre à montrer
+      derrière (affichée seule, généralement juste après le chargement de la page). Bouton désactivé
+      ~600ms à l'ouverture pour éviter un clic fantôme.</p>
+    <div class="confirm-preview">
+      <h3>MISE À JOUR INSTALLÉE</h3>
+      <p>Nouvelle version disponible : 1.42.0</p>
       <button class="jouer">OK</button>
     </div>
 

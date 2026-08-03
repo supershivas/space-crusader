@@ -231,7 +231,11 @@
   .toast{font-family:var(--pixel);font-size:var(--fs-corps);line-height:var(--lh-normal);color:#bfeeff;background:#0d1530;
     text-shadow:var(--stroke);
     border:2px solid #37e0ff;border-radius:var(--radius-md);padding:var(--space-sm) var(--space-md);text-align:center;opacity:0;transform:translateY(-10px);
-    transition:opacity .25s,transform .25s;box-shadow:0 0 0 1px rgba(55,224,255,.4),0 6px 18px rgba(0,0,0,.7);}
+    transition:opacity .25s,transform .25s;box-shadow:0 0 0 1px rgba(55,224,255,.4),0 6px 18px rgba(0,0,0,.7);
+    display:flex;align-items:center;gap:6px;}
+  /* icône + texte en flex (comme .modal h2) : l'espacement vient du gap, pas de la marge par
+     défaut de .ico-slot (pensée pour un flux de texte inline, pas une rangée flex). */
+  .toast .ico-slot{margin-right:0;}
   .toast.show{opacity:1;transform:translateY(0);}
   /* Fond légèrement teinté de la couleur de la variante (pas seulement la bordure) : un cadre
      coloré se distingue davantage d'un coup d'œil qu'une simple bordure sur un fond resté
@@ -274,8 +278,22 @@
   .modal h2{font-family:var(--pixel);color:#37e0ff;font-size:var(--fs-modale);margin:0 0 6px;text-shadow:0 2px 0 #10406a;line-height:var(--lh-normal);text-align:center;width:100%;
     display:flex;align-items:center;justify-content:center;gap:6px;}
   /* h2 en flex (icône + texte) : l'espacement vient du gap, pas de la marge de l'icône */
-  .modal h2 .ico-slot,#pause h2 .ico-slot{margin-right:0;}
+  .modal h2 .ico-slot,#pause h2 .ico-slot,.submodal h2 .ico-slot{margin-right:0;}
   .modal .hint{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;line-height:var(--lh-normal);margin-bottom:14px;}
+  /* Surmodale : résultat d'un événement/bonus de planète (voir ui.js:ouvrirResultat()), affichée
+     PAR-DESSUS la page de choix (.modal) encore ouverte derrière plutôt que de la remplacer par
+     une nouvelle page — contrairement à .modal (plein écran, une "page"), sa boîte est
+     dimensionnée à son contenu (max-width, cadre) et son fond n'assombrit qu'un peu plus la page
+     du dessous, qui reste visible/devinable tout autour. Même échelle de z-index que .modal
+     (14) + 1 cran pour être certaine de rester au-dessus quel que soit l'ordre dans le DOM. */
+  .submodal{position:absolute;inset:0;z-index:15;display:none;align-items:center;justify-content:center;
+    background:rgba(7,11,24,.55);padding:16px;}
+  .submodal.visible{display:flex;}
+  .submodal h2{font-family:var(--pixel);color:#37e0ff;font-size:var(--fs-modale);margin:0 0 6px;text-shadow:0 2px 0 #10406a;
+    line-height:var(--lh-normal);display:flex;align-items:center;justify-content:center;gap:6px;}
+  .submodal .hint{font-family:var(--pixel);font-size:var(--fs-petit);color:#9fb0d8;line-height:var(--lh-normal);margin:0;}
+  .submodal .boite{background:rgba(13,21,48,.97);border:2px solid #2f4a86;border-radius:var(--radius-lg);
+    padding:var(--space-lg) var(--space-md);max-width:300px;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.6);}
   /* Réglage de volume (Paramètres) : icône + libellé + curseur, un par bus (musique/effets).
      accent-color reprend le cyan d'accent du jeu, cohérent avec les autres composants. */
   .volume-bloc{display:flex;flex-direction:column;gap:10px;width:100%;max-width:260px;margin-bottom:var(--space-md);}
@@ -438,9 +456,10 @@
       <div class="mission-score" id="missionScoreLigne"><span data-i18n="mission_score">Score</span> : <span id="missionScoreVal">0</span></div>
       <div class="hint" id="missionInfos" style="margin-top:8px;"></div>
       <button class="jouer" id="btnMission" style="margin-top:14px;font-size:var(--fs-modale);padding:11px 22px;" data-i18n="mission_continuer">Continuer ▶</button></div>
-    <div id="resultat" class="modal"><h2><span class="ico-slot" data-ico="point"></span><span data-i18n="resultat_titre">RÉSULTAT</span></h2>
-      <div class="hint" id="resultatTexte" style="max-width:300px;"></div>
-      <button class="jouer" id="btnResultatOk" style="margin-top:14px;font-size:var(--fs-corps);padding:11px 22px;" data-i18n="maj_ok">OK</button></div>
+    <div id="resultat" class="submodal"><div class="boite">
+      <h2><span class="ico-slot" data-ico="point"></span><span data-i18n="resultat_titre">RÉSULTAT</span></h2>
+      <div class="hint" id="resultatTexte" style="max-width:260px;"></div>
+      <button class="jouer" id="btnResultatOk" style="margin-top:14px;font-size:var(--fs-corps);padding:11px 22px;" data-i18n="maj_ok">OK</button></div></div>
     <div id="confirmation" class="modal"><h2><span class="ico-slot" data-ico="alerte"></span><span data-i18n="confirmation_titre">CONFIRMATION</span></h2>
       <div class="hint" id="confirmationTexte" style="max-width:300px;"></div>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px;">

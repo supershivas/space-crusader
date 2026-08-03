@@ -333,6 +333,7 @@ export const ICONS={
   main:       ["..W.W..",".WWWWW.","WWWWWWW","WWWWWWW",".WWWWW.","..WWW..","...W..."],
   fleche_haut:["...W...","..WWW..",".WWWWW.","...W...","...W...","...W...","......."],
   trophee:    [".eeeee.","eeeeeee","eeeeeee",".eeeee.","..eee..","..eee..",".eeeee."],
+  etoile:     ["...y...","...y...","..yyy..","yyyyyyy",".yyyyy.","..y.y..",".y...y."],
 };
 /* fournit un <canvas> pixel-art prêt à insérer dans le DOM (taille ~px, mise à l'échelle entière la plus proche) */
 export function iconCanvas(key,px=20){
