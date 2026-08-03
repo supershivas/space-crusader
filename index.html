@@ -166,17 +166,17 @@
   /* bouton d'action destructive (ex: effacer la progression) */
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
   /* Posés dans le coin haut-gauche du cadre HUD dessiné sur le canvas (voir dessinerCadreHUD()
-     dans render.js). Marge du haut en --space-md plutôt que --space-sm : le cadre HUD lui-même
-     commence un peu plus bas (fy=4 dans dessinerCadreHUD()), donc --space-sm collait les boutons
-     trop près du bord de l'écran/du scene, au-dessus du cadre plutôt qu'alignés dessus. Marge
-     gauche restée en --space-sm (alignée sur la marge du cadre, state.GX). */
+     dans render.js). Marge du haut en --space-md : le cadre HUD lui-même commence à fy=8
+     (--space-sm) depuis le haut du canvas, --space-md donne un peu d'air pour que les boutons
+     paraissent posés dedans plutôt que collés à son bord. Marge gauche en --space-md aussi
+     (PAS --space-sm comme avant) : le cadre commence à state.GX=14 (--space-md) depuis la
+     gauche, une marge gauche en --space-sm (8, donc plus petite) faisait mordre le bouton son
+     sur l'angle arrondi du cadre au lieu d'être aligné avec son bord. */
   .coin{position:absolute;top:calc(env(safe-area-inset-top, 0px) + var(--space-md));z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:var(--radius-md);width:42px;height:42px;cursor:pointer;line-height:1;}
-  #son{left:calc(env(safe-area-inset-left, 0px) + var(--space-sm));}
-  /* Léger décalage supplémentaire vers la droite : trop proche du cadre HUD sinon (le bouton
-     son touche déjà sa marge gauche, le bouton pause juste après avait l'air de mordre sur le
-     cadre). */
-  #pauseBtn{left:calc(env(safe-area-inset-left, 0px) + 42px + var(--space-sm) * 2 + 6px);display:none;z-index:16;}
+  #son{left:calc(env(safe-area-inset-left, 0px) + var(--space-md));}
+  /* Juste après le bouton son : sa gauche + sa largeur (42px) + un espacement --space-sm. */
+  #pauseBtn{left:calc(env(safe-area-inset-left, 0px) + var(--space-md) + 42px + var(--space-sm));display:none;z-index:16;}
   .coin:active{transform:scale(.94);}
 
   /* Infobulle */
