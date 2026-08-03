@@ -763,7 +763,8 @@ function tooltipCarte(x,y){
   const reach=atteign.includes(trouve), cur=trouve===state.noeudActuel;
   tooltip.innerHTML='';
   const nameDiv=document.createElement('div'); nameDiv.className='tt-name';
-  icone(nameDiv,ICONE[trouve.type],14); nameDiv.appendChild(document.createTextNode(' '+(NOM_NOEUD[trouve.type]||trouve.type)));
+  icone(nameDiv,ICONE[trouve.type],14);
+  const label=document.createElement('span'); label.textContent=NOM_NOEUD[trouve.type]||trouve.type; nameDiv.appendChild(label);
   tooltip.appendChild(nameDiv);
   let html='<div class="tt-spd">'+(DESC_NOEUD[trouve.type]||'')+'</div>';
   html+='<div class="tt-'+(cur?'grn':(reach?'dmg':'hp'))+'" style="color:'+(cur?'#8fa0c8':(reach?'#ffd23d':'#e5484d'))+'">'+(cur?t('carte_position_actuelle'):(reach?t('carte_accessible'):t('carte_hors_portee')))+'</div>';
