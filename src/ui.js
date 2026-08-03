@@ -3,7 +3,7 @@
    (souris + clavier)
    ===================================================================== */
 import { state, centreCase, saveState, ACHIEVEMENTS_DEF, saveData, effacerSauvegarde, enregistrerStat, statsEquilibrage, sauvegardeExiste, estDecouvert, decouvrir } from './state.js';
-import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS, META_HEROS_MAX, coutMetaHero } from './config.js';
+import { DEG_ASTEROIDE, UPGRADES, SHIPS, SHIP_ROUGE, META, CAPACITES, OBSTACLES, SKINS_CROISEUR, SKINS_VAISSEAUX, RARETE, TOURELLES, HEROS, META_HEROS_MAX, coutMetaHero, BIOMES, forceDefensePlanete } from './config.js';
 import { fighterEn, aileEn, asterEn, bonusEn, bossEn, tourelleEn, baseEn, trouNoirEn, champEn, occupe,
          estProtege, imgVaisseau, ramasser, obstacleEn, appliquerAmeliorationEffet, rafraichirSkinVaisseaux, imgAileGuide, getImgMimic,
          imgObstacle, getImgAster, hpAile, vitesseAile, hpVaisseauBase, imgHeroPortrait } from './entities.js';
@@ -12,7 +12,7 @@ import { initAudio, sonSelect, sonTir, sonUndo, sonPause, sonAchievement, sonRen
 import { casesMouvement, casesMouvementCapacite, analyseTir, tirer, tirerTourelle, finirTourelle, toucherBoss, toucherBase, frapperTourelle,
          ultimePret, declencheUltime, choisirAction, finDuTour, porteeDep, demarrerTourJoueur,
          peutActiverCapacite, activerCapacite, tirerCharge, degLaserActuel, frapperObstacle, declencheMimic, frapperAster } from './combat.js';
-import { finDuTourPlanete, appliquerGlissade, verifierCamouflage } from './planete.js';
+import { finDuTourPlanete, appliquerGlissade, verifierCamouflage, demarrerMissionPlanete } from './planete.js';
 import { noeudsAtteignables, posNoeud, entrerNoeud, NOM_NOEUD, DESC_NOEUD, ICONE, texteObjectif } from './map.js';
 import { iconCanvas, imgBonusPV, imgBonusTIR, imgBonusVAIS } from './sprites.js';
 import { t } from './i18n.js';
@@ -39,6 +39,9 @@ const pauseDiv=document.getElementById('pause'), achieveDiv=document.getElementB
 const upgradeDiv=document.getElementById('upgrade'), upgradeCards=document.getElementById('upgradeCards');
 const buildDiv=document.getElementById('build'), buildCards=document.getElementById('buildCards');
 const eventDiv=document.getElementById('event'), eventTitre=document.getElementById('eventTitre'), eventDesc=document.getElementById('eventDesc'), eventCards=document.getElementById('eventCards');
+const briefingDiv=document.getElementById('planeteBriefing'), briefingBiomeNom=document.getElementById('briefingBiomeNom'),
+  briefingMecanique=document.getElementById('briefingMecanique'), briefingForce=document.getElementById('briefingForce'),
+  briefingAlerte=document.getElementById('briefingAlerte'), briefingCards=document.getElementById('briefingCards');
 const carteDiv=document.getElementById('carte'), carteChoixDiv=document.getElementById('carteChoix');
 const missionDiv=document.getElementById('mission'), missionTitre=document.getElementById('missionTitre'), missionObjectif=document.getElementById('missionObjectif'),
   missionRecap=document.getElementById('missionRecap'), missionScoreVal=document.getElementById('missionScoreVal'), missionScoreLigne=document.getElementById('missionScoreLigne'), missionInfos=document.getElementById('missionInfos');
@@ -106,8 +109,12 @@ export function addHighscore(){
   state.highscores.push(entry); state.highscores.sort((a,b)=>b.score-a.score); state.highscores=state.highscores.slice(0,5); saveData();
   const tbl=document.getElementById('highscores');
   tbl.innerHTML='';
-  const trHead=document.createElement('tr'); const tdHead=document.createElement('td'); tdHead.colSpan=3; tdHead.style.color='#ffd23d'; tdHead.style.display='flex'; tdHead.style.alignItems='center'; tdHead.style.justifyContent='center';
-  icone(tdHead,'trophee',14); tdHead.appendChild(document.createTextNode(' '+t('succes_meilleurs_scores'))); trHead.appendChild(tdHead); tbl.appendChild(trHead);
+  // icône + libellé : même composant .ico-slot que partout ailleurs dans le jeu (boutons, titres
+  // de modale) plutôt qu'un canvas suivi d'un simple caractère espace — cet ancien assemblage
+  // manuel donnait un espacement trop serré et mal maîtrisé entre l'icône et le texte.
+  const trHead=document.createElement('tr'); const tdHead=document.createElement('td'); tdHead.colSpan=3; tdHead.style.color='#ffd23d';
+  const slotHead=document.createElement('span'); slotHead.className='ico-slot'; tdHead.appendChild(slotHead);
+  icone(slotHead,'trophee',16); tdHead.appendChild(document.createTextNode(t('succes_meilleurs_scores'))); trHead.appendChild(tdHead); tbl.appendChild(trHead);
   tbl.insertAdjacentHTML('beforeend',state.highscores.map((h,i)=>'<tr class="'+(h.score===state.score?'hs-new':'')+'"><td>#'+(i+1)+'</td><td>'+h.score+'</td><td>V'+h.vague+'</td></tr>').join(''));
 }
 
@@ -281,6 +288,34 @@ export function ouvrirScenePlanete(scene){
     eventCards.appendChild(b); }
   eventDiv.classList.add('visible');
 }
+
+/* briefing de mission planète (étape 3 de la refonte) : affiché avant la bannière d'engagement,
+   au moment d'entrer sur le nœud — le biome est tiré ici (pas dans demarrerMissionPlanete) pour
+   que le texte affiché corresponde exactement à la mission qui démarrera. Force de défense
+   volontairement floue (légère/moyenne/lourde, voir forceDefensePlanete) plutôt qu'un compte
+   exact de tourelles, pour garder un peu de brouillard de guerre (cf. ROADMAP.md). Le choix
+   d'approche (façon FTL, léger) est géré par demarrerMissionPlanete lui-même. */
+export function ouvrirBriefingPlanete(){
+  state.selection=null; state.modeTourelle=false; state.modeCapacite=null;
+  tooltip.classList.remove('visible');
+  const biome=BIOMES[Math.floor(Math.random()*BIOMES.length)];
+  const force=forceDefensePlanete(state.secteur,state.difficulte);
+  briefingBiomeNom.textContent=t('biome_'+biome.id+'_nom');
+  briefingMecanique.textContent=t('biome_'+biome.id+'_desc');
+  briefingForce.innerHTML=''; icone(briefingForce,'cible',12); briefingForce.appendChild(document.createTextNode(' '+t('briefing_force_label')+' : '+t('briefing_force_'+force)));
+  briefingAlerte.innerHTML=''; icone(briefingAlerte,'alerte',12); briefingAlerte.appendChild(document.createTextNode(' '+t('briefing_alerte_rappel')));
+  briefingCards.innerHTML='';
+  const approches=[
+    {ico:'cle',  nom:t('briefing_approche_standard_nom'),  desc:t('briefing_approche_standard_desc'),  approche:'standard'},
+    {ico:'epee', nom:t('briefing_approche_agressive_nom'), desc:t('briefing_approche_agressive_desc'), approche:'agressive'},
+  ];
+  for(const ap of approches){ const b=document.createElement('div'); b.className='card';
+    b.appendChild(divEmo(ap.ico));
+    const d=document.createElement('div'); d.innerHTML='<div class="nom">'+ap.nom+'</div><div class="desc">'+ap.desc+'</div>'; b.appendChild(d);
+    b.onclick=()=>{ briefingDiv.classList.remove('visible'); demarrerMissionPlanete(biome.id,ap.approche); };
+    briefingCards.appendChild(b); }
+  briefingDiv.classList.add('visible');
+}
 export function ouvrirMeta(){ tooltip.classList.remove('visible'); metaCristaux.innerHTML=''; icone(metaCristaux,'gemme',14); metaCristaux.appendChild(document.createTextNode(' '+t('meta_cristaux')+' : '+(state.meta.cristaux||0))); metaCards.innerHTML='';
   for(const m of META){ const lvl=state.meta[m.id]||0, cout=m.cout(lvl), atMax=lvl>=m.max, peut=!atMax&&(state.meta.cristaux||0)>=cout;
     const b=document.createElement('div'); b.className='card';
@@ -365,17 +400,21 @@ const GUIDE_BIOMES=[{type:'desert',ico:'alerte'},{type:'glace',ico:'gel'},{type:
    de fin de partie — mêmes listes/images que ouvrirGuide(), sans dupliquer le catalogue.
    Renvoie des descripteurs de carte (img/ico/nomKey/tier), pas juste des noms : l'écran de fin
    affiche les vraies vignettes (non cliquables), pas une liste de texte. */
-function decouvertesResume(){
+/* recentOnly (écran de fin) : ne garde que les entrées débloquées PENDANT la partie qui vient
+   de se terminer (state.decouvertesRun), plutôt que tout l'historique — sinon la 3e page de
+   l'écran de fin réaffichait systématiquement toute l'encyclopédie déjà connue. */
+function decouvertesResume(recentOnly){
   const cartes=[];
+  const vu=(categorie,type)=> estDecouvert(categorie,type) && (!recentOnly || state.decouvertesRun[categorie+':'+type]);
   const imgBonusParType={pv:imgBonusPV,tir:imgBonusTIR,vaisseau:imgBonusVAIS,mimic:getImgMimic()};
-  for(const type of GUIDE_ALLIES) if(estDecouvert('vaisseau',type)) cartes.push({img:imgVaisseau(type),nomKey:'ship_'+type+'_nom'});
-  for(const type of GUIDE_ENNEMIS) if(estDecouvert('aile',type)) cartes.push({img:imgAileGuide(type),nomKey:'ail_'+type+'_nom',tier:RARETE.aile[type]});
-  for(const type of GUIDE_BOSS) if(estDecouvert('boss',type)) cartes.push({img:imgBossGuide(type),nomKey:'boss_'+type+'_nom',tier:RARETE.boss[type]});
-  for(const type of GUIDE_BONUS) if(estDecouvert('bonus',type)) cartes.push({img:imgBonusParType[type],nomKey:'bonus_'+type+'_nom',tier:RARETE.bonus[type]});
-  for(const m of GUIDE_MENACES) if(estDecouvert('menace',m.type)) cartes.push({img:m.img?m.img():null,ico:m.ico,nomKey:m.nomKey,tier:RARETE.menace[m.type]});
-  if(estDecouvert('planete_base','base')) cartes.push({img:imgBaseGuide(),nomKey:'planete_base_guide_nom'});
-  for(const type of GUIDE_TOURELLES) if(estDecouvert('planete_tourelle',type)) cartes.push({img:imgTourelleGuide(type),nomKey:'tourelle_'+type+'_nom'});
-  for(const b of GUIDE_BIOMES) if(estDecouvert('planete_biome',b.type)) cartes.push({ico:b.ico,nomKey:'biome_'+b.type+'_nom'});
+  for(const type of GUIDE_ALLIES) if(vu('vaisseau',type)) cartes.push({img:imgVaisseau(type),nomKey:'ship_'+type+'_nom'});
+  for(const type of GUIDE_ENNEMIS) if(vu('aile',type)) cartes.push({img:imgAileGuide(type),nomKey:'ail_'+type+'_nom',tier:RARETE.aile[type]});
+  for(const type of GUIDE_BOSS) if(vu('boss',type)) cartes.push({img:imgBossGuide(type),nomKey:'boss_'+type+'_nom',tier:RARETE.boss[type]});
+  for(const type of GUIDE_BONUS) if(vu('bonus',type)) cartes.push({img:imgBonusParType[type],nomKey:'bonus_'+type+'_nom',tier:RARETE.bonus[type]});
+  for(const m of GUIDE_MENACES) if(vu('menace',m.type)) cartes.push({img:m.img?m.img():null,ico:m.ico,nomKey:m.nomKey,tier:RARETE.menace[m.type]});
+  if(vu('planete_base','base')) cartes.push({img:imgBaseGuide(),nomKey:'planete_base_guide_nom'});
+  for(const type of GUIDE_TOURELLES) if(vu('planete_tourelle',type)) cartes.push({img:imgTourelleGuide(type),nomKey:'tourelle_'+type+'_nom'});
+  for(const b of GUIDE_BIOMES) if(vu('planete_biome',b.type)) cartes.push({ico:b.ico,nomKey:'biome_'+b.type+'_nom'});
   const total=GUIDE_ALLIES.length+GUIDE_ENNEMIS.length+GUIDE_BOSS.length+GUIDE_BONUS.length+GUIDE_MENACES.length+1+GUIDE_TOURELLES.length+GUIDE_BIOMES.length;
   return {cartes, total};
 }
@@ -565,16 +604,16 @@ export function finPartie(){
     const noms=Object.keys(ACHIEVEMENTS_DEF).filter(id=>state.achievements[id]).map(id=>t('ach_'+id+'_nom'));
     succ.innerHTML = noms.length ? '🏅 '+noms.join(' · ') : '';
   }
-  // Encyclopédie découverte (décompte persistant, toutes parties confondues) : les vraies
-  // vignettes (non cliquables — le détail complet reste dans l'Encyclopédie elle-même),
-  // avec un compte en en-tête plutôt qu'une liste de noms en texte.
+  // Encyclopédie : seulement les entrées débloquées PENDANT ce combat (state.decouvertesRun),
+  // pas tout l'historique — les vraies vignettes (non cliquables, le détail complet reste dans
+  // l'Encyclopédie elle-même), avec un compte en en-tête plutôt qu'une liste de noms en texte.
   const dec=document.getElementById('finDecouvertes'); dec.innerHTML='';
-  { const r=decouvertesResume();
+  { const r=decouvertesResume(true);
     if(r.cartes.length){
       const header=document.createElement('div'); header.className='fin-dec-header';
-      header.textContent='📖 '+t('fin_encyclopedie')+' '+r.cartes.length+'/'+r.total;
+      header.textContent='📖 '+t('fin_encyclopedie')+' '+r.cartes.length;
       dec.appendChild(header);
-      const wrap=document.createElement('div'); wrap.className='cards';
+      const wrap=document.createElement('div'); wrap.className='cards fin-dec-cards';
       for(const c of r.cartes) wrap.appendChild(carteGuideMini(c.img,c.ico,c.nomKey,c.tier));
       dec.appendChild(wrap);
     }
@@ -826,7 +865,7 @@ canvas.addEventListener('pointerdown', ev=>{
   const autre=fighterEn(c,r); if(autre&&!autre.used){ state.selection=autre; sonSelect(); return; }
   const an=analyseTir(f);
   if(bossEn(c,r)){ if(an.boss){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBoss(deg,px,py); },130); } else montrerToast(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'bad'); return; }
-  if(state.planete && baseEn(c,r)){ if(an.base){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBase(deg,px,py); },130); } else montrerToast(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'bad'); return; }
+  if(state.planete && baseEn(c,r)){ if(an.base){ const px=centreCase(c,r).x,py=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:px,y2:py,t:0,ennemi:false}); sonTir(); const deg=f.type==='rouge'?2:1; f.used=true; state.selection=null; const gen=state.actionGen; setTimeout(()=>{ if(state.actionGen===gen) toucherBase(deg,px,py,c); },130); } else montrerToast(an.jam?t('tt_vaisseau_brouille'):t('tt_tir_bloque_court'),'bad'); return; }
   if(state.planete){ const tourCible=tourelleEn(c,r); if(tourCible){ if(an.tourellesOk.has(tourCible)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperTourelle(tourCible),130); } else montrerToast(raisonTirBloque(an,c),'bad'); return; } }
   const cible=aileEn(c,r); if(cible){ if(an.ailesOk.has(cible)){ tirer(f,cible); } else montrerToast(raisonTirBloque(an,c,cible),'bad'); return; }
   const ob=obstacleEn(c,r); if(ob){ if(an.obstaclesOk.has(ob)){ const tx=centreCase(c,r).x,ty=centreCase(c,r).y; state.lasers.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); state.trails.push({x1:f.x,y1:f.y-6,x2:tx,y2:ty,t:0,ennemi:false}); sonTir(); f.used=true; state.selection=null; setTimeout(()=>frapperObstacle(ob),130); } else montrerToast(raisonTirBloque(an,c,ob),'bad'); return; }

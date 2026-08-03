@@ -228,10 +228,11 @@ export const RUINE_2=["TTTTTT",".TtTt.","TTTTTT",".tTTt.","TTTTTT",".TTTT."];
    échelle réduite (voir cuireUnites) pour rester nettement plus petits que les anciens débris
    pleine cellule. Grille de forme unique, partagée par les deux camps — seule la palette
    change à la cuisson : bleu-gris par défaut (B/b/S/s, voir JOUEUR) pour les vaisseaux alliés,
-   override rouge (voir OVER_DEBRIS_ENNEMI dans entities.js) pour les ailes ennemies. */
+   override rouge (OVER_DEBRIS_ENNEMI) pour les ailes ennemies. */
 export const DEBRIS_FRAGMENT_1=["Bb.","bSs",".sB"];
 export const DEBRIS_FRAGMENT_2=[".Bb","Ssb","b.."];
 export const DEBRIS_FRAGMENT_3=["sB.",".bS","B.b"];
+export const OVER_DEBRIS_ENNEMI={B:'#5a1420',b:'#8f2b2f',S:'#c94257',s:'#ff8f92'};
 
 /* ---- MISSION PLANÈTE : base ennemie + tourelles fixes ---- */
 /* base ennemie : bastion fortifié (3×2 cases, même gabarit qu'un boss), noyau d'énergie violet

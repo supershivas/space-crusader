@@ -8,7 +8,7 @@ import { ULTIME_MAX, DIFFICULTES, BOUCLIER_USAGES_MAX, OBSTACLES, SHIPS, CAPACIT
 import { spread, nouveauVaisseau, deployerVaisseau, faireAile, fighterEn, getImgAster } from './entities.js';
 import { genererCarte, deserialiserCarte, ouvrirCarte, ameliorationAleatoire } from './map.js';
 import { demarrerTourJoueur, animer } from './combat.js';
-import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome } from './planete.js';
+import { demarrerTourJoueurPlanete, finMissionPlanete, activerRappelsBiome, annoncerCiblesTourelles } from './planete.js';
 import { initAudio, startMusic, sonSelect, getVolumeMusique, getVolumeEffets, setVolumeMusique, setVolumeEffets } from './audio.js';
 import { configurer, redimensionner, initEtoiles, dessinerIllustration, dessiner, randomiserAccueil } from './render.js';
 import { ouvrirMeta, togglePause, retourAccueil, abandonnerPartie, montrerToast, ouvrirMaj, ouvrirGuide, demanderConfirmation, majMeilleurScoreAccueil, ouvrirChoixHero } from './ui.js';
@@ -58,6 +58,7 @@ function nouvellePartie(){
   state.lockTimer=0; state.flashCroiseur=0; state.flashRecharge=0; state.secousse=0; state.tourCompteur=0; state.ambianceT=0;
   state.prochainAsteroide=3+Math.floor(Math.random()*2); state.prochainBoss=18+Math.floor(Math.random()*6);
   state.comboCount=0; state.comboTimer=0; state.bestCombo=0; state.undoStack=[]; state.paused=false;
+  state.decouvertesRun={};
   state.achievements.asteroid_dodge=(state.achievements.asteroid_dodge||0); state.achievements.boss_slayer=state.achievements.boss_slayer||false; state.achievements.no_turret=state.achievements.no_turret||false; state.achievements.perfect_wave=state.achievements.perfect_wave||false;
   // tutoriel : jauge d'ultime déjà pleine, pour pouvoir démontrer l'ultime sans attendre plusieurs tours de kills
   if(!tutorielVu()) state.ultimeJauge=state.ultimeSeuil;
@@ -80,7 +81,7 @@ function reprendrePartie(){
   state.boucliersRestants=(d.boucliersRestants!==undefined)?d.boucliersRestants:BOUCLIER_USAGES_MAX;
   state.ultimeSeuil=d.ultimeSeuil||ULTIME_MAX; state.enFeu=d.enFeu||0;
   state.rerollsRestants=(d.rerollsRestants!==undefined)?d.rerollsRestants:(state.meta.reroll||0);
-  for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,maxhp:f.maxhp||f.hp,used:f.used,capUsed:!!f.capUsed,kills:f.kills||0,gele:f.gele||0});
+  for(const f of d.fighters||[]) state.fighters.push(nouveauVaisseau(f.c,f.r,f.type,false)), Object.assign(state.fighters[state.fighters.length-1],{hp:f.hp,maxhp:f.maxhp||f.hp,used:f.used,capUsed:!!f.capUsed,kills:f.kills||0,gele:f.gele||0,sabordage:f.sabordage||0});
   for(const a of d.ailes||[]){ faireAile(a.c,a.r,a.type); const na=state.ailes[state.ailes.length-1]; na.hp=a.hp; na.maxhp=a.maxhp; na.vitesse=a.vitesse; const p=centreCase(a.c,a.r); na.x=p.x; na.y=p.y; }
   for(const o of d.asteroides||[]){ const p=centreCase(Math.max(0,Math.min(state.COLS-1,o.c)),Math.max(0,Math.min(state.RANGS-1,o.r))); state.asteroides.push({c:o.c,r:o.r,dc:o.dc,dr:o.dr,x:p.x,y:p.y,ang:0,img:getImgAster(),hp:o.hp||1,maxhp:o.maxhp||1,type:o.type||'normal'}); }
   for(const b of d.bonus||[]){ const p=centreCase(b.c,b.r); state.bonus.push({c:b.c,r:b.r,type:b.type,ttl:b.ttl,x:p.x,y:p.y}); }
@@ -95,14 +96,18 @@ function reprendrePartie(){
     const b=d.planete.base, pb=centreCase(b.c+1,0);
     state.planete={
       biome:d.planete.biome,
-      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
+      base:{c:b.c,r:b.r,w:b.w,h:b.h,hp:b.hp,maxhp:b.maxhp,reveillee:b.reveillee,chargeCols:b.chargeCols||null,prochaineCharge:b.prochaineCharge,pointFaible:(b.pointFaible!=null)?b.pointFaible:b.c,x:pb.x,y:pb.y+state.CELL/2-state.CELL},
       tourelles:(d.planete.tourelles||[]).map(tr=>{ const p=centreCase(tr.c,tr.r);
         const cachette=tr.cachette?state.obstacles.find(o=>o.c===tr.cachette.c&&o.r===tr.cachette.r&&o.type==='ruine'):null;
         return {id:tr.id,ico:tr.ico,c:tr.c,r:tr.r,hp:tr.hp,maxhp:tr.maxhp,portee:tr.portee,degats:tr.degats,camouflee:tr.camouflee,reveillee:tr.reveillee,cachette,x:p.x,y:p.y}; }),
       tourCompteur:d.planete.tourCompteur||0, prochaineGarnison:d.planete.prochaineGarnison, prochaineTempete:d.planete.prochaineTempete,
+      alerte:d.planete.alerte||0, meilleureDistance:(d.planete.meilleureDistance!=null)?d.planete.meilleureDistance:state.RANGS,
     };
     state.suiteDemarrerTour=demarrerTourJoueurPlanete; state.suiteFinPlanete=finMissionPlanete;
     activerRappelsBiome(state.planete.biome);
+    // intentions des tourelles (étape 4) : non sérialisées (référence directe à un vaisseau),
+    // recalculées ici à partir des positions restaurées — visibles dès la reprise de partie.
+    annoncerCiblesTourelles(state.planete);
   }
   deserialiserCarte(d.carte);
   document.getElementById('accueil').classList.add('cache'); document.getElementById('fin').classList.add('cache');

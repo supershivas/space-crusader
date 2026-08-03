@@ -6,6 +6,92 @@ une section "Fait" ou simplement supprimée une fois fusionnée sur `main`).
 
 ## À l'étude
 
+### Missions sur planète — refonte post-playtest (tension tactique)
+
+**Statut** : implémentation complète (8/8 étapes), testée en jeu réel à
+chaque étape, fusionnée sur `main`. Fait suite au diagnostic de la V1
+ci-dessous (section "Missions sur planète — tower attack"), implémentée et
+en production, mais jugée peu intéressante après plusieurs parties jouées.
+
+**Diagnostic (parties réelles jouées, clics simulés, pas de raccourcis)** :
+sur une mission secteur 1/facile, l'escadrille est restée immobile à la
+rangée de départ du tour 1 au tour 8, en cliquant juste "tirer sur la base"
+— PV de la base 36→0 sans qu'aucune tourelle ne touche un seul vaisseau ni
+qu'une garnison n'arrive à temps. Trois causes identifiées dans le code :
+1. `analyseTir()` (repris tel quel du combat spatial) balaie toute la colonne
+   jusqu'à la rangée 0 — la portée ne limite que le nombre de colonnes, pas
+   la distance. Un vaisseau resté à la dernière rangée peut donc tirer sur
+   la base à l'autre bout de la carte dès le tour 1 : aucun intérêt à avancer.
+2. La portée des tourelles (1-2 cases) est dérisoire face à une grille de
+   8-10 rangées — sans être forcées de s'approcher (cause 1), elles ne
+   tirent quasiment jamais.
+3. La base (3 colonnes de large) n'est souvent couverte que par 1-2 tourelles
+   (1 colonne chacune) : il y a presque toujours une colonne "gratuite"
+   jusqu'à la base, ou à l'inverse — si le joueur n'a que des colonnes
+   bloquées — l'impression que "la base est indestructible" faute de retour
+   visuel clair sur ce qui est réellement touché.
+
+**Design validé** :
+- **Correctif de portée (prérequis à tout le reste)** : en mission planète,
+  la portée de tir est limitée à une distance réelle (rangées devant le
+  vaisseau), pas seulement à des colonnes — avancer redevient nécessaire
+  pour agir.
+- **Briefing de mission**, affiché avant la bannière d'engagement (au moment
+  d'entrer sur le nœud) : rappel de la mécanique du biome, force de défense
+  approximative (jauge "légère/moyenne/lourde", pas le nombre exact de
+  tourelles — un peu de brouillard, pas une fiche technique), rappel de la
+  jauge d'alerte, et un choix d'approche optionnel et léger façon FTL
+  (ex. partir avec l'alerte à zéro contre 1 tourelle de plus révélée d'entrée).
+- **Jauge d'alerte** (état de mission, pas un chrono dur — cohérent avec la
+  doctrine du jeu qui ne punit jamais par une limite de tours) : monte tant
+  que l'escadrille reste loin/inactive.
+  - Palier 1 : la garnison est produite plus vite/plus forte.
+  - Palier 2 : les rangées arrière deviennent hostiles (réutilise le système
+    de `champs`/dégâts de zone déjà existant, PAS une mort instantanée —
+    juste des dégâts qui grignotent qui s'y attarde), toujours télégraphié
+    plusieurs tours à l'avance. Habillage par biome : tempête de sable qui
+    s'étend (désert), blizzard qui gagne (glace), obscurité qui gagne
+    (grotte), effondrement de structure (villes anciennes) — réutilise les
+    mécaniques déjà en place plutôt que d'en inventer une nouvelle.
+- **Intentions visibles** (à la Slay the Spire) : une tourelle réveillée
+  affiche sa cible/prochaine action ; la base "charge" périodiquement une
+  salve de zone annoncée 1 tour à l'avance — le joueur peut toujours réagir
+  (replier, foncer casser la source avant qu'elle n'agisse), jamais de coup
+  surprise.
+- **Tourelles à zone de contrôle mobile** et **point faible de la base qui
+  se déplace** (à la façon échecs) : une tourelle menace 2-3 colonnes
+  proches et peut pivoter si un vaisseau s'y expose trop longtemps ; la
+  colonne réellement vulnérable de la base change périodiquement — empêche
+  de figer une solution unique trouvée au tour 1 et d'y camper.
+- **Couverture généralisée** : le mécanisme de ruines destructibles (V1 :
+  réservé au biome villes anciennes) étendu aux 4 biomes, avec une densité/
+  un habillage propre à chacun — avancer devient une vraie décision
+  tactique (s'exposer vs. contourner) au lieu d'un couloir de tir dégagé
+  par défaut.
+- **Capacité de sabordage** (à la FTL) : un vaisseau rapide arrivé au contact
+  de la base peut lancer un canal multi-tours à gros dégâts/quasi one-shot,
+  interrompu s'il est détruit — un choix risque/récompense distinct du
+  siège prudent, qui récompense l'agressivité.
+
+**Plan d'implémentation envisagé** (mêmes principes que la V1 : chaque étape
+testable avant la suivante, ordre pensé pour tester le correctif fondateur
+en premier) :
+1. ✅ Correctif de portée (limite de distance réelle) — seul, pour valider que
+   l'avance redevient nécessaire, avant d'ajouter la couche de pression.
+2. ✅ Jauge d'alerte (2 paliers, télégraphiée, habillée par biome).
+3. ✅ Écran de briefing (biome, force de défense approximative, rappel
+   d'alerte, choix d'approche optionnel).
+4. ✅ Intentions visibles (tourelles + charge de salve de la base).
+5. ✅ Zone de contrôle mobile des tourelles + point faible mobile de la base.
+6. ✅ Couverture (ruines) généralisée aux 4 biomes.
+7. ✅ Capacité de sabordage (vaisseau rapide, assaut final).
+8. ✅ Vérifications transverses : re-playtest complet (parties réelles jouées,
+   pas de raccourcis), équilibrage des PV/dégâts vs. durée de mission,
+   non-régression du combat spatial et du reste des missions planète,
+   version + cache du service worker, fusion sur `main`.
+
+---
+
 ### Missions sur planète — "tower attack" (jeu inversé)
 
 **Statut** : conception intégralement verrouillée avec l'utilisateur le
@@ -162,6 +248,11 @@ passer à la suivante — jamais tout d'un bloc) :
 **Statut final** : les 9 étapes sont terminées et vérifiées. Mode missions
 planète intégralement fonctionnel (4 biomes, base, tourelles, garnison,
 sauvegarde/reprise, habillage, encyclopédie), fusionné sur `main`.
+**Note** : après plusieurs parties jouées, ce mode s'est révélé peu
+intéressant tactiquement (voir le diagnostic dans la section "refonte
+post-playtest" ci-dessus, qui prend le relais) — cette section reste comme
+trace de la V1 livrée, mais le développement actif se poursuit dans la
+section de refonte.
 
 ### Ambiance sonore — enrichissement de l'audio procédural
 

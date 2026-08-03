@@ -7,8 +7,7 @@ import { UPGRADES, DIFFICULTES, BOUCLIER_USAGES_MAX, HEROS, RARETE } from './con
 import { apparaitreEscadrille, aileEn, faireAile, spawnBoss, deployerVaisseau, typeAile, genererObstacles, spawnMimic, appliquerAmeliorationEffet } from './entities.js';
 import { setMusicPhase, setMusicBiome, sonVoix, sonRenfort, sonVague, sonVictoireSecteur, sonHerosDebloque, sonEpique } from './audio.js';
 import { demarrerTourJoueur, exploser } from './combat.js';
-import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner } from './ui.js';
-import { demarrerMissionPlanete } from './planete.js';
+import { logMsg, ouvrirAmelioration, ouvrirMission, ouvrirScenePlanete, checkAchievements, montrerToast, ouvrirEtapeBanner, ouvrirBriefingPlanete } from './ui.js';
 import { t, L } from './i18n.js';
 
 export const ICONE={combat:'epee',elite:'crane',event:'point',rest:'cle',tresor:'gemme',hangar:'satellite',forge:'engrenage',boss:'demon',planete:'globe',heros:'trophee'};
@@ -78,7 +77,7 @@ export function deserialiserCarte(d){ if(!d) { state.carte=null; state.noeudActu
 export function ouvrirCarte(){ state.phase='carte'; state.scenePlanete=null; sauvegarderPartie(serialiserCarte); }
 export function entrerNoeud(nd){ state.noeudActuel=nd; nd.visite=true; const type=nd.type;
   if(type==='combat'||type==='elite'||type==='boss'){ demarrerCombat(type); }
-  else if(type==='planete'){ demarrerMissionPlanete(); }
+  else if(type==='planete'){ ouvrirBriefingPlanete(); }
   else { ouvrirScenePlanete(construireScene(type)); } }
 
 /* construit le contenu d'une planète sans combat : décor + choix en haut d'écran */

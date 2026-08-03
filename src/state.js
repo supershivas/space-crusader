@@ -76,6 +76,11 @@ export const state = {
   // catalogue des entités déjà rencontrées (guide) : clé "categorie:type" -> true
   // (les héros débloqués y figurent sous la catégorie 'heros', même mécanisme que le reste)
   decouvertes:{},
+  // entrées d'encyclopédie NOUVELLEMENT débloquées pendant la partie EN COURS (remis à zéro à
+  // chaque nouvelle partie, voir main.js:nouvellePartie) — sert à n'afficher que les
+  // découvertes récentes sur l'écran de fin (finPage3), par opposition à l'Encyclopédie
+  // complète (ouvrirGuide()) qui reste sur `decouvertes` (tout l'historique).
+  decouvertesRun:{},
 
   damageThisWave:0,
   hoverCell:null, hoverTime:0,
@@ -123,6 +128,7 @@ export function decouvrir(categorie,type){
   const cle=categorie+':'+type;
   if(state.decouvertes[cle]) return;
   state.decouvertes[cle]=true;
+  state.decouvertesRun[cle]=true;   // nouvelle entrée d'encyclopédie débloquée pendant CETTE partie
   try{ localStorage.setItem('dc_decouvertes',JSON.stringify(state.decouvertes)); }catch(e){}
 }
 export function estDecouvert(categorie,type){ return !!state.decouvertes[categorie+':'+type]; }
@@ -169,7 +175,7 @@ export function sauvegarderPartie(serialiserCarte){
     enCombat:state.enCombat, objectifVague:state.objectifVague, killsThisWave:state.killsThisWave, shipsLostThisWave:state.shipsLostThisWave, bossKilledThisWave:state.bossKilledThisWave, damageThisWave:state.damageThisWave, scoreAvantVague:state.scoreAvantVague,
     hangar:state.hangar, actionFaite:state.actionFaite, tirsGratuits:state.tirsGratuits, bossVaincus:state.bossVaincus, difficulte:state.difficulte, rerollsRestants:state.rerollsRestants,
     boucliersRestants:state.boucliersRestants, ultimeSeuil:state.ultimeSeuil, enFeu:state.enFeu||0,
-    fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,maxhp:f.maxhp,used:f.used,capUsed:f.capUsed||false,kills:f.kills||0,gele:f.gele||0})),
+    fighters: state.fighters.map(f=>({c:f.c,r:f.r,type:f.type,hp:f.hp,maxhp:f.maxhp,used:f.used,capUsed:f.capUsed||false,kills:f.kills||0,gele:f.gele||0,sabordage:f.sabordage||0})),
     ailes: state.ailes.map(a=>({c:a.c,r:a.r,type:a.type,hp:a.hp,maxhp:a.maxhp,vitesse:a.vitesse})),
     asteroides: state.asteroides.map(o=>({c:o.c,r:o.r,dc:o.dc,dr:o.dr,type:o.type,hp:o.hp,maxhp:o.maxhp})),
     bonus: state.bonus.map(b=>({c:b.c,r:b.r,type:b.type,ttl:b.ttl})),
@@ -182,9 +188,10 @@ export function sauvegarderPartie(serialiserCarte){
     // quelle — on n'enregistre que sa position, re-liée à l'obstacle correspondant à la reprise.
     planete: state.planete ? {
       biome: state.planete.biome,
-      base: {c:state.planete.base.c, r:state.planete.base.r, w:state.planete.base.w, h:state.planete.base.h, hp:state.planete.base.hp, maxhp:state.planete.base.maxhp, reveillee:state.planete.base.reveillee},
+      base: {c:state.planete.base.c, r:state.planete.base.r, w:state.planete.base.w, h:state.planete.base.h, hp:state.planete.base.hp, maxhp:state.planete.base.maxhp, reveillee:state.planete.base.reveillee, chargeCols:state.planete.base.chargeCols, prochaineCharge:state.planete.base.prochaineCharge, pointFaible:state.planete.base.pointFaible},
       tourelles: state.planete.tourelles.map(tr=>({id:tr.id, ico:tr.ico, c:tr.c, r:tr.r, hp:tr.hp, maxhp:tr.maxhp, portee:tr.portee, degats:tr.degats, camouflee:tr.camouflee, reveillee:tr.reveillee, cachette: tr.cachette?{c:tr.cachette.c,r:tr.cachette.r}:null})),
       tourCompteur: state.planete.tourCompteur, prochaineGarnison: state.planete.prochaineGarnison, prochaineTempete: state.planete.prochaineTempete,
+      alerte: state.planete.alerte, meilleureDistance: state.planete.meilleureDistance,
     } : null,
     carte: serialiserCarte()
   })); }catch(e){}

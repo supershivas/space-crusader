@@ -2,7 +2,7 @@
    COMBAT — ciblage, déplacement, résolution de tour, tirs, boucle jeu
    ===================================================================== */
 import { state, centreCase, saveState, sauvegarderPartie, decouvrir, afficherDegats } from './state.js';
-import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES } from './config.js';
+import { DEG_LASER, DEG_EPERON, DEG_ASTEROIDE, ULTIME_INCREMENT, DIFFICULTES, CAPACITES, OBSTACLES, SABORDAGE_TOURS, BASE_POINT_FAIBLE_MULT } from './config.js';
 import { fighterEn, aileEn, asterEn, bossEn, bonusEn, occupe, dansGrille, trouNoirEn, champEn,
          obstacleEn, obstacleBloquant, champObstacleEn, tourelleEn, baseEn,
          tuerFighter, tuerAile, estElite, estProtege, porteurAura, blesser, faireAile, larguerBonus,
@@ -15,6 +15,13 @@ import { t } from './i18n.js';
 
 /* dégâts d'un tir laser ennemi (aile ou boss) : augmente avec le secteur */
 export function degLaserActuel(){ return DEG_LASER + Math.floor(state.secteur/2); }
+
+/* Mission planète — refonte : la portée de tir doit être une vraie limite de DISTANCE (rangées
+   devant le vaisseau), pas seulement de colonnes comme en combat spatial — sinon un vaisseau
+   resté à la rangée de départ peut sniper la base dès le tour 1 sans jamais avoir à avancer
+   (diagnostic de la V1, voir ROADMAP.md). Proportionnelle à la hauteur de la grille pour rester
+   cohérente entre le petit gabarit mobile et le grand gabarit desktop. */
+export function porteeTirVerticalePlanete(){ return Math.max(3,Math.round(state.RANGS*0.4)); }
 
 /* ---- ciblage / déplacement ---- */
 export function tirable(f,a){ return Math.abs(a.c-f.c)<=1; }
@@ -34,7 +41,16 @@ function annoncerCombo(){ if(state.comboCount>1) montrerToast(t('hud_combo',{n:s
 export function activerCapacite(f){
   if(!peutActiverCapacite(f)) return false;
   if(f.type==='bouclier'){ f.provoque=true; f.capUsed=true; state.selection=null; sonRenfort(); logMsg('🛡 Provocation !','log-ylw'); annoncerCapacite(f.type); return true; }
-  if(f.type==='rapide'){ state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); annoncerCapacite(f.type); return true; }
+  if(f.type==='rapide'){
+    // Sabordage (mission planète, refonte étape 7) : au contact de la base, la capacité du
+    // vaisseau rapide devient un assaut risque/récompense plutôt qu'un déplacement — voir
+    // finDuTourPlanete (planete.js) pour la résolution du canal.
+    if(state.planete){ const b=state.planete.base;
+      const d=Math.max(0,f.c-(b.c+b.w-1),b.c-f.c,f.r-(b.r+b.h-1),b.r-f.r);
+      if(d<=1){ f.sabordage=SABORDAGE_TOURS; f.capUsed=true; f.used=true; state.selection=null; sonSelect(); montrerToast(t('toast_sabordage_amorce'),'gold'); return true; }
+    }
+    state.modeCapacite={ship:f,kind:'bond'}; sonSelect(); annoncerCapacite(f.type); return true;
+  }
   if(f.type==='bombardier'){ state.modeCapacite={ship:f,kind:'charge'}; sonSelect(); annoncerCapacite(f.type); return true; }
   if(f.type==='transporteur'){
     if(state.fighters.length>=state.MAX_VAISSEAUX) return false;
@@ -90,10 +106,13 @@ export function analyseTir(f){
   const ailesOk=new Set(); const obstaclesOk=new Set(); const asteroidesOk=new Set(); const mimicsOk=new Set(); const tourellesOk=new Set(); let bossOk=false; let baseOk=false; const beams=[];
   // biome Grotte (mission planète) : obscurité, portée réduite de 1 (jamais négative)
   const p=Math.max(0,1+(state.ups?state.ups.portee:0)+(f.type==='sniper'?1:0)+(bonusDemonokos?bonusDemonokos.valeur:0)-(state.planete&&state.planete.biome==='grotte'?1:0));
+  // mission planète : portée verticale limitée (voir porteeTirVerticalePlanete) — en combat
+  // spatial, aucune limite, le faisceau balaie toute la colonne comme avant.
+  const rMinV=state.planete?Math.max(0,f.r-porteeTirVerticalePlanete()):0;
   for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue;
     const start=f.r-1; if(start<0) continue;   // on ne regarde QUE ce qui est devant (au-dessus)
-    let kind='vide', r1=0;
-    for(let rr=start; rr>=0; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
+    let kind='vide', r1=rMinV;
+    for(let rr=start; rr>=rMinV; rr--){   // les ailes pas encore entrées dans la grille (rangée < 0) restent hors de portée
       const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
       const tr=state.planete&&tourelleEn(c,rr); if(tr){ if(tr.reveillee===false){ kind='menace'; r1=rr; break; } tourellesOk.add(tr); kind='ennemi'; r1=rr; break; }   // tourelle fixe (mission planète) : destructible comme un obstacle ; invisible/inactive tant que non révélée (camouflage, obscurité)
       const al=aileEn(c,rr); if(al){ if(estProtege(al)&&!bonusDemonokos){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
@@ -109,9 +128,10 @@ export function analyseTir(f){
   }
   // Rétro-tir du Vaisseau Rouge : vise aussi les ennemis passés en dessous
   if(f.type==='rouge' && state.ups && state.ups.rouge_back){
-    for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue; const start=f.r+1; if(start>state.RANGS-1) continue;
-      let kind='vide', r1=state.RANGS-1;
-      for(let rr=start; rr<=state.RANGS-1; rr++){
+    const rMaxV=state.planete?Math.min(state.RANGS-1,f.r+porteeTirVerticalePlanete()):state.RANGS-1;
+    for(let dc=-p;dc<=p;dc++){ const c=f.c+dc; if(c<0||c>=state.COLS) continue; const start=f.r+1; if(start>rMaxV) continue;
+      let kind='vide', r1=rMaxV;
+      for(let rr=start; rr<=rMaxV; rr++){
         const ob=obstacleBloquant(c,rr); if(ob){ if(OBSTACLES[ob.type].destructible){ obstaclesOk.add(ob); kind='ennemi'; } else kind='menace'; r1=rr; break; }
         const al=aileEn(c,rr); if(al){ if(estProtege(al)){ kind='menace'; r1=rr; break; } ailesOk.add(al); kind='ennemi'; r1=rr; break; }
         const mm=bonusEn(c,rr); if(mm&&mm.type==='mimic'){ mimicsOk.add(mm); kind='ennemi'; r1=rr; break; }
@@ -153,9 +173,14 @@ export function frapperObstacle(o){
 export function frapperTourelle(t){ t.hp--; exploser(t.x,t.y,false); sonBoom();
   if(t.hp<=0){ const i=state.planete.tourelles.indexOf(t); if(i>=0) state.planete.tourelles.splice(i,1); exploser(t.x,t.y,true); state.score++; state.killsThisWave++; } }
 /* tir allié sur la base ennemie (mission planète) : PV décomptés, la victoire est détectée
-   dans animer() (voir state.suiteFinPlanete) une fois les animations de tir retombées */
-export function toucherBase(deg,px,py){ if(!state.planete) return;
-  const base=state.planete.base; base.hp=Math.max(0,base.hp-deg); exploser(px,py,false); sonBoom();
+   dans animer() (voir state.suiteFinPlanete) une fois les animations de tir retombées.
+   col : colonne visée — seule la colonne base.pointFaible (étape 5, mobile, voir
+   gererPointFaibleBase dans planete.js) encaisse les dégâts pleins, les autres n'en infligent
+   que BASE_POINT_FAIBLE_MULT (arrondi, jamais 0 tant que deg>0). */
+export function toucherBase(deg,px,py,col){ if(!state.planete) return;
+  const base=state.planete.base;
+  const reel=(col===base.pointFaible)?deg:Math.max(1,Math.round(deg*BASE_POINT_FAIBLE_MULT));
+  base.hp=Math.max(0,base.hp-reel); exploser(px,py,false); sonBoom();
   if(base.hp<=0) exploser(base.x,base.y,true); }
 
 /* planifie une menace : ajoute une ALERTE visible un tour avant */

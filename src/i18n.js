@@ -99,7 +99,7 @@ const STRINGS = {
     // Divers
     mission_continuer:'Continuer ▶',
     fin_rejouer:'REJOUER',
-    fin_suivant:'Suivant ▶',
+    fin_suivant:'Suivant',
     fin_bilan_titre:'BILAN',
     fin_recompenses_titre:'RÉCOMPENSES',
     up_titre:'AMÉLIORATION', up_hint:'Choisis une amélioration pour toute la partie',
@@ -187,6 +187,7 @@ const STRINGS = {
     hud_a_toi_de_jouer:'À TOI DE JOUER',
     hud_ennemis_attaquent:'LES ENNEMIS ATTAQUENT…',
     hud_champ:'CHAMP',
+    hud_charge_base:'CHARGE',
     hud_brouille:'BROUILLÉ',
     hud_combo:'x{n} COMBO',
 
@@ -243,6 +244,15 @@ const STRINGS = {
     tourelle_canon_nom:'Tourelle canon', tourelle_canon_desc:'Tourelle fixe standard, portée courte.',
     tourelle_sniper_nom:'Tourelle sniper', tourelle_sniper_desc:'Tourelle fixe à longue portée, peu de PV.',
     tourelle_lourde_nom:'Tourelle lourde', tourelle_lourde_desc:'Tourelle fixe blindée, dégâts élevés.',
+
+    // ===== Missions planète : briefing (étape 3 de la refonte) =====
+    briefing_force_label:'Défenses estimées',
+    briefing_force_legere:'Légères', briefing_force_moyenne:'Moyennes', briefing_force_lourde:'Lourdes',
+    briefing_alerte_rappel:'Rester immobile trop longtemps alerte la garnison, puis rend l\'arrière du champ de bataille hostile — avance régulièrement pour désamorcer la jauge.',
+    briefing_approche_standard_nom:'Approche prudente',
+    briefing_approche_standard_desc:'Départ normal, aucun risque ajouté.',
+    briefing_approche_agressive_nom:'Poussée agressive',
+    briefing_approche_agressive_desc:'L\'escadrille s\'élance d\'une rangée dès le départ, mais la garnison est déjà en alerte.',
     planete_base_guide_nom:'Base ennemie', planete_base_guide_desc:'Objectif des missions planète : la détruire remporte la mission.',
 
     // ===== Objectifs de vague =====
@@ -335,7 +345,7 @@ const STRINGS = {
     fin_boss_vaincus:'Boss vaincus',
     fin_meilleur_combo:'Meilleur combo',
     fin_succes_debloques:'succès débloqués',
-    fin_encyclopedie:'Encyclopédie :',
+    fin_encyclopedie:'Nouvelles découvertes :',
     fin_cristaux_gagnes:'cristaux gagnés',
     fin_vague:'Vague',
 
@@ -348,6 +358,19 @@ const STRINGS = {
     toast_secteur:'Secteur {n}',
     toast_tempete_sable:'Tempête de sable !',
     toast_tourelle_reveleee:'Tourelle repérée !',
+    toast_alerte_apaisee:'Progression détectée — alerte apaisée.',
+    alerte_palier1_avert:'Rester immobile attire l\'attention…',
+    alerte_palier1_actif:'La garnison s\'active !',
+    alerte_palier2_avert:'Zone arrière bientôt hostile — avance !',
+    alerte_palier2_actif_desert:'La tempête engloutit l\'arrière du champ de bataille !',
+    alerte_palier2_actif_glace:'Le blizzard gagne l\'arrière du champ de bataille !',
+    alerte_palier2_actif_grotte:'L\'obscurité engloutit l\'arrière du champ de bataille !',
+    alerte_palier2_actif_villes_anciennes:'Les ruines s\'effondrent à l\'arrière du champ de bataille !',
+    toast_charge_base_avert:'La base charge une salve de zone — elle frappera au tour suivant !',
+    toast_charge_base_impact:'La salve de la base s\'abat sur la zone annoncée !',
+    toast_point_faible_deplace:'Le point faible de la base s\'est déplacé !',
+    toast_sabordage_amorce:'Sabordage amorcé — le vaisseau frappera la base dans 2 tours s\'il survit.',
+    toast_sabordage_impact:'Le sabordage frappe la base de plein fouet !',
     hangar_prep:'Hangar :',
 
     // ===== Infobulles unités (ailes ennemies) =====
@@ -570,7 +593,7 @@ const STRINGS = {
     pause_hint:'P = pause · Esc = undo action',
     mission_continuer:'Continue ▶',
     fin_rejouer:'PLAY AGAIN',
-    fin_suivant:'Next ▶',
+    fin_suivant:'Next',
     fin_bilan_titre:'SUMMARY',
     fin_recompenses_titre:'REWARDS',
     up_titre:'UPGRADE', up_hint:'Choose an upgrade for the whole run',
@@ -652,6 +675,7 @@ const STRINGS = {
     hud_a_toi_de_jouer:'YOUR TURN',
     hud_ennemis_attaquent:'ENEMIES ATTACKING…',
     hud_champ:'FIELD',
+    hud_charge_base:'CHARGING',
     hud_brouille:'JAMMED',
     hud_combo:'x{n} COMBO',
 
@@ -706,6 +730,15 @@ const STRINGS = {
     tourelle_sniper_nom:'Sniper turret', tourelle_sniper_desc:'Long-range fixed turret, low HP.',
     tourelle_lourde_nom:'Heavy turret', tourelle_lourde_desc:'Armored fixed turret, high damage.',
     planete_base_guide_nom:'Enemy base', planete_base_guide_desc:'Planet mission objective: destroy it to win the mission.',
+
+    // ===== Planet missions: briefing (refonte step 3) =====
+    briefing_force_label:'Estimated defenses',
+    briefing_force_legere:'Light', briefing_force_moyenne:'Moderate', briefing_force_lourde:'Heavy',
+    briefing_alerte_rappel:'Staying put too long alerts the garrison, then turns the rear of the battlefield hostile — keep advancing to defuse the gauge.',
+    briefing_approche_standard_nom:'Cautious approach',
+    briefing_approche_standard_desc:'Normal start, no added risk.',
+    briefing_approche_agressive_nom:'Aggressive push',
+    briefing_approche_agressive_desc:'The squadron surges forward one row at the start, but the garrison is already on alert.',
 
     objectif_secondaire:'Secondary objective',
     obj_sansdegat:'No damage to the cruiser',
@@ -791,7 +824,7 @@ const STRINGS = {
     fin_boss_vaincus:'Bosses defeated',
     fin_meilleur_combo:'Best combo',
     fin_succes_debloques:'achievements unlocked',
-    fin_encyclopedie:'Encyclopedia:',
+    fin_encyclopedie:'New discoveries:',
     fin_cristaux_gagnes:'crystals earned',
     fin_vague:'Wave',
 
@@ -803,6 +836,19 @@ const STRINGS = {
     toast_secteur:'Sector {n}',
     toast_tempete_sable:'Sandstorm!',
     toast_tourelle_reveleee:'Turret spotted!',
+    toast_alerte_apaisee:'Progress detected — alert defused.',
+    alerte_palier1_avert:'Staying put is drawing attention…',
+    alerte_palier1_actif:'The garrison is mobilizing!',
+    alerte_palier2_avert:'The rear will soon be hostile — advance!',
+    alerte_palier2_actif_desert:'The sandstorm is swallowing the rear of the battlefield!',
+    alerte_palier2_actif_glace:'The blizzard is closing in on the rear of the battlefield!',
+    alerte_palier2_actif_grotte:'The darkness is swallowing the rear of the battlefield!',
+    alerte_palier2_actif_villes_anciennes:'The ruins are collapsing at the rear of the battlefield!',
+    toast_charge_base_avert:'The base is charging a zone salvo — it will strike next turn!',
+    toast_charge_base_impact:'The base\'s salvo hits the marked zone!',
+    toast_point_faible_deplace:'The base\'s weak point has shifted!',
+    toast_sabordage_amorce:'Sabotage run started — the ship will hit the base in 2 turns if it survives.',
+    toast_sabordage_impact:'The sabotage run slams into the base!',
     hangar_prep:'Hangar:',
 
     ail_normal_nom:'Fighter', ail_normal_desc:'Advances and fires straight ahead.',

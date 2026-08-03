@@ -271,10 +271,27 @@ export function dessiner(t){
     if(w.kind==='astero'){ ctx.fillStyle='rgba(255,176,61,.16)'; ctx.fillRect(state.GX,state.GY+w.r*state.CELL,state.COLS*state.CELL,state.CELL);
       dessinerIcone(imgAlerte,w.dir>0?state.GX+4+imgAlerte.width/2:state.GX+state.COLS*state.CELL-4-imgAlerte.width/2,state.GY+w.r*state.CELL+state.CELL*0.7-6,al); }
     else if(w.kind==='trou'){ ctx.strokeStyle='rgba(180,120,255,'+al+')'; ctx.lineWidth=3; ctx.strokeRect(state.GX+(w.c-1)*state.CELL+3,state.GY+(w.r-1)*state.CELL+3,3*state.CELL-6,3*state.CELL-6); dessinerIcone(imgAlerte,centreCase(w.c,w.r).x,centreCase(w.c,w.r).y,al); }
+    else if(w.kind==='baseCharge'){ ctx.fillStyle='rgba(229,72,77,'+(.14+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL);
+      dessinerIcone(imgAlerte,state.GX+((w.c0+w.c1+1)/2)*state.CELL-24,state.GY+14,al);
+      ctx.fillStyle='rgba(255,140,140,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_charge_base'),state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
     else { ctx.fillStyle='rgba(155,107,214,'+(.12+.12*pulse)+')'; ctx.fillRect(state.GX+w.c0*state.CELL,state.GY,(w.c1-w.c0+1)*state.CELL,state.RANGS*state.CELL);
       dessinerIcone(imgAlerte,state.GX+((w.c0+w.c1+1)/2)*state.CELL-24,state.GY+14,al);
       ctx.fillStyle='rgba(200,160,255,'+al+')'; ctx.font='11px monospace'; ctx.textAlign='center'; ctx.fillText(trad('hud_champ'),state.GX+((w.c0+w.c1+1)/2)*state.CELL+6,state.GY+18); }
     ctx.textAlign='left'; ctx.restore(); }
+
+  // ---- zone de contrôle des tourelles (étape 5) : carré de portée, toujours visible, très
+  // discret pour ne pas noyer la lecture de la grille — sert à planifier l'approche sans essai-
+  // erreur, complète l'intention (cible annoncée) dessinée plus loin sur chaque tourelle. ----
+  if(state.planete){ for(const tr of state.planete.tourelles){ if(!tr.reveillee) continue;
+    const cMin=Math.max(0,tr.c-tr.portee), cMax=Math.min(state.COLS-1,tr.c+tr.portee),
+      rMin=Math.max(0,tr.r-tr.portee), rMax=Math.min(state.RANGS-1,tr.r+tr.portee);
+    ctx.fillStyle='rgba(229,72,77,.05)'; ctx.fillRect(state.GX+cMin*state.CELL,state.GY+rMin*state.CELL,(cMax-cMin+1)*state.CELL,(rMax-rMin+1)*state.CELL); }
+    // point faible mobile de la base (étape 5) : colonne surlignée en or, dégâts pleins uniquement là
+    const base=state.planete.base;
+    if(base.reveillee!==false&&base.pointFaible!=null){
+      ctx.fillStyle='rgba(255,210,61,'+(.16+.1*pulse)+')';
+      ctx.fillRect(state.GX+base.pointFaible*state.CELL,state.GY+base.r*state.CELL,state.CELL,base.h*state.CELL); }
+  }
 
   if(state.phase==='joueur'){
     // survol d'un ennemi -> montre sa future destination
@@ -432,6 +449,12 @@ export function dessiner(t){
       const ty0=state.GY+tr.r*state.CELL+6;
       if(tr.maxhp>1){ const n=tr.maxhp, sq=4, gap=2, tot=n*sq+(n-1)*gap, hbx=Math.round(tr.x-tot/2), hby=Math.round(ty0-6);
         for(let i=0;i<n;i++){ ctx.fillStyle=i<tr.hp?'#e5484d':'#4a5262'; ctx.fillRect(hbx+i*(sq+gap),hby,sq,sq); } }
+      // intention visible (étape 4) : cible annoncée à l'ouverture de ce tour, tirée au tour
+      // suivant si elle reste à portée — jamais un tir qui surprend le joueur (voir planete.js).
+      if(tr.cible&&state.fighters.includes(tr.cible)){ const al=.5+.4*pulse;
+        ctx.save(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(255,90,90,'+al+')'; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(tr.x,tr.y); ctx.lineTo(tr.cible.x,tr.cible.y); ctx.stroke(); ctx.restore();
+        dessinerIcone(imgAlerte,tr.x,Math.round(ty0-14),al); }
     }
   }
 
@@ -462,6 +485,11 @@ export function dessiner(t){
       if(state.ups.rouge_back){ ctx.fillStyle='#ff8a3d'; for(const dx of [-6,0,6]){ ctx.fillRect(Math.round(f.x+dx-1),Math.round(fy+f.img.height/2+1),3,4); } } }
     ctx.globalAlpha=f.used?.4:1; ctx.drawImage(f.img,Math.round(f.x-f.img.width/2),Math.round(fy-f.img.height/2)); ctx.globalAlpha=1;
     if(f.gele>0) dessinerIcone(imgGel,f.x,fy,.7+.3*pulse);
+    // sabordage (étape 7) : canal d'assaut en cours contre la base — anneau doré pulsant +
+    // pastilles de tours restants, remplace la pastille de capacité tant qu'il dure.
+    if(f.sabordage>0){ ctx.strokeStyle='rgba(255,210,61,'+(.6+.4*pulse)+')'; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(f.x,fy,state.CELL*0.42,0,7); ctx.stroke();
+      const n=f.sabordage, sq=5, gap=2, tot=n*sq+(n-1)*gap, bx=Math.round(f.x-tot/2), by=Math.round(fy-f.img.height/2-10);
+      for(let i=0;i<n;i++){ ctx.fillStyle='#ffd23d'; ctx.fillRect(bx+i*(sq+gap),by,sq,sq); } }
     // PV : mêmes carrés harmonisés que les ennemis, sous le vaisseau (rouge = coque renforcée, bleu = cuirassé)
     if(f.maxhp>1){ const coul=f.type==='rouge'?'#ff5a5a':f.type==='bouclier'?'#4aa3ff':'#ff2a5a'; dessinerPV(f.x,Math.round(fy+f.img.height/2+2),f.hp,f.maxhp,coul); }
     // grade du vaisseau (kills) : 1-3 points jaunes puis étoile dorée à 15+
@@ -513,6 +541,10 @@ export function dessiner(t){
       ctx.fillStyle=coul; ctx.fillRect(pv.x+2,pv.y+2,Math.max(0,(pv.w-4)*ratio),pv.h-4);
       arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
       ctx.fillStyle='#eef3ff'; ctx.font='9px "Press Start 2P", monospace'; ctx.textAlign='left'; ctx.fillText(trad('hud_base'),pv.x+8,pv.y+pv.h/2+3);
+      // jauge d'alerte : pastille d'avertissement à droite de la barre, palier 1 orange fixe, palier 2 rouge pulsant
+      const niv=state.planete.alerteNiveau||0;
+      if(niv>0){ const coulA=niv===2?'rgba(229,72,77,'+(.6+.4*pulse)+')':'#ff8a3d';
+        ctx.fillStyle=coulA; ctx.font='9px monospace'; ctx.textAlign='right'; ctx.fillText('▲',pv.x+pv.w-8,pv.y+pv.h/2+4); ctx.textAlign='left'; }
     }
   } else { const ratio=Math.max(0,state.hpCruiser/state.HP_MAX), pv=state.PV;
     arrondi(pv.x,pv.y,pv.w,pv.h,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();

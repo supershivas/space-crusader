@@ -64,7 +64,9 @@
      gagnée), plus la peine de laisser deviner la scène de jeu figée à travers le flou — fond
      opaque, sans flou, sinon le dernier décor de combat (ennemis, obstacles…) fantômait
      derrière le texte du bilan. */
-  #fin{background:var(--espace);backdrop-filter:none;}
+  /* La carrousel de fin gère lui-même son défilement interne (.fin-body) : l'écran ne doit
+     pas aussi défiler en plus, sinon deux barres de scroll imbriquées se disputent le geste. */
+  #fin{background:var(--espace);backdrop-filter:none;overflow-y:hidden;align-items:stretch;justify-content:flex-start;}
   .cache{display:none;}
   h1{font-size:var(--fs-titre);line-height:var(--lh-normal);margin:0;color:#37e0ff;text-shadow:0 3px 0 #10406a;}
   /* écrans de conclusion (défaite du croiseur, fin de combat/mission) : titre bien plus gros que
@@ -106,9 +108,28 @@
      débordait largement de la hauteur dispo sur mobile, poussait toute la page (barre
      d'adresse comprise) et pouvait couper une ligne de score en plein milieu. Chaque page
      tient seule sur un écran, jamais coupée, avec un "Suivant" jusqu'aux boutons d'action
-     sur la dernière. */
-  .fin-page{display:flex;flex-direction:column;align-items:center;gap:var(--space-md);width:100%;}
+     sur la dernière.
+     Chaque page = un corps défilant (.fin-body, contenu variable selon la page) + un pied fixe
+     (.fin-footer, TOUJOURS la même paire de composants dans le même ordre : points de
+     progression puis 1-2 boutons de nav) ancré en bas d'écran par le flex — les points et
+     boutons de navigation restent ainsi à la même hauteur sur les 3 pages, peu importe la
+     quantité de contenu au-dessus (voir aussi design-system.html § Écran de fin). Les actions
+     secondaires propres à la page 3 (Améliorations/Accueil) vivent dans .fin-body, pas dans le
+     pied — seule l'action principale (Rejouer) y prend la place de "Suivant". */
+  .fin-page{display:flex;flex-direction:column;align-items:center;width:100%;flex:1 1 auto;min-height:0;}
   .fin-page.cache{display:none;}
+  .fin-body{flex:1 1 auto;min-height:0;overflow-y:auto;display:flex;flex-direction:column;align-items:center;
+    gap:var(--space-md);width:100%;justify-content:safe center;}
+  .fin-footer{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:var(--space-sm);width:100%;padding-top:var(--space-md);}
+  /* Vignettes de découvertes récentes (page 3) : seul élément vraiment susceptible de
+     déborder (nombre de rencontres variable d'une partie à l'autre) — hauteur plafonnée et
+     défilement propre à CE bloc, pour que le titre/cristaux/boutons au-dessus et en dessous
+     restent visibles sans avoir à parcourir toute la page. */
+  .fin-dec-cards{max-height:30vh;overflow-y:auto;padding:2px 2px 2px 0;margin-top:6px;}
+  .fin-dec-cards::-webkit-scrollbar{width:6px;}
+  .fin-dec-cards::-webkit-scrollbar-track{background:transparent;}
+  .fin-dec-cards::-webkit-scrollbar-thumb{background:#3b5aa0;border-radius:3px;}
+  .fin-dec-cards{scrollbar-width:thin;scrollbar-color:#3b5aa0 transparent;}
   .fin-souscran{font-family:var(--pixel);color:#37e0ff;font-size:var(--fs-modale);margin:0;text-shadow:0 2px 0 #10406a;}
   /* Timeline à 3 points reliés (étape atteinte = claire, à venir = sombre) plutôt qu'un
      compteur "1 / 3" — se lit d'un coup d'œil et affiche la progression, pas juste un rang. */
@@ -145,9 +166,11 @@
   /* bouton d'action destructive (ex: effacer la progression) */
   button.jouer.danger{background:#5a2030;border-bottom-color:#3a1420;color:#ff9a9a;font-size:var(--fs-petit);padding:10px 16px;box-shadow:none;}
   /* Posés dans le coin haut-gauche du cadre HUD dessiné sur le canvas (voir dessinerCadreHUD()
-     dans render.js) : même marge que le cadre lui-même (--space-sm) pour paraître intégrés au
-     cadre plutôt que flotter par-dessus, et même écart entre eux. */
-  .coin{position:absolute;top:calc(env(safe-area-inset-top, 0px) + var(--space-sm));z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
+     dans render.js). Marge du haut en --space-md plutôt que --space-sm : le cadre HUD lui-même
+     commence un peu plus bas (fy=4 dans dessinerCadreHUD()), donc --space-sm collait les boutons
+     trop près du bord de l'écran/du scene, au-dessus du cadre plutôt qu'alignés dessus. Marge
+     gauche restée en --space-sm (alignée sur la marge du cadre, state.GX). */
+  .coin{position:absolute;top:calc(env(safe-area-inset-top, 0px) + var(--space-md));z-index:5;font-family:var(--pixel);font-size:14px;background:rgba(13,21,48,.85);
     color:var(--texte);border:2px solid #24406e;border-radius:var(--radius-md);width:42px;height:42px;cursor:pointer;line-height:1;}
   #son{left:calc(env(safe-area-inset-left, 0px) + var(--space-sm));}
   /* Léger décalage supplémentaire vers la droite : trop proche du cadre HUD sinon (le bouton
@@ -264,7 +287,8 @@
   /* Nombre de tours nécessaires avant la sortie du hangar (carte de construction d'un
      vaisseau) : mis en valeur à part du reste de la description (cadre + couleur dédiés),
      information décisive pour le choix plutôt qu'une mention noyée dans le texte. */
-  .card-tours{font-size:var(--fs-petit);color:#ffd23d;border:1px solid #ffd23d;border-radius:var(--radius-sm);padding:1px 6px;margin-top:2px;}
+  .card-tours{font-size:var(--fs-petit);color:#ffd23d;border:1px solid #ffd23d;border-radius:var(--radius-sm);padding:1px 6px;margin-top:2px;
+    box-sizing:border-box;max-width:100%;text-align:center;}
   .card canvas{image-rendering:pixelated;border-radius:var(--radius-sm);}
   /* Difficulté : toujours les 3 cartes sur une seule ligne (jamais 2+1 qui déséquilibre la
      modale) — largeur flexible plutôt que fixe, le texte se réenroule si l'écran est étroit. */
@@ -368,6 +392,11 @@
       <button class="jouer secondaire" id="btnReroll" style="display:none;margin-top:12px;"><span class="ico-slot" data-ico="de"></span><span id="rerollLabel">Reroll</span></button></div>
     <div id="build" class="modal"><h2><span class="ico-slot" data-ico="cle"></span><span data-i18n="build_titre">CHOISIS TON VAISSEAU</span></h2><div class="hint" data-i18n="build_hint">Il sortira du hangar au prochain tour · tape ailleurs pour annuler</div><div class="cards" id="buildCards"></div></div>
     <div id="event" class="modal"><h2 id="eventTitre">ÉVÉNEMENT</h2><div class="hint" id="eventDesc"></div><div class="cards" id="eventCards"></div></div>
+    <div id="planeteBriefing" class="modal"><h2><span class="ico-slot" data-ico="globe"></span><span id="briefingBiomeNom">BIOME</span></h2>
+      <div class="hint" id="briefingMecanique" style="max-width:300px;"></div>
+      <div class="hint" id="briefingForce" style="max-width:300px;margin-top:4px;"></div>
+      <div class="hint" id="briefingAlerte" style="max-width:300px;margin-top:4px;color:#ff8a3d;"></div>
+      <div class="cards" id="briefingCards" style="margin-top:14px;"></div></div>
     <div id="carte" class="modal"><h2><span class="ico-slot" data-ico="carte"></span><span data-i18n="carte_titre">CHOISIS TA DESTINATION</span></h2><div class="hint" data-i18n="carte_hint">Deux planètes en vue — trace ta route</div><div class="cards" id="carteChoix"></div></div>
     <div id="difficulte" class="modal"><h2 data-i18n="diff_titre">CHOISIS LA DIFFICULTÉ</h2>
       <div class="cards" id="difficulteCards"></div>
@@ -462,37 +491,49 @@
     </div>
     <div id="fin" class="ecran cache">
       <div class="fin-page" id="finPage1">
-        <h1 style="color:#e5484d" data-i18n="fin_titre">CROISEUR HORS-SERVICE</h1>
-        <p class="sous" data-i18n="fin_sous_titre">Il a besoin de réparations !</p>
-        <p class="score-fin" id="scoreFin">Score : 0</p>
-        <table id="highscores"></table>
-        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line"></span><span class="fin-dot"></span><span class="fin-line"></span><span class="fin-dot"></span></div>
-        <div class="fin-nav">
-          <button class="jouer" id="btnFinSuivant1"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+        <div class="fin-body">
+          <h1 style="color:#e5484d" data-i18n="fin_titre">CROISEUR HORS-SERVICE</h1>
+          <p class="sous" data-i18n="fin_sous_titre">Il a besoin de réparations !</p>
+          <p class="score-fin" id="scoreFin">Score : 0</p>
+          <table id="highscores"></table>
+        </div>
+        <div class="fin-footer">
+          <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line"></span><span class="fin-dot"></span><span class="fin-line"></span><span class="fin-dot"></span></div>
+          <div class="fin-nav">
+            <button class="jouer" id="btnFinSuivant1"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+          </div>
         </div>
       </div>
       <div class="fin-page cache" id="finPage2">
-        <h2 class="fin-souscran" data-i18n="fin_bilan_titre">BILAN</h2>
-        <div id="finStats" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:2px"></div>
-        <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
-        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line"></span><span class="fin-dot"></span></div>
-        <div class="fin-nav">
-          <button class="jouer secondaire fin-prev" id="btnFinPrecedent2" aria-label="Précédent"><span class="ico-slot ico-flip" data-ico="play"></span></button>
-          <button class="jouer" id="btnFinSuivant2"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+        <div class="fin-body">
+          <h2 class="fin-souscran" data-i18n="fin_bilan_titre">BILAN</h2>
+          <div id="finStats" style="font-size:8px;color:#9fb0d8;line-height:var(--lh-normal);margin-top:2px"></div>
+          <div id="finSucces" style="font-size:7px;color:#ffd23d;line-height:var(--lh-normal);margin-top:4px;max-width:34ch"></div>
+        </div>
+        <div class="fin-footer">
+          <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line"></span><span class="fin-dot"></span></div>
+          <div class="fin-nav">
+            <button class="jouer secondaire fin-prev" id="btnFinPrecedent2" aria-label="Précédent"><span class="ico-slot ico-flip" data-ico="play"></span></button>
+            <button class="jouer" id="btnFinSuivant2"><span class="ico-slot" data-ico="play"></span><span data-i18n="fin_suivant">Suivant</span></button>
+          </div>
         </div>
       </div>
       <div class="fin-page cache" id="finPage3">
-        <h2 class="fin-souscran" data-i18n="fin_recompenses_titre">RÉCOMPENSES</h2>
-        <div id="finDecouvertes" style="margin-top:4px;max-width:100%;"></div>
-        <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
-        <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span></div>
-        <div class="fin-nav">
-          <button class="jouer secondaire fin-prev" id="btnFinPrecedent3" aria-label="Précédent"><span class="ico-slot ico-flip" data-ico="play"></span></button>
+        <div class="fin-body">
+          <h2 class="fin-souscran" data-i18n="fin_recompenses_titre">RÉCOMPENSES</h2>
+          <div id="finDecouvertes" style="margin-top:4px;max-width:100%;"></div>
+          <p id="cristauxGagnes" style="color:#8fd0ff;font-size:9px;line-height:var(--lh-normal)"></p>
+          <div class="menu-vertical">
+            <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="gemme"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
+            <button class="jouer secondaire" id="btnFinAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+          </div>
         </div>
-        <div class="menu-vertical">
-          <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
-          <button class="jouer secondaire" id="btnMeta2"><span class="ico-slot" data-ico="gemme"></span><span data-i18n="home_ameliorations">AMÉLIORATIONS</span></button>
-          <button class="jouer secondaire" id="btnFinAccueil"><span class="ico-slot" data-ico="maison"></span><span data-i18n="pause_accueil">Accueil</span></button>
+        <div class="fin-footer">
+          <div class="fin-dots"><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span><span class="fin-line on"></span><span class="fin-dot on"></span></div>
+          <div class="fin-nav">
+            <button class="jouer secondaire fin-prev" id="btnFinPrecedent3" aria-label="Précédent"><span class="ico-slot ico-flip" data-ico="play"></span></button>
+            <button class="jouer" id="btnRejouer"><span class="ico-slot" data-ico="restart"></span><span data-i18n="fin_rejouer">REJOUER</span></button>
+          </div>
         </div>
       </div>
     </div>
