@@ -148,7 +148,10 @@ function dessinerCadreHUD(){
   // Tout le contenu (hors boutons son/pause, en DOM par-dessus le coin haut-gauche) est
   // centré sur la largeur du cadre — secteur/vague et score regroupés sur une seule ligne
   // plutôt que collés chacun à un bord, pour un rendu plus propre et mieux équilibré.
-  const marge=state.GX, fx=marge, fy=4, fw=state.LARGEUR-2*marge, fh=state.GY-10, cx=fx+fw/2;
+  // fy en --space-sm (8, même échelle que MARGE=--space-md pour les côtés) : était à 4px codé en
+  // dur, une valeur hors échelle qui collait le cadre quasi au ras du haut du canvas — les
+  // boutons son/pause (DOM, par-dessus) s'y retrouvaient collés plutôt qu'intégrés au cadre.
+  const marge=state.GX, fx=marge, fy=8, fw=state.LARGEUR-2*marge, fh=state.GY-14, cx=fx+fw/2;
   arrondi(fx,fy,fw,fh,RADIUS.bar); ctx.fillStyle='rgba(10,14,28,.8)'; ctx.fill();
   ctx.strokeStyle='#4a5a86'; ctx.lineWidth=2; ctx.stroke();
   ctx.textAlign='center';
